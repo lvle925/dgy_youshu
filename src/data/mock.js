@@ -1,0 +1,610 @@
+export const districts = ['黄浦区', '徐汇区', '长宁区', '静安区', '普陀区', '虹口区', '杨浦区', '闵行区', '宝山区', '嘉定区', '浦东新区', '金山区', '松江区', '青浦区', '奉贤区', '崇明区'];
+export const subsidyTypes = ['创业服务', '知识产权', '研发投入', '场地投入', '荣誉资质', '品牌展会', '服务投入', '商贸投入', '税收优惠', '融资贷款', '管理提升', '信息化', '质量标准', '体系认证', '人才投入', '稳岗就业'];
+export const levels = ['国家级', '省级', '市级', '区级'];
+export const industries = ['农、林、牧、渔业', '采矿业', '制造业', '电力、热力、燃气及水生产和供应业', '建筑业', '批发和零售业', '交通运输、仓储和邮政业', '住宿和餐饮业', '信息传输、软件和信息技术服务业', '金融业', '房地产业', '租赁和商务服务业', '科学研究和技术服务业', '水利、环境和公共设施管理业', '居民服务、修理和其他服务业', '教育', '卫生和社会工作', '文化、体育和娱乐业'];
+export const parkNames = ['临港新片区生命蓝湾生物医药特色产业园', '临港新片区东方芯港', '张江人工智能岛', '漕河泾科技绿洲', '金桥5G产业生态园', '外高桥智能制造服务产业园', '虹桥临空数字经济产业园', '杨浦长阳创谷', '紫竹高新技术产业开发区', '松江G60科创云廊', '嘉定氢能港', '宝山数智南大', '青浦市西软件信息园', '奉贤东方美谷', '崇明智慧生态园'];
+export const industriesShort = ['生物医药', '集成电路', '人工智能', '数字经济', '高端装备', '新材料', '新能源', '生命健康', '智能制造', '软件信息'];
+
+export const companyNames = [
+  '上海榕萌科技发展有限公司', '上海青航视界电子商务有限责任公司', '上海迈愈生物科技有限公司',
+  '上海蔚荫实业有限公司', '美迪西普旭生物医药科技（上海）有限公司', '上海锦源晟新能源材料集团有限公司',
+  '上海融脉医疗科技有限公司', '贝源石油（上海）有限公司', '沛君航运经纪（上海）有限公司',
+  '中车智慧产业投资（上海）有限公司', '上海沪安物流有限公司', '上海含其家居用品有限公司',
+  '上海汇智联成科技有限公司', '上海禾晟易网络科技有限公司', '上海芯动联科科技有限公司',
+  '培新全空间(上海)通用技术有限公司', '上海豪量建筑工程有限公司', '上海火芽网络技术有限公司',
+  '上海聚领精研医药科技有限公司', '上海临港新片区经济发展有限公司', '上海张江高科技园区开发股份有限公司',
+  '上海漕河泾新兴技术开发区发展总公司', '上海金桥出口加工区开发股份有限公司', '上海外高桥保税区开发股份有限公司',
+  '上海虹桥商务区投资置业有限公司', '上海莘庄工业区经济技术发展有限公司', '上海杨浦科技创业中心有限公司',
+  '上海天地软件创业园有限公司', '上海紫竹高新技术产业开发区有限公司', '上海松江经济技术开发建设集团有限公司',
+];
+
+const shortNames = ['榕萌科技', '青航视界', '迈愈生物', '蔚荫实业', '美迪西普旭', '锦源晟新能源', '融脉医疗', '贝源石油', '沛君航运', '中车智慧', '沪安物流', '含其家居', '汇智联成', '禾晟易网络', '芯动联科', '培新全空间', '豪量建筑', '火芽网络', '聚领精研', '临港经济', '张江高科', '漕河泾', '金桥出口', '外高桥', '虹桥商务区', '莘庄工业区', '杨浦科创', '天地软件园', '紫竹高新', '松江经开'];
+
+export const companies = companyNames.map((name, i) => {
+  const park = parkNames[i % parkNames.length];
+  const district = districts[(i * 3) % districts.length];
+  const settleYear = 2015 + (i % 10);
+  const regYear = 2010 + (i % 14);
+  return {
+    id: 'C' + String(10001 + i),
+    code: '91310' + String(100000000 + i * 7919).slice(0, 9),
+    name,
+    shortName: shortNames[i],
+    industry: industriesShort[i % industriesShort.length],
+    district,
+    park,
+    scale: ['小型', '中型', '大型', '微型'][i % 4],
+    socialSecurity: [12, 48, 126, 8, 236, 88, 35, 17, 203, 64][i % 10],
+    settleDate: `${settleYear}-0${(i % 9) + 1}-1${i % 9}`,
+    registerDate: `${regYear}-0${(i % 9) + 1}-0${(i % 8) + 1}`,
+    address: ['上海市杨浦区翔殷路128号6号楼2层（集中登记地）', '中国（上海）自由贸易试验区临港新片区新杨公路860号', '上海市浦东新区张江路665号', '上海市徐汇区宜山路900号', '上海市闵行区紫星路588号'][i % 5],
+    contact: ['张伟', '李娜', '王磊', '陈静', '刘洋', '周敏', '吴超', '徐静', '孙鹏', '马莉'][i % 10],
+    phone: '138****' + String(1000 + i * 73).slice(-4),
+    regCapital: [500, 1000, 3000, 800, 5000, 2000, 1200, 600, 10000, 3000][i % 10] + ' 万元',
+    tags: [['高新技术企业', '专精特新'], ['科技型中小企业'], ['专精特新', '创新型中小企业'], ['高新技术企业'], ['省级专精特新企业', '创新型企业']][i % 5],
+    risk: 'safe',
+    score: 92 - (i % 8) * 3,
+    retentionRate: (98 + (i % 20) / 10).toFixed(2),
+    growth: ['较上月新增 12 家', '较上月持平', '较上月减少 3 家', '较上月新增 5 家'][i % 4],
+  };
+});
+
+export const policies = [
+  {
+    id: 'P001', name: '上海市"专精特新"中小企业认定', level: '省级', org: '上海市经济和信息化委员会',
+    stars: 5, type: '荣誉资质', companies: 38891, industry: '农业；林业；畜牧业；渔业；制造业；软件和信息技术服务业',
+    district: '上海市', date: '2026-09-18', amount: 26548.92, deadline: '2026-12-31', status: '申报中', hot: 29658,
+    content: '为贯彻落实《上海市促进中小企业发展条例》，引导中小企业走专业化、精细化、特色化、新颖化发展道路，开展本年度上海市"专精特新"中小企业认定工作。',
+    requirements: ['在本市注册登记、具有独立法人资格', '成立满两年以上，上年度营业收入不低于1000万元', '近两年研发投入占营业收入比重不低于3%', '主导产品在细分市场占有率位居前列'],
+    materials: ['企业申请书', '营业执照复印件', '近两年审计报告', '知识产权证明材料'],
+  },
+  {
+    id: 'P002', name: '上海市科技型中小企业技术创新资金项目', level: '省级', org: '上海市科学技术委员会',
+    stars: 4, type: '荣誉资质', companies: 20639, industry: '煤炭开采和洗选业；石油和天然气开采业；制造业',
+    district: '浦东新区', date: '2026-08-02', amount: 18233.15, deadline: '2026-11-30', status: '申报中', hot: 20622,
+    content: '支持科技型中小企业开展技术创新活动，提升企业自主创新能力，重点支持新一代信息技术、生物医药、高端装备制造等领域。',
+    requirements: ['注册在本市的科技型中小企业', '上年度研发费用总额不低于50万元', '项目具有明确的技术创新内容和产业化前景'],
+    materials: ['项目申报书', '上年度财务报表', '知识产权证明'],
+  },
+  {
+    id: 'P003', name: '上海市重点企业一次性吸纳就业补贴', level: '省级', org: '上海市人力资源和社会保障局',
+    stars: 4, type: '人才投入', companies: 18739, industry: '农副食品加工业；食品制造业；纺织业',
+    district: '徐汇区', date: '2026-07-25', amount: 15402.60, deadline: '2026-12-15', status: '申报中', hot: 18739,
+    content: '对吸纳重点群体就业的企业给予一次性吸纳就业补贴，稳定企业用工，促进重点群体就业。',
+    requirements: ['与重点群体签订1年以上劳动合同', '依法缴纳社会保险费满3个月', '企业信用记录良好'],
+    materials: ['补贴申请表', '劳动合同复印件', '社保缴纳证明'],
+  },
+  {
+    id: 'P004', name: '上海市科技创新券', level: '省级', org: '上海市科学技术委员会',
+    stars: 4, type: '服务投入', companies: 11311, industry: '农业；林业；畜牧业；渔业；制造业',
+    district: '杨浦区', date: '2026-06-12', amount: 9658.30, deadline: '2026-12-20', status: '申报中', hot: 10119,
+    content: '面向科技型中小企业发放科技创新券，用于购买研发设计、检验检测、技术转移等科技服务。',
+    requirements: ['本市注册的科技型中小企业', '年度创新券使用额度不超过合同金额的50%'],
+    materials: ['创新券申请表', '服务合同', '发票及付款凭证'],
+  },
+  {
+    id: 'P005', name: '上海市高新技术成果转化项目', level: '省级', org: '上海市科学技术委员会',
+    stars: 4, type: '研发投入', companies: 8621, industry: '石油、煤炭及其他燃料加工业',
+    district: '闵行区', date: '2026-05-08', amount: 8321.44, deadline: '2026-10-31', status: '已截止', hot: 7842,
+    content: '支持高新技术成果在本市转化落地，对经认定的高新技术成果转化项目给予财政扶持。',
+    requirements: ['项目技术达到国内领先水平', '已实现产业化并形成销售', '企业在本市注册并纳税'],
+    materials: ['转化项目认定申请书', '技术证明材料', '销售合同及发票'],
+  },
+  {
+    id: 'P006', name: '上海市困难行业企业稳就业补贴', level: '省级', org: '上海市人力资源和社会保障局',
+    stars: 3, type: '管理提升', companies: 6721, industry: '铁路运输业；道路运输业；水上运输业',
+    district: '静安区', date: '2026-04-16', amount: 6102.25, deadline: '2026-09-30', status: '已截止', hot: 6530,
+    content: '对受外部环境影响较大的困难行业企业给予稳就业补贴，支持企业稳定岗位。',
+    requirements: ['属于困难行业目录范围', '上年度未裁员或裁员率低于全市平均水平'],
+    materials: ['稳岗补贴申请表', '参保职工名单'],
+  },
+  {
+    id: 'P007', name: '上海市国家重要科技计划项目（匹配资金）', level: '国家级', org: '上海市科学技术委员会',
+    stars: 4, type: '研发投入', companies: 5669, industry: '化学原料和化学制品制造业',
+    district: '浦东新区', date: '2026-03-21', amount: 5320.18, deadline: '2026-08-31', status: '已截止', hot: 5109,
+    content: '对国家科技重大专项、国家重点研发计划立项项目给予地方匹配资金支持。',
+    requirements: ['牵头承担国家科技计划项目', '项目立项通知书在有效期内'],
+    materials: ['匹配资金申请表', '国家项目立项文件'],
+  },
+  {
+    id: 'P008', name: '上海市可再生能源和新能源发展专项资金', level: '省级', org: '上海市发展和改革委员会',
+    stars: 3, type: '场地投入', companies: 3854, industry: '电力、热力生产和供应业',
+    district: '奉贤区', date: '2026-02-11', amount: 3922.76, deadline: '2026-07-31', status: '已截止', hot: 3544,
+    content: '支持光伏、风电、氢能等可再生能源和新能源项目建设，给予投资补贴和电价支持。',
+    requirements: ['项目已并网发电', '符合本市新能源发展规划'],
+    materials: ['资金申请表', '并网验收证明'],
+  },
+  {
+    id: 'P009', name: '浦东新区科技发展基金', level: '区级', org: '浦东新区科技和经济委员会',
+    stars: 4, type: '研发投入', companies: 3210, industry: '信息传输、软件和信息技术服务业',
+    district: '浦东新区', date: '2026-10-09', amount: 5120.40, deadline: '2026-12-10', status: '申报中', hot: 2870,
+    content: '聚焦集成电路、生物医药、人工智能等重点产业，支持企业开展关键核心技术攻关。',
+    requirements: ['注册在浦东新区的独立法人企业', '研发项目具有自主知识产权'],
+    materials: ['项目可行性报告', '营业执照', '研发投入证明'],
+  },
+  {
+    id: 'P010', name: '张江科学城专项资金', level: '区级', org: '上海推进科技创新中心建设办公室',
+    stars: 5, type: '融资贷款', companies: 2890, industry: '科学研究和技术服务业',
+    district: '浦东新区', date: '2026-09-01', amount: 4650.88, deadline: '2026-11-25', status: '申报中', hot: 2601,
+    content: '支持张江科学城内企业开展科技创新、成果转化和科技金融服务。',
+    requirements: ['注册在张江科学城范围内', '企业上年度研发投入占比不低于5%'],
+    materials: ['专项资金申请表', '审计报告'],
+  },
+  {
+    id: 'P011', name: '徐汇区人工智能产业扶持政策', level: '区级', org: '徐汇区科学技术委员会',
+    stars: 4, type: '场地投入', companies: 2205, industry: '信息传输、软件和信息技术服务业',
+    district: '徐汇区', date: '2026-08-15', amount: 3820.32, deadline: '2026-12-05', status: '申报中', hot: 2180,
+    content: '对人工智能领域企业给予办公场地租金补贴、算力补贴和应用场景支持。',
+    requirements: ['主营人工智能相关业务', '在徐汇区租赁办公场地'],
+    materials: ['租赁合同', '租金发票'],
+  },
+  {
+    id: 'P012', name: '杨浦区双创小巨人企业培育', level: '区级', org: '杨浦区科学技术委员会',
+    stars: 4, type: '荣誉资质', companies: 1980, industry: '科技推广和应用服务业',
+    district: '杨浦区', date: '2026-07-03', amount: 3120.55, deadline: '2026-10-20', status: '已截止', hot: 1893,
+    content: '培育一批创新能力强、成长性好的双创小巨人企业，给予认定奖励和融资支持。',
+    requirements: ['注册在杨浦区满三年', '近三年营业收入年均增长率不低于20%'],
+    materials: ['认定申请表', '近三年审计报告'],
+  },
+  {
+    id: 'P013', name: '闵行区先进制造业高质量发展专项', level: '区级', org: '闵行区经济委员会',
+    stars: 3, type: '质量提升', companies: 1765, industry: '制造业',
+    district: '闵行区', date: '2026-06-20', amount: 2830.10, deadline: '2026-09-15', status: '已截止', hot: 1540,
+    content: '支持先进制造业企业开展智能化改造、绿色化改造和数字化转型。',
+    requirements: ['规上制造业企业', '项目设备投资不低于500万元'],
+    materials: ['项目备案文件', '设备采购合同'],
+  },
+  {
+    id: 'P014', name: '嘉定区汽车产业专项扶持', level: '区级', org: '嘉定区经济委员会',
+    stars: 4, type: '研发投入', companies: 1620, industry: '汽车制造业',
+    district: '嘉定区', date: '2026-05-28', amount: 2605.48, deadline: '2026-11-20', status: '申报中', hot: 1490,
+    content: '围绕智能网联汽车、新能源汽车关键零部件领域，支持企业技术研发和产业化。',
+    requirements: ['注册在嘉定区的汽车相关企业', '项目具备明确的研发目标'],
+    materials: ['项目计划书', '研发费用明细'],
+  },
+  {
+    id: 'P015', name: '宝山区科创企业培育计划', level: '区级', org: '宝山区科学技术委员会',
+    stars: 3, type: '创业服务', companies: 1388, industry: '科技推广和应用服务业',
+    district: '宝山区', date: '2026-04-09', amount: 2210.66, deadline: '2026-08-10', status: '已截止', hot: 1280,
+    content: '为科创企业提供创业孵化、导师辅导、投融资对接等全周期服务。',
+    requirements: ['成立不超过五年的科创企业', '入驻区内科技企业孵化器'],
+    materials: ['入驻协议', '企业商业计划书'],
+  },
+  {
+    id: 'P016', name: '松江区G60科创走廊产业政策', level: '区级', org: '松江区经济委员会',
+    stars: 4, type: '场地投入', companies: 1302, industry: '制造业',
+    district: '松江区', date: '2026-03-19', amount: 2090.30, deadline: '2026-12-18', status: '申报中', hot: 1190,
+    content: '支持G60科创走廊沿线企业购置、租赁产业载体，给予相应补贴。',
+    requirements: ['注册在松江区', '购置或租赁区内产业载体'],
+    materials: ['载体购置/租赁合同', '付款凭证'],
+  },
+  {
+    id: 'P017', name: '青浦区软件和信息服务业扶持', level: '区级', org: '青浦区科学技术委员会',
+    stars: 3, type: '信息化', companies: 1105, industry: '软件和信息技术服务业',
+    district: '青浦区', date: '2026-02-25', amount: 1820.72, deadline: '2026-06-30', status: '已截止', hot: 965,
+    content: '支持软件和信息服务业企业做大做强，对营业收入首次突破规模的企业给予奖励。',
+    requirements: ['软件业务收入占营业收入比重不低于50%'],
+    materials: ['软件业务收入证明', '审计报告'],
+  },
+  {
+    id: 'P018', name: '奉贤区东方美谷产业专项', level: '区级', org: '奉贤区经济委员会',
+    stars: 3, type: '品牌展会', companies: 986, industry: '化妆品制造业',
+    district: '奉贤区', date: '2026-01-30', amount: 1530.26, deadline: '2026-05-31', status: '已截止', hot: 870,
+    content: '支持美丽健康产业企业参加国内外品牌展会，提升"东方美谷"品牌影响力。',
+    requirements: ['注册在奉贤区的美丽健康企业', '参加经认定的重点展会'],
+    materials: ['参展合同', '展位费发票'],
+  },
+  {
+    id: 'P019', name: '崇明区生态产业扶持资金', level: '区级', org: '崇明区发展和改革委员会',
+    stars: 3, type: '融资贷款', companies: 760, industry: '生态保护和环境治理业',
+    district: '崇明区', date: '2026-01-15', amount: 1120.44, deadline: '2026-04-30', status: '已截止', hot: 690,
+    content: '支持生态农业、文旅康养等生态产业项目，给予贷款贴息和项目补助。',
+    requirements: ['项目落地在崇明区', '符合崇明世界级生态岛产业导向'],
+    materials: ['项目立项材料', '贷款合同'],
+  },
+  {
+    id: 'P020', name: '上海市企业技术中心认定', level: '省级', org: '上海市经济和信息化委员会',
+    stars: 4, type: '荣誉资质', companies: 3280, industry: '制造业；信息传输、软件和信息技术服务业',
+    district: '上海市', date: '2026-11-01', amount: 4260.18, deadline: '2026-12-28', status: '申报中', hot: 2980,
+    content: '鼓励企业建立技术中心，提升企业技术创新能力和核心竞争力，组织开展市级企业技术中心认定。',
+    requirements: ['企业上年度主营业务收入不低于2亿元', '研发经费支出占主营业务收入比重不低于3%', '拥有技术水平高、实践经验丰富的技术带头人'],
+    materials: ['企业技术中心申请报告', '评价表及证明材料', '上年度审计报告'],
+  },
+];
+
+export const policyNotices = [
+  { id: 'N001', title: '关于开展2026年度上海市"专精特新"中小企业认定工作的通知', org: '上海市经济和信息化委员会', date: '2026-09-18', type: '申报通知', views: 12830 },
+  { id: 'N002', title: '关于组织申报2026年上海市科技型中小企业技术创新资金项目的通知', org: '上海市科学技术委员会', date: '2026-08-02', type: '申报通知', views: 9860 },
+  { id: 'N003', title: '关于做好2026年重点企业一次性吸纳就业补贴发放工作的通知', org: '上海市人力资源和社会保障局', date: '2026-07-25', type: '申报通知', views: 8620 },
+  { id: 'N004', title: '关于公布2026年上海市科技创新券服务机构名单的通知', org: '上海市科学技术委员会', date: '2026-07-12', type: '结果公示', views: 7310 },
+  { id: 'N005', title: '关于开展2026年度高新技术成果转化项目认定的通知', org: '上海市科学技术委员会', date: '2026-05-08', type: '申报通知', views: 6980 },
+  { id: 'N006', title: '关于2026年上海市企业技术中心认定工作的通知', org: '上海市经济和信息化委员会', date: '2026-11-01', type: '申报通知', views: 6320 },
+  { id: 'N007', title: '关于组织申报浦东新区科技发展基金项目的通知', org: '浦东新区科技和经济委员会', date: '2026-10-09', type: '申报通知', views: 5890 },
+  { id: 'N008', title: '关于公布2025年度上海市"专精特新"中小企业名单的通知', org: '上海市经济和信息化委员会', date: '2025-12-20', type: '结果公示', views: 15420 },
+  { id: 'N009', title: '关于调整上海市科技创新券使用额度的通知', org: '上海市科学技术委员会', date: '2026-06-30', type: '政策调整', views: 4520 },
+  { id: 'N010', title: '关于开展2026年张江科学城专项资金申报的通知', org: '上海推进科技创新中心建设办公室', date: '2026-09-01', type: '申报通知', views: 4210 },
+  { id: 'N011', title: '关于2026年上海市困难行业企业稳就业补贴的补充通知', org: '上海市人力资源和社会保障局', date: '2026-04-28', type: '政策调整', views: 3890 },
+  { id: 'N012', title: '关于组织申报2026年嘉定区汽车产业专项扶持项目的通知', org: '嘉定区经济委员会', date: '2026-05-28', type: '申报通知', views: 3120 },
+];
+
+export const policyPublicList = [
+  { id: 'L001', title: '2026年度上海市"专精特新"中小企业名单（第一批）', batch: '第一批', org: '上海市经济和信息化委员会', date: '2026-10-15', count: 2380 },
+  { id: 'L002', title: '2026年上海市科技型中小企业入库名单（第三批）', batch: '第三批', org: '上海市科学技术委员会', date: '2026-09-28', count: 4120 },
+  { id: 'L003', title: '2026年上海市科技创新券拟兑付名单', batch: '第二批', org: '上海市科学技术委员会', date: '2026-09-10', count: 860 },
+  { id: 'L004', title: '2026年浦东新区科技发展基金拟立项项目公示', batch: '第一批', org: '浦东新区科技和经济委员会', date: '2026-08-30', count: 245 },
+  { id: 'L005', title: '2026年上海市高新技术成果转化项目认定名单', batch: '第二批', org: '上海市科学技术委员会', date: '2026-08-08', count: 512 },
+  { id: 'L006', title: '2026年上海市企业技术中心拟认定名单', batch: '第一批', org: '上海市经济和信息化委员会', date: '2026-07-20', count: 128 },
+  { id: 'L007', title: '2026年张江科学城专项资金拟支持项目公示', batch: '第一批', org: '上海推进科技创新中心建设办公室', date: '2026-07-05', count: 96 },
+  { id: 'L008', title: '2026年徐汇区人工智能产业扶持项目公示', batch: '第一批', org: '徐汇区科学技术委员会', date: '2026-06-18', count: 74 },
+];
+
+export const policyTopics = [
+  { id: 'T001', title: '上海市生物医药产业高质量发展研究', org: '上海市科学技术委员会', field: '生物医药', budget: '80 万元', deadline: '2026-12-15', status: '申报中' },
+  { id: 'T002', title: '集成电路关键装备国产化路径研究', org: '上海市经济和信息化委员会', field: '集成电路', budget: '120 万元', deadline: '2026-11-30', status: '申报中' },
+  { id: 'T003', title: '人工智能大模型在政务场景的应用研究', org: '上海市大数据中心', field: '人工智能', budget: '60 万元', deadline: '2026-11-20', status: '申报中' },
+  { id: 'T004', title: '长三角产业链协同发展机制研究', org: '上海市发展和改革委员会', field: '区域经济', budget: '45 万元', deadline: '2026-10-31', status: '已截止' },
+  { id: 'T005', title: '新能源汽车产业链安全评估研究', org: '上海市经济和信息化委员会', field: '新能源汽车', budget: '70 万元', deadline: '2026-10-15', status: '已截止' },
+  { id: 'T006', title: '数据要素市场化配置改革研究', org: '上海市数据局', field: '数字经济', budget: '50 万元', deadline: '2026-09-30', status: '已截止' },
+  { id: 'T007', title: '绿色低碳技术创新体系建设研究', org: '上海市科学技术委员会', field: '绿色低碳', budget: '55 万元', deadline: '2026-09-12', status: '已截止' },
+  { id: 'T008', title: '专精特新企业梯度培育机制研究', org: '上海市经济和信息化委员会', field: '企业管理', budget: '35 万元', deadline: '2026-08-20', status: '已截止' },
+];
+
+export const homeStats = {
+  policyTotal: 25726,
+  projectPolicy: 2356,
+  notice: 7598,
+  announce: 15772,
+  subsidyAmount: '5,569,412.32',
+  fundedCompanies: 1500132,
+  monitored: 0,
+  reports: 0,
+  visits: 69965,
+  yesterdayVisit: 2332,
+  weekVisit: 4403,
+  monthVisit: 16165,
+};
+
+export const hotPolicyRank = [
+  { name: '上海市"专精特新"中小企业认定', value: 29658 },
+  { name: '上海市科技型中小企业技术创新资金项目', value: 20622 },
+  { name: '上海市重点企业一次性吸纳就业补贴', value: 18739 },
+  { name: '上海市科技创新券', value: 10119 },
+  { name: '上海市高新技术成果转化项目', value: 7842 },
+  { name: '上海市困难行业企业稳就业补贴', value: 6530 },
+  { name: '上海市国家重要科技计划项目（匹配资金）', value: 5109 },
+  { name: '上海市可再生能源和新能源发展专项资金', value: 3544 },
+];
+
+export const parks = [
+  { id: 'K001', name: '临港新片区生命蓝湾生物医药特色产业园', district: '浦东新区', type: '特色产业园', buildings: 42, area: '126.8 万㎡', occupancy: 92.5, enterprises: 386, manager: '王海峰', phone: '021-6828****', address: '浦东新区新杨公路860号', intro: '聚焦生物医药、高端医疗器械、生命健康服务，打造具有全球影响力的生命科技产业高地。' },
+  { id: 'K002', name: '临港新片区东方芯港', district: '浦东新区', type: '特色产业园', buildings: 28, area: '98.2 万㎡', occupancy: 88.1, enterprises: 245, manager: '李国强', phone: '021-6828****', address: '浦东新区临港大道200号', intro: '以集成电路制造、装备、材料为核心，构建全链条集成电路产业生态。' },
+  { id: 'K003', name: '张江人工智能岛', district: '浦东新区', type: '特色产业园', buildings: 12, area: '10.2 万㎡', occupancy: 96.3, enterprises: 132, manager: '陈晓东', phone: '021-5080****', address: '浦东新区川和路55弄', intro: '全国首个人工智能创新应用先导区，集聚人工智能头部企业和创新平台。' },
+  { id: 'K004', name: '漕河泾科技绿洲', district: '徐汇区', type: '综合园区', buildings: 36, area: '72.5 万㎡', occupancy: 94.7, enterprises: 528, manager: '周敏', phone: '021-6485****', address: '徐汇区田林路418号', intro: '以数字经济、软件信息、生命健康为主导的综合型科技园区。' },
+  { id: 'K005', name: '金桥5G产业生态园', district: '浦东新区', type: '特色产业园', buildings: 18, area: '45.6 万㎡', occupancy: 90.2, enterprises: 198, manager: '吴超', phone: '021-5031****', address: '浦东新区金皖路389号', intro: '聚焦5G、智能制造、车联网，打造5G产业创新高地。' },
+  { id: 'K006', name: '外高桥智能制造服务产业园', district: '浦东新区', type: '特色产业园', buildings: 22, area: '38.4 万㎡', occupancy: 86.5, enterprises: 176, manager: '徐静', phone: '021-5866****', address: '浦东新区富特北路211号', intro: '发展智能制造、检验检测、供应链管理等生产性服务业。' },
+  { id: 'K007', name: '虹桥临空数字经济产业园', district: '长宁区', type: '特色产业园', buildings: 16, area: '33.8 万㎡', occupancy: 91.8, enterprises: 238, manager: '马莉', phone: '021-5218****', address: '长宁区广顺路33号', intro: '依托虹桥枢纽优势，发展数字贸易、航空服务、时尚创意产业。' },
+  { id: 'K008', name: '杨浦长阳创谷', district: '杨浦区', type: '综合园区', buildings: 20, area: '28.6 万㎡', occupancy: 93.1, enterprises: 312, manager: '张伟', phone: '021-5506****', address: '杨浦区长阳路1687号', intro: '由老厂房改造而来的创新创业街区，集聚人工智能和创意设计企业。' },
+  { id: 'K009', name: '紫竹高新技术产业开发区', district: '闵行区', type: '综合园区', buildings: 32, area: '65.3 万㎡', occupancy: 89.6, enterprises: 465, manager: '刘洋', phone: '021-6121****', address: '闵行区东川路555号', intro: '以电子信息、生命科学、新能源与新材料为主导的高新技术产业开发区。' },
+  { id: 'K010', name: '松江G60科创云廊', district: '松江区', type: '特色产业园', buildings: 14, area: '52.1 万㎡', occupancy: 87.3, enterprises: 286, manager: '孙鹏', phone: '021-6788****', address: '松江区莘砖公路668号', intro: 'G60科创走廊标志性载体，聚焦工业互联网、智能制造、生物医药。' },
+];
+
+export const clues = [
+  { id: 'D001', company: '苏州晶湛半导体有限公司', intent: '拟在上海设立研发中心', region: '江苏省苏州市', industry: '集成电路', level: 'A', source: '产业链招商', contact: '刘先生', phone: '139****3821', date: '2026-11-12', status: '跟进中', park: '临港新片区东方芯港', score: 95, desc: '企业专注氮化镓外延材料，计划在长三角布局第二研发中心，意向选址浦东或临港。' },
+  { id: 'D002', company: '深圳市优艾智合机器人科技有限公司', intent: '华东区域总部落地', region: '广东省深圳市', industry: '人工智能', level: 'A', source: '商机摸排', contact: '张女士', phone: '138****7623', date: '2026-11-10', status: '已对接', park: '张江人工智能岛', score: 92, desc: '工业移动机器人企业，拟设立华东区域总部及交付中心。' },
+  { id: 'D003', company: '北京推想医疗科技股份有限公司', intent: '国际业务总部', region: '北京市海淀区', industry: '生命健康', level: 'A', source: '展会活动', contact: '王先生', phone: '137****9012', date: '2026-11-08', status: '跟进中', park: '临港新片区生命蓝湾生物医药特色产业园', score: 90, desc: 'AI医学影像企业，计划在上海设立国际业务总部。' },
+  { id: 'D004', company: '杭州群核信息技术有限公司', intent: '第二总部及研发基地', region: '浙江省杭州市', industry: '数字经济', level: 'B', source: '企业扩张', contact: '陈女士', phone: '136****5544', date: '2026-11-05', status: '跟进中', park: '漕河泾科技绿洲', score: 86, desc: '云设计平台企业，拟在上海设立第二总部，团队规模约300人。' },
+  { id: 'D005', company: '南京芯驰半导体科技有限公司', intent: '车规芯片研发中心', region: '江苏省南京市', industry: '集成电路', level: 'A', source: '产业链招商', contact: '周先生', phone: '135****2231', date: '2026-11-03', status: '已签约', park: '嘉定氢能港', score: 94, desc: '汽车芯片设计企业，拟在嘉定设立车规芯片研发中心。' },
+  { id: 'D006', company: '广州小鹏汽车科技有限公司', intent: '智能驾驶研发中心', region: '广东省广州市', industry: '新能源汽车', level: 'A', source: '企业扩张', contact: '吴女士', phone: '134****8899', date: '2026-10-30', status: '跟进中', park: '嘉定氢能港', score: 93, desc: '新能源整车企业，计划在上海扩大智能驾驶研发团队。' },
+  { id: 'D007', company: '成都先导药物开发股份有限公司', intent: '华东研发中心', region: '四川省成都市', industry: '生物医药', level: 'B', source: '商机摸排', contact: '徐先生', phone: '133****6677', date: '2026-10-26', status: '跟进中', park: '张江人工智能岛', score: 84, desc: 'DEL药物发现企业，拟在上海建设华东研发中心。' },
+  { id: 'D008', company: '武汉光迅科技股份有限公司', intent: '光通信研发基地', region: '湖北省武汉市', industry: '光通信', level: 'B', source: '产业链招商', contact: '马先生', phone: '132****1122', date: '2026-10-22', status: '已对接', park: '金桥5G产业生态园', score: 82, desc: '光通信器件龙头企业，拟在上海设立研发基地。' },
+  { id: 'D009', company: '西安铂力特增材技术股份有限公司', intent: '华东制造基地', region: '陕西省西安市', industry: '高端装备', level: 'B', source: '展会活动', contact: '李女士', phone: '131****3344', date: '2026-10-18', status: '跟进中', park: '外高桥智能制造服务产业园', score: 80, desc: '金属3D打印企业，计划在临港布局华东制造基地。' },
+  { id: 'D010', company: '合肥国轩高科动力能源有限公司', intent: '储能研究院', region: '安徽省合肥市', industry: '新能源', level: 'A', source: '企业扩张', contact: '孙先生', phone: '130****5566', date: '2026-10-15', status: '已签约', park: '松江G60科创云廊', score: 91, desc: '动力电池企业，拟在上海设立储能技术研究院。' },
+  { id: 'D011', company: '厦门盈趣科技股份有限公司', intent: '工业设计中心', region: '福建省厦门市', industry: '智能制造', level: 'C', source: '商机摸排', contact: '赵女士', phone: '189****7788', date: '2026-10-12', status: '已搁置', park: '杨浦长阳创谷', score: 72, desc: '智能控制部件企业，拟设立工业设计中心。' },
+  { id: 'D012', company: '青岛海尔智家股份有限公司', intent: '智能家居创新中心', region: '山东省青岛市', industry: '智能制造', level: 'B', source: '企业扩张', contact: '钱先生', phone: '188****9900', date: '2026-10-08', status: '跟进中', park: '张江人工智能岛', score: 85, desc: '智能家居企业，计划在上海设立智能家居创新中心。' },
+];
+
+export const investigationTasks = [
+  { id: 'M001', company: '苏州晶湛半导体有限公司', park: '临港新片区东方芯港', industry: '集成电路', demand: '研发办公 3000㎡', owner: '顾龙飞', status: '摸排中', updated: '2026-11-16', tags: ['高新技术企业', '专精特新'] },
+  { id: 'M002', company: '深圳市优艾智合机器人科技有限公司', park: '张江人工智能岛', industry: '人工智能', demand: '总部办公 2000㎡', owner: '李婷', status: '已确认', updated: '2026-11-15', tags: ['独角兽', '融资B轮'] },
+  { id: 'M003', company: '北京推想医疗科技股份有限公司', park: '临港新片区生命蓝湾生物医药特色产业园', industry: '生命健康', demand: '研发中心 5000㎡', owner: '王凯', status: '摸排中', updated: '2026-11-14', tags: ['高新技术企业'] },
+  { id: 'M004', company: '杭州群核信息技术有限公司', park: '漕河泾科技绿洲', industry: '数字经济', demand: '区域总部 4000㎡', owner: '顾龙飞', status: '待跟进', updated: '2026-11-12', tags: ['独角兽', '软件企业'] },
+  { id: 'M005', company: '南京芯驰半导体科技有限公司', park: '嘉定氢能港', industry: '集成电路', demand: '研发中心 6000㎡', owner: '陈晨', status: '已完成', updated: '2026-11-10', tags: ['专精特新'] },
+  { id: 'M006', company: '广州小鹏汽车科技有限公司', park: '嘉定氢能港', industry: '新能源汽车', demand: '研发基地 15000㎡', owner: '李婷', status: '摸排中', updated: '2026-11-08', tags: ['上市企业'] },
+  { id: 'M007', company: '成都先导药物开发股份有限公司', park: '张江人工智能岛', industry: '生物医药', demand: '实验室 2500㎡', owner: '王凯', status: '待跟进', updated: '2026-11-06', tags: ['上市企业'] },
+  { id: 'M008', company: '武汉光迅科技股份有限公司', park: '金桥5G产业生态园', industry: '光通信', demand: '研发办公 3500㎡', owner: '陈晨', status: '已完成', updated: '2026-11-03', tags: ['上市企业', '链主企业'] },
+];
+
+export const aiTasks = [
+  { id: 'AI001', name: '临港新片区高潜企业首轮触达', scene: '招商线索首访', status: '进行中', total: 860, connected: 512, intent: 96, owner: '顾龙飞', created: '2026-11-10', script: '招商邀约话术 V3' },
+  { id: 'AI002', name: '生命蓝湾生物医药企业回访', scene: '园区企业回访', status: '已完成', total: 320, connected: 288, intent: 42, owner: '李婷', created: '2026-11-02', script: '园区服务回访话术 V2' },
+  { id: 'AI003', name: '张江人工智能岛企业政策宣讲', scene: '政策宣讲邀约', status: '进行中', total: 450, connected: 210, intent: 38, owner: '王凯', created: '2026-11-08', script: '政策宣讲邀约话术 V1' },
+  { id: 'AI004', name: '专精特新企业认定提醒', scene: '政策申报提醒', status: '已完成', total: 1200, connected: 1024, intent: 186, owner: '陈晨', created: '2026-10-20', script: '申报提醒话术 V2' },
+  { id: 'AI005', name: '迁出风险企业关怀', scene: '安商稳商关怀', status: '待启动', total: 218, connected: 0, intent: 0, owner: '顾龙飞', created: '2026-11-16', script: '稳商关怀话术 V1' },
+  { id: 'AI006', name: '商机大厅线索批量外呼', scene: '招商线索首访', status: '已暂停', total: 560, connected: 148, intent: 21, owner: '李婷', created: '2026-11-06', script: '招商邀约话术 V3' },
+];
+
+export const aiRecords = [
+  { id: 'R001', company: '上海榕萌科技发展有限公司', phone: '138****3821', task: '临港新片区高潜企业首轮触达', duration: '03:42', result: '有意向', intent: '高', time: '2026-11-17 10:32', script: '招商邀约话术 V3' },
+  { id: 'R002', company: '上海青航视界电子商务有限责任公司', phone: '139****7623', task: '临港新片区高潜企业首轮触达', duration: '02:18', result: '需跟进', intent: '中', time: '2026-11-17 10:18', script: '招商邀约话术 V3' },
+  { id: 'R003', company: '上海迈愈生物科技有限公司', phone: '137****9012', task: '生命蓝湾生物医药企业回访', duration: '04:05', result: '有意向', intent: '高', time: '2026-11-17 09:56', script: '园区服务回访话术 V2' },
+  { id: 'R004', company: '上海蔚荫实业有限公司', phone: '136****5544', task: '张江人工智能岛企业政策宣讲', duration: '01:35', result: '未接通', intent: '低', time: '2026-11-17 09:40', script: '政策宣讲邀约话术 V1' },
+  { id: 'R005', company: '美迪西普旭生物医药科技（上海）有限公司', phone: '135****2231', task: '生命蓝湾生物医药企业回访', duration: '05:12', result: '有意向', intent: '高', time: '2026-11-16 17:22', script: '园区服务回访话术 V2' },
+  { id: 'R006', company: '上海锦源晟新能源材料集团有限公司', phone: '134****8899', task: '专精特新企业认定提醒', duration: '02:50', result: '需跟进', intent: '中', time: '2026-11-16 16:48', script: '申报提醒话术 V2' },
+  { id: 'R007', company: '上海融脉医疗科技有限公司', phone: '133****6677', task: '临港新片区高潜企业首轮触达', duration: '03:10', result: '有意向', intent: '高', time: '2026-11-16 15:30', script: '招商邀约话术 V3' },
+  { id: 'R008', company: '贝源石油（上海）有限公司', phone: '132****1122', task: '商机大厅线索批量外呼', duration: '00:48', result: '未接通', intent: '低', time: '2026-11-16 14:55', script: '招商邀约话术 V3' },
+  { id: 'R009', company: '沛君航运经纪（上海）有限公司', phone: '131****3344', task: '商机大厅线索批量外呼', duration: '02:26', result: '需跟进', intent: '中', time: '2026-11-16 14:20', script: '招商邀约话术 V3' },
+  { id: 'R010', company: '中车智慧产业投资（上海）有限公司', phone: '130****5566', task: '专精特新企业认定提醒', duration: '03:55', result: '有意向', intent: '高', time: '2026-11-16 11:42', script: '申报提醒话术 V2' },
+  { id: 'R011', company: '上海沪安物流有限公司', phone: '189****7788', task: '张江人工智能岛企业政策宣讲', duration: '01:20', result: '拒绝', intent: '低', time: '2026-11-16 10:12', script: '政策宣讲邀约话术 V1' },
+  { id: 'R012', company: '上海含其家居用品有限公司', phone: '188****9900', task: '临港新片区高潜企业首轮触达', duration: '02:44', result: '需跟进', intent: '中', time: '2026-11-15 17:08', script: '招商邀约话术 V3' },
+];
+
+export const members = [
+  { id: 'U001', name: '顾龙飞', phone: '133****4537', role: '超级管理员', dept: '招商运营部', park: '全部园区', status: '启用', lastLogin: '2026-11-17 09:12' },
+  { id: 'U002', name: '李婷', phone: '138****2210', role: '招商主管', dept: '招商运营部', park: '临港新片区生命蓝湾生物医药特色产业园', status: '启用', lastLogin: '2026-11-17 08:50' },
+  { id: 'U003', name: '王凯', phone: '139****3355', role: '招商专员', dept: '招商运营部', park: '张江人工智能岛', status: '启用', lastLogin: '2026-11-16 18:22' },
+  { id: 'U004', name: '陈晨', phone: '137****7788', role: '招商专员', dept: '招商运营部', park: '嘉定氢能港', status: '启用', lastLogin: '2026-11-16 16:05' },
+  { id: 'U005', name: '周敏', phone: '136****1122', role: '园区管理员', dept: '园区服务部', park: '漕河泾科技绿洲', status: '启用', lastLogin: '2026-11-16 14:40' },
+  { id: 'U006', name: '吴超', phone: '135****5566', role: '数据分析师', dept: '数据运营部', park: '全部园区', status: '启用', lastLogin: '2026-11-15 11:18' },
+  { id: 'U007', name: '徐静', phone: '134****9900', role: '只读成员', dept: '综合管理部', park: '全部园区', status: '停用', lastLogin: '2026-10-28 09:36' },
+  { id: 'U008', name: '刘洋', phone: '133****3344', role: '招商专员', dept: '招商运营部', park: '紫竹高新技术产业开发区', status: '启用', lastLogin: '2026-11-14 15:22' },
+];
+
+export const roles = [
+  { id: 'ROLE1', name: '超级管理员', code: 'super_admin', members: 2, desc: '拥有平台全部功能权限', perms: ['全部菜单', '数据导出', '成员管理', '角色管理', '接口计费'] },
+  { id: 'ROLE2', name: '招商主管', code: 'invest_manager', members: 5, desc: '负责招商团队与商机线索管理', perms: ['首页', '政策管理', '商机洞察', '企业查询', '数据导出'] },
+  { id: 'ROLE3', name: '招商专员', code: 'invest_staff', members: 18, desc: '负责线索跟进与企业走访', perms: ['首页', '政策管理', '商机摸排', '企业查询', '走访管理'] },
+  { id: 'ROLE4', name: '园区管理员', code: 'park_admin', members: 9, desc: '负责园区、楼宇与企业档案维护', perms: ['首页', '园区楼宇', '园区管理', '企业档案'] },
+  { id: 'ROLE5', name: '数据分析师', code: 'analyst', members: 3, desc: '查看分析看板与统计数据', perms: ['首页', '全景洞察', '操作日志统计', '数据导出'] },
+  { id: 'ROLE6', name: '只读成员', code: 'viewer', members: 12, desc: '仅可查看页面数据', perms: ['首页', '政策管理', '企业查询'] },
+];
+
+export const logs = [
+  { id: 'LOG001', user: '顾龙飞', module: '政策管理', action: '生成政策海报', target: '上海市"专精特新"中小企业认定', ip: '116.228.***.45', time: '2026-11-17 10:42' },
+  { id: 'LOG002', user: '李婷', module: '商机摸排', action: '新增摸排任务', target: '苏州晶湛半导体有限公司', ip: '116.228.***.67', time: '2026-11-17 10:20' },
+  { id: 'LOG003', user: '王凯', module: 'AI外呼中心', action: '启动外呼任务', target: '临港新片区高潜企业首轮触达', ip: '101.88.***.12', time: '2026-11-17 09:58' },
+  { id: 'LOG004', user: '顾龙飞', module: '人员管理', action: '新增成员', target: '刘洋', ip: '116.228.***.45', time: '2026-11-17 09:30' },
+  { id: 'LOG005', user: '陈晨', module: '企业查询', action: '导出企业名单', target: '嘉定区·新能源汽车产业 236 家', ip: '101.88.***.38', time: '2026-11-16 18:12' },
+  { id: 'LOG006', user: '周敏', module: '园区管理', action: '更新园区信息', target: '漕河泾科技绿洲', ip: '58.246.***.90', time: '2026-11-16 17:44' },
+  { id: 'LOG007', user: '李婷', module: '走访管理', action: '创建走访工单', target: '上海迈愈生物科技有限公司', ip: '116.228.***.67', time: '2026-11-16 16:22' },
+  { id: 'LOG008', user: '吴超', module: '全景洞察', action: '查看分析看板', target: '园区企业迁出趋势', ip: '180.168.***.24', time: '2026-11-16 15:08' },
+  { id: 'LOG009', user: '顾龙飞', module: '角色管理', action: '修改角色权限', target: '招商主管', ip: '116.228.***.45', time: '2026-11-16 14:36' },
+  { id: 'LOG010', user: '王凯', module: '商机大厅', action: '导出匹配企业', target: '洛阳中关村产业精准招商模型', ip: '101.88.***.12', time: '2026-11-16 11:52' },
+  { id: 'LOG011', user: '陈晨', module: '企服保障', action: '发送年报提醒', target: '未报送企业 290 家', ip: '101.88.***.38', time: '2026-11-16 10:14' },
+  { id: 'LOG012', user: '顾龙飞', module: '接口计费', action: '充值账户', target: '充值 5000 元', ip: '116.228.***.45', time: '2026-11-15 16:40' },
+  { id: 'LOG013', user: '徐静', module: '企业档案', action: '导出企业档案', target: '入驻企业 3105 家', ip: '58.246.***.55', time: '2026-11-15 14:22' },
+  { id: 'LOG014', user: '刘洋', module: '迁移预警', action: '提交企业反馈', target: '上海锦源晟新能源材料集团有限公司', ip: '180.168.***.71', time: '2026-11-15 11:05' },
+  { id: 'LOG015', user: '李婷', module: '政策管理', action: '新增政策', target: '上海市企业技术中心认定', ip: '116.228.***.67', time: '2026-11-14 17:30' },
+];
+
+export const logStatSeries = [
+  { date: '11-11', count: 128, users: 8 },
+  { date: '11-12', count: 156, users: 10 },
+  { date: '11-13', count: 142, users: 9 },
+  { date: '11-14', count: 188, users: 12 },
+  { date: '11-15', count: 165, users: 11 },
+  { date: '11-16', count: 210, users: 13 },
+  { date: '11-17', count: 96, users: 7 },
+];
+
+export const billing = {
+  balance: 12860.5,
+  monthlyUsage: 3260.8,
+  apiCalls: 48620,
+  successRate: 99.6,
+  plan: '企业标准版',
+  expire: '2027-06-30',
+  records: [
+    { id: 'B001', type: '接口调用', item: '企业工商信息查询', count: 12680, amount: 634.0, date: '2026-11-16', status: '已扣费' },
+    { id: 'B002', type: '接口调用', item: '企业风险信息查询', count: 8420, amount: 842.0, date: '2026-11-15', status: '已扣费' },
+    { id: 'B003', type: '充值', item: '账户充值', count: 1, amount: 5000.0, date: '2026-11-15', status: '已到账' },
+    { id: 'B004', type: '接口调用', item: '政策数据同步', count: 3560, amount: 356.0, date: '2026-11-14', status: '已扣费' },
+    { id: 'B005', type: '接口调用', item: 'AI外呼通话', count: 1260, amount: 630.0, date: '2026-11-13', status: '已扣费' },
+    { id: 'B006', type: '接口调用', item: '企业图谱查询', count: 2150, amount: 430.0, date: '2026-11-12', status: '已扣费' },
+    { id: 'B007', type: '接口调用', item: '招投标数据查询', count: 980, amount: 196.0, date: '2026-11-11', status: '已扣费' },
+    { id: 'B008', type: '充值', item: '账户充值', count: 1, amount: 10000.0, date: '2026-10-28', status: '已到账' },
+  ],
+};
+
+export const archiveStats = {
+  settled: 3105,
+  migrated: 9,
+  vanished: 18,
+  leaders: 0,
+  avgYears: 5,
+  retention: '99.14%',
+  monthNew: 1,
+  monthRegister: 1,
+  monthMoveIn: 0,
+};
+
+export const migrationStats = { high: 18, mid: 57, low: 1779, safe: 1251 };
+
+export const migrationEnterprises = [
+  { id: 'E001', name: '上海锦源晟新能源材料集团有限公司', risk: '高风险', score: 100, trend: '持平', drive: '外部主导', push: '推力信号弱', pull: '业务外拓 + 招聘扩张', park: '临港新片区', intent: '贺比亚', feedback: '未反馈', tags: ['省级专精特新企业'] },
+  { id: 'E002', name: '上海融脉医疗科技有限公司', risk: '高风险', score: 100, trend: '持平', drive: '内部主导', push: '经营不稳 + 人才流失', pull: '拉力信号弱', park: '临港新片区', intent: '龙海区', feedback: '未反馈', tags: ['创新型企业', '+3'] },
+  { id: 'E003', name: '贝源石油（上海）有限公司', risk: '高风险', score: 100, trend: '持平', drive: '内部主导', push: '人才流失 + 经营不稳', pull: '拉力信号弱', park: '临港奉贤', intent: '-', feedback: '未反馈', tags: [] },
+  { id: 'E004', name: '沛君航运经纪（上海）有限公司', risk: '高风险', score: 100, trend: '持平', drive: '内部主导', push: '人才流失 + 经营不稳', pull: '拉力信号弱', park: '临港新片区', intent: '-', feedback: '未反馈', tags: [] },
+  { id: 'E005', name: '中车智慧产业投资（上海）有限公司', risk: '高风险', score: 95, trend: '持平', drive: '双向承压', push: '推力信号弱', pull: '招聘扩张 + 业务外拓', park: '临港奉贤', intent: '济南', feedback: '未反馈', tags: [] },
+  { id: 'E006', name: '上海沪安物流有限公司', risk: '高风险', score: 92, trend: '持平', drive: '内部主导', push: '推力信号弱', pull: '拉力信号弱', park: '临港新片区', intent: '-', feedback: '未反馈', tags: [] },
+  { id: 'E007', name: '上海含其家居用品有限公司', risk: '高风险', score: 90, trend: '持平', drive: '内部主导', push: '推力信号弱', pull: '拉力信号弱', park: '临港奉贤', intent: '-', feedback: '未反馈', tags: [] },
+  { id: 'E008', name: '上海汇智联成科技有限公司', risk: '高风险', score: 89, trend: '持平', drive: '内部主导', push: '推力信号弱', pull: '拉力信号弱', park: '临港新片区', intent: '-', feedback: '未反馈', tags: [] },
+  { id: 'E009', name: '上海禾晟易网络科技有限公司', risk: '中风险', score: 76, trend: '下降', drive: '外部主导', push: '经营不稳', pull: '招聘扩张', park: '张江科学城', intent: '苏州', feedback: '已反馈', tags: [] },
+  { id: 'E010', name: '上海芯动联科科技有限公司', risk: '中风险', score: 72, trend: '持平', drive: '内部主导', push: '人才流失', pull: '拉力信号弱', park: '张江科学城', intent: '-', feedback: '跟进中', tags: ['高新技术企业'] },
+  { id: 'E011', name: '培新全空间(上海)通用技术有限公司', risk: '中风险', score: 68, trend: '上升', drive: '双向承压', push: '创新衰退', pull: '业务外拓', park: '漕河泾开发区', intent: '杭州', feedback: '未反馈', tags: [] },
+  { id: 'E012', name: '上海豪量建筑工程有限公司', risk: '中风险', score: 65, trend: '持平', drive: '外部主导', push: '经营不稳', pull: '资本外引', park: '临港新片区', intent: '-', feedback: '已反馈', tags: [] },
+];
+
+export const guaranteeRecords = [
+  { id: 'G001', name: '上海禾晟易网络科技有限公司', park: '-', owner: '李婷', status: '未报送:连续2年', date: '-', address: '上海市杨浦区翔殷路128号6号楼2层（集中登记地）' },
+  { id: 'G002', name: '上海芯动联科科技有限公司', park: '-', owner: '王凯', status: '未报送:连续2年', date: '-', address: '上海市杨浦区翔殷路128号6号楼2层（集中登记地）' },
+  { id: 'G003', name: '培新全空间(上海)通用技术有限公司', park: '-', owner: '陈晨', status: '未报送:连续2年', date: '-', address: '上海市杨浦区翔殷路128号6号楼2层（集中登记地）' },
+  { id: 'G004', name: '上海豪量建筑工程有限公司', park: '临港新片区生命蓝湾生物医药特色产业园', owner: '顾龙飞', status: '已申报', date: '2026-07-05', address: '中国（上海）自由贸易试验区临港新片区新杨公路860号' },
+  { id: 'G005', name: '上海火芽网络技术有限公司', park: '临港新片区生命蓝湾生物医药特色产业园', owner: '李婷', status: '已申报', date: '2026-06-06', address: '中国（上海）自由贸易试验区临港新片区新杨公路860号' },
+  { id: 'G006', name: '上海聚领精研医药科技有限公司', park: '临港新片区生命蓝湾生物医药特色产业园', owner: '王凯', status: '已申报', date: '2026-06-20', address: '中国（上海）自由贸易试验区临港新片区新杨公路860号' },
+  { id: 'G007', name: '上海榕萌科技发展有限公司', park: '张江人工智能岛', owner: '陈晨', status: '已申报', date: '2026-05-18', address: '上海市浦东新区川和路55弄' },
+  { id: 'G008', name: '上海青航视界电子商务有限责任公司', park: '漕河泾科技绿洲', owner: '周敏', status: '未报送:当年', date: '-', address: '上海市徐汇区田林路418号' },
+  { id: 'G009', name: '上海迈愈生物科技有限公司', park: '临港新片区生命蓝湾生物医药特色产业园', owner: '李婷', status: '已申报', date: '2026-06-11', address: '中国（上海）自由贸易试验区临港新片区新杨公路860号' },
+  { id: 'G010', name: '上海蔚荫实业有限公司', park: '松江G60科创云廊', owner: '刘洋', status: '未报送:当年', date: '-', address: '上海市松江区莘砖公路668号' },
+  { id: 'G011', name: '美迪西普旭生物医药科技（上海）有限公司', park: '张江人工智能岛', owner: '王凯', status: '已申报', date: '2026-04-22', address: '上海市浦东新区张江路665号' },
+  { id: 'G012', name: '上海锦源晟新能源材料集团有限公司', park: '临港新片区东方芯港', owner: '顾龙飞', status: '未报送:连续2年', date: '-', address: '上海市浦东新区临港大道200号' },
+];
+
+export const visitOrders = [
+  { id: 'V001', title: '高潜迁出企业走访（上海锦源晟）', source: '迁移预警', owner: '顾龙飞', planDate: '2026-11-20', creator: '系统', priority: '高', status: '待走访', created: '2026-11-16' },
+  { id: 'V002', title: '新入驻企业服务需求走访', source: '企业档案', owner: '李婷', planDate: '2026-11-19', creator: '顾龙飞', priority: '中', status: '走访中', created: '2026-11-15' },
+  { id: 'V003', title: '年报未报送企业上门提醒', source: '企服保障', owner: '王凯', planDate: '2026-11-18', creator: '李婷', priority: '高', status: '待走访', created: '2026-11-14' },
+  { id: 'V004', title: '重点企业季度例行走访', source: '手动创建', owner: '陈晨', planDate: '2026-11-15', creator: '陈晨', priority: '中', status: '已完成', created: '2026-11-10' },
+  { id: 'V005', title: '政策申报辅导走访（专精特新）', source: '政策管理', owner: '周敏', planDate: '2026-11-12', creator: '周敏', priority: '低', status: '已完成', created: '2026-11-08' },
+  { id: 'V006', title: '园区载体租赁到期回访', source: '园区管理', owner: '刘洋', planDate: '2026-11-25', creator: '刘洋', priority: '中', status: '待走访', created: '2026-11-16' },
+];
+
+export const visitRecords = [
+  { id: 'VR001', title: '重点企业季度例行走访', company: '上海融脉医疗科技有限公司', owner: '陈晨', date: '2026-11-15', result: '企业稳定经营，暂无迁出意向', duration: '45 分钟' },
+  { id: 'VR002', title: '政策申报辅导走访', company: '上海火芽网络技术有限公司', owner: '周敏', date: '2026-11-12', result: '已协助完成专精特新申报材料准备', duration: '60 分钟' },
+  { id: 'VR003', title: '新入驻企业服务对接', company: '上海迈愈生物科技有限公司', owner: '李婷', date: '2026-11-08', result: '收集场地、人才、政策三类需求共 5 项', duration: '50 分钟' },
+  { id: 'VR004', title: '迁出风险企业安抚走访', company: '上海含其家居用品有限公司', owner: '顾龙飞', date: '2026-11-05', result: '企业反馈用工成本上升，已协调园区租金优惠', duration: '70 分钟' },
+];
+
+export const biddingRows = [
+  { id: 'Z001', title: '临港新片区智慧园区综合管理平台建设项目', type: '招标公告', buyer: '上海临港经济发展（集团）有限公司', budget: '2860 万元', date: '2026-11-16', deadline: '2026-12-06', region: '上海市浦东新区', status: '报名中' },
+  { id: 'Z002', title: '张江人工智能岛算力中心扩容采购项目', type: '招标公告', buyer: '上海张江（集团）有限公司', budget: '5200 万元', date: '2026-11-15', deadline: '2026-12-02', region: '上海市浦东新区', status: '报名中' },
+  { id: 'Z003', title: '漕河泾科技绿洲园区物业服务采购项目', type: '中标公告', buyer: '上海漕河泾新兴技术开发区发展总公司', budget: '1680 万元', date: '2026-11-14', winner: '上海东湖物业管理有限公司', region: '上海市徐汇区', status: '已中标' },
+  { id: 'Z004', title: '上海化工区智慧安防系统升级改造项目', type: '招标公告', buyer: '上海化学工业区发展有限公司', budget: '3200 万元', date: '2026-11-12', deadline: '2026-11-28', region: '上海市金山区', status: '即将截止' },
+  { id: 'Z005', title: '松江G60科创云廊二期智能化工程设计', type: '中标公告', buyer: '上海松江新城建设发展有限公司', budget: '980 万元', date: '2026-11-10', winner: '上海建筑设计研究院有限公司', region: '上海市松江区', status: '已中标' },
+  { id: 'Z006', title: '生命蓝湾生物医药产业园实验室设备采购', type: '招标公告', buyer: '上海临港奉贤经济发展有限公司', budget: '4400 万元', date: '2026-11-08', deadline: '2026-11-30', region: '上海市奉贤区', status: '报名中' },
+  { id: 'Z007', title: '杨浦长阳创谷城市更新项目施工总承包', type: '中标公告', buyer: '上海杨浦科技创新（集团）有限公司', budget: '1.2 亿元', date: '2026-11-05', winner: '上海建工集团股份有限公司', region: '上海市杨浦区', status: '已中标' },
+  { id: 'Z008', title: '紫竹高新区企业服务平台建设项目', type: '招标公告', buyer: '上海紫竹高新区（集团）有限公司', budget: '760 万元', date: '2026-11-02', deadline: '2026-11-22', region: '上海市闵行区', status: '即将截止' },
+];
+
+export const biddingRecommend = [
+  { id: 'BR1', title: '智慧园区数字孪生底座建设项目', buyer: '上海金桥出口加工区开发股份有限公司', budget: '1900 万元', match: 98 },
+  { id: 'BR2', title: '产业大脑数据服务采购项目', buyer: '上海临港新片区经济发展有限公司', budget: '1200 万元', match: 96 },
+  { id: 'BR3', title: '园区能耗监测平台建设项目', buyer: '上海外高桥保税区开发股份有限公司', budget: '860 万元', match: 93 },
+  { id: 'BR4', title: '企业服务一体化平台升级项目', buyer: '上海虹桥商务区投资置业有限公司', budget: '640 万元', match: 90 },
+];
+
+export const biddingCompanies = [
+  { name: '上海建工集团股份有限公司', count: 128, industry: '建筑工程' },
+  { name: '上海东湖物业管理有限公司', count: 96, industry: '物业服务' },
+  { name: '上海建筑设计研究院有限公司', count: 82, industry: '工程设计' },
+  { name: '上海仪电（集团）有限公司', count: 74, industry: '电子信息' },
+  { name: '华东建筑集团股份有限公司', count: 68, industry: '工程设计' },
+];
+
+export const industryChainTree = {
+  name: '人工智能',
+  children: [
+    {
+      name: '基础层',
+      children: [
+        { name: 'AI芯片', count: 86, companies: ['寒武纪', '燧原科技', '壁仞科技', '地平线'] },
+        { name: '算力设施', count: 42, companies: ['商汤科技', '优刻得', '上海超算中心'] },
+        { name: '数据服务', count: 65, companies: ['数据堂', '海天瑞声', '星环科技'] },
+        { name: '算法框架', count: 38, companies: ['百度飞桨', '华为昇思', '一流科技'] },
+      ],
+    },
+    {
+      name: '技术层',
+      children: [
+        { name: '计算机视觉', count: 132, companies: ['商汤科技', '依图科技', '旷视科技'] },
+        { name: '语音识别', count: 58, companies: ['科大讯飞', '云知声', '思必驰'] },
+        { name: '自然语言处理', count: 96, companies: ['达观数据', '竹间智能', '澜舟科技'] },
+        { name: '机器学习平台', count: 46, companies: ['第四范式', '聚熵智能', '深睿医疗'] },
+      ],
+    },
+    {
+      name: '应用层',
+      children: [
+        { name: '智能制造', count: 210, companies: ['宝信软件', '上海电气', '振华重工'] },
+        { name: '智慧医疗', count: 148, companies: ['联影智能', '推想医疗', '森亿智能'] },
+        { name: '智能驾驶', count: 124, companies: ['小鹏汽车', '蔚来汽车', 'Momenta'] },
+        { name: '智慧金融', count: 88, companies: ['陆金所', '汇付天下', '冰鉴科技'] },
+      ],
+    },
+  ],
+};
+
+export const supplyChainNodes = [
+  { id: 'S1', name: '上海锦源晟新能源材料集团有限公司', industry: '新能源', level: '链主企业', park: '临港新片区东方芯港', products: '锂电正极材料前驱体', partners: 26 },
+  { id: 'S2', name: '上海融脉医疗科技有限公司', industry: '生命健康', level: '链主企业', park: '临港新片区生命蓝湾生物医药特色产业园', products: '介入医疗器械', partners: 18 },
+  { id: 'S3', name: '上海芯动联科科技有限公司', industry: '集成电路', level: '核心供应商', park: '张江人工智能岛', products: 'MEMS惯性传感器', partners: 12 },
+  { id: 'S4', name: '上海禾晟易网络科技有限公司', industry: '数字经济', level: '核心供应商', park: '漕河泾科技绿洲', products: '产业数据服务', partners: 15 },
+  { id: 'S5', name: '上海火芽网络技术有限公司', industry: '软件信息', level: '配套企业', park: '杨浦长阳创谷', products: '企业数字化解决方案', partners: 8 },
+  { id: 'S6', name: '上海豪量建筑工程有限公司', industry: '建筑服务', level: '配套企业', park: '临港新片区生命蓝湾生物医药特色产业园', products: '园区工程建设', partners: 6 },
+  { id: 'S7', name: '上海聚领精研医药科技有限公司', industry: '生物医药', level: '核心供应商', park: '临港新片区生命蓝湾生物医药特色产业园', products: '创新药物研发CRO', partners: 21 },
+  { id: 'S8', name: '上海迈愈生物科技有限公司', industry: '生物医药', level: '配套企业', park: '临港新片区生命蓝湾生物医药特色产业园', products: '细胞治疗技术服务', partners: 9 },
+];
+
+export const mapMarkers = [
+  { id: 'MM1', name: '临港新片区生命蓝湾', type: '特色园区', x: 78, y: 74, enterprises: 386, clues: 26 },
+  { id: 'MM2', name: '张江人工智能岛', type: '特色园区', x: 64, y: 52, enterprises: 132, clues: 42 },
+  { id: 'MM3', name: '漕河泾科技绿洲', type: '综合园区', x: 44, y: 48, enterprises: 528, clues: 38 },
+  { id: 'MM4', name: '嘉定氢能港', type: '特色园区', x: 28, y: 26, enterprises: 96, clues: 19 },
+  { id: 'MM5', name: '杨浦长阳创谷', type: '综合园区', x: 52, y: 34, enterprises: 312, clues: 24 },
+  { id: 'MM6', name: 'G60科创云廊', type: '特色园区', x: 20, y: 62, enterprises: 286, clues: 21 },
+  { id: 'MM7', name: '东方美谷', type: '特色园区', x: 70, y: 84, enterprises: 178, clues: 12 },
+  { id: 'MM8', name: '金桥5G产业园', type: '特色园区', x: 72, y: 44, enterprises: 198, clues: 17 },
+];
+
+export const campusList = [
+  { id: 'CP1', name: '临港新片区生命蓝湾', district: '浦东新区', buildings: 42, enterprises: 386, area: '126.8 万㎡', occupancy: 92.5, manager: '顾龙飞', status: '运营中' },
+  { id: 'CP2', name: '临港新片区东方芯港', district: '浦东新区', buildings: 28, enterprises: 245, area: '98.2 万㎡', occupancy: 88.1, manager: '李婷', status: '运营中' },
+  { id: 'CP3', name: '张江人工智能岛', district: '浦东新区', buildings: 12, enterprises: 132, area: '10.2 万㎡', occupancy: 96.3, manager: '王凯', status: '运营中' },
+  { id: 'CP4', name: '漕河泾科技绿洲', district: '徐汇区', buildings: 36, enterprises: 528, area: '72.5 万㎡', occupancy: 94.7, manager: '周敏', status: '运营中' },
+  { id: 'CP5', name: '嘉定氢能港', district: '嘉定区', buildings: 16, enterprises: 96, area: '42.0 万㎡', occupancy: 78.4, manager: '陈晨', status: '建设中' },
+  { id: 'CP6', name: '松江G60科创云廊', district: '松江区', buildings: 14, enterprises: 286, area: '52.1 万㎡', occupancy: 87.3, manager: '刘洋', status: '运营中' },
+];
+
+export const panoramicStats = {
+  enterprises: 3105,
+  parks: 15,
+  buildings: 268,
+  clues: 1682,
+  migration: 84,
+  revenue: '1.86 亿元',
+  settleRate: '92.5%',
+  service: 96,
+};
+
+export const matchRules = [
+  '企业注册在江苏、广东、浙江、河南',
+  '五大主导产业：石油化工、装备制造、新材料、新能源、生命健康',
+  '成本敏感：洛阳主城区成本敏感型，有外溢倾向',
+  '项目考察：近一年被洛阳或河南省政府机构考察过',
+  '业务布局：在河南有中标项目',
+  '情感驱动：董监高籍贯或毕业院校为河南',
+  '注册地址变更：洛阳企业近五年内有注册地址变更',
+  '新增对外投资：近5年对外省新增投资',
+  '股权变更：股东变动或有融资',
+  '指标敏感：企业所在地存在产业限制，土地能耗指标紧张',
+  '租期敏感：洛阳市租约临近到期',
+];
+
+export const matchCompanies = [
+  { id: 'MC1', name: '洛阳隆华传热节能股份有限公司', industry: '装备制造', score: 96, tags: ['项目线索', '业务布局', '成本敏感'], park: '洛阳', capital: '5.2 亿元', contact: '王总' },
+  { id: 'MC2', name: '中石化洛阳工程有限公司', industry: '石油化工', score: 94, tags: ['对外投资', '指标敏感', '股东变更'], park: '洛阳', capital: '18.6 亿元', contact: '李总' },
+  { id: 'MC3', name: '洛阳栾川钼业集团股份有限公司', industry: '新材料', score: 92, tags: ['项目线索', '融资成功', '链主供应商'], park: '洛阳', capital: '42.8 亿元', contact: '张总' },
+  { id: 'MC4', name: '普莱柯生物工程股份有限公司', industry: '生命健康', score: 90, tags: ['注册地址变更', '股东变更', '项目考察'], park: '洛阳', capital: '8.6 亿元', contact: '刘总' },
+  { id: 'MC5', name: '洛阳北方玻璃技术股份有限公司', industry: '新材料', score: 88, tags: ['成本敏感', '租期敏感'], park: '洛阳', capital: '12.3 亿元', contact: '陈总' },
+  { id: 'MC6', name: '河南通达电缆股份有限公司', industry: '装备制造', score: 86, tags: ['业务布局', '对外投资'], park: '洛阳', capital: '6.8 亿元', contact: '赵总' },
+  { id: 'MC7', name: '洛阳建龙微纳新材料股份有限公司', industry: '新材料', score: 84, tags: ['融资成功', '项目线索'], park: '洛阳', capital: '4.5 亿元', contact: '孙总' },
+  { id: 'MC8', name: '中航光电科技股份有限公司', industry: '装备制造', score: 82, tags: ['链主供应商', '领导考察'], park: '洛阳', capital: '36.2 亿元', contact: '周总' },
+];
+
+export const settingConfig = {
+  portalName: '上海临港产业招商服务平台',
+  slogan: '汇聚全球创新资源，共建世界级产业集群',
+  contact: '021-6828 8888',
+  email: 'service@lingang-invest.cn',
+  address: '上海市浦东新区临港新片区环湖西二路888号',
+  modules: ['政策服务', '园区载体', '商机大厅', '企业服务', '招投标查询'],
+};
+
+export const externalCompanyNames = [
+  '苏州晶湛半导体有限公司', '深圳市优艾智合机器人科技有限公司', '北京推想医疗科技股份有限公司',
+  '杭州群核信息技术有限公司', '南京芯驰半导体科技有限公司', '广州小鹏汽车科技有限公司',
+  '成都先导药物开发股份有限公司', '武汉光迅科技股份有限公司', '西安铂力特增材技术股份有限公司',
+  '合肥国轩高科动力能源有限公司', '厦门盈趣科技股份有限公司', '青岛海尔智家股份有限公司',
+];
+
+export const platformUsers = ['顾龙飞', '李婷', '王凯', '陈晨', '周敏', '吴超', '徐静', '刘洋'];
