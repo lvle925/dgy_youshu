@@ -70,9 +70,9 @@
         <a-divider />
         <h4 style="font-size: 13px">摸排记录</h4>
         <a-timeline style="margin-top: 12px">
-          <a-timeline-item color="#4a62e7">2026-11-16 电话沟通企业选址需求，确认研发办公面积约 3000㎡</a-timeline-item>
-          <a-timeline-item color="#c7d2fe">2026-11-12 发送园区载体资料与政策汇编</a-timeline-item>
-          <a-timeline-item color="#c7d2fe">2026-11-08 通过产业链活动首次接触企业</a-timeline-item>
+          <a-timeline-item color="#1652B8">2026-11-16 电话沟通企业选址需求，确认研发办公面积约 3000㎡</a-timeline-item>
+          <a-timeline-item color="#F2F4F7">2026-11-12 发送园区载体资料与政策汇编</a-timeline-item>
+          <a-timeline-item color="#F2F4F7">2026-11-08 通过产业链活动首次接触企业</a-timeline-item>
         </a-timeline>
         <div class="drawer-actions">
           <a-button @click="msg.success('已添加跟进记录（演示）')">添加跟进</a-button>

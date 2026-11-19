@@ -70,15 +70,17 @@
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue';
+import { onMounted, reactive, ref } from 'vue';
+import { api } from '../api';
 import { message, Modal } from 'ant-design-vue';
 import { PlusOutlined } from '@ant-design/icons-vue';
 import PageCard from '../components/PageCard.vue';
 import StatCard from '../components/StatCard.vue';
-import { roles as seedRoles } from '../data/mock';
+
 
 const msg = message;
-const roleList = ref(seedRoles.map((r) => ({ ...r })));
+const roleList = ref([]);
+onMounted(async () => { try { roleList.value = await api.list('roles'); } catch { msg.error('无法加载角色'); } });
 const columns = [
   { title: '角色名称', key: 'name', width: 220 },
   { title: '角色描述', dataIndex: 'desc' },
@@ -94,19 +96,13 @@ function openForm(row) {
   Object.assign(form, row ? { ...row } : { name: '', code: '', desc: '', scope: 'all' });
   formOpen.value = true;
 }
-function saveRole() {
-  if (!form.name || !form.code) {
-    msg.warning('请填写角色名称与标识');
-    return;
-  }
-  if (editing.value) {
-    Object.assign(editing.value, { name: form.name, code: form.code, desc: form.desc });
-    msg.success('角色已更新');
-  } else {
-    roleList.value.push({ id: 'ROLE' + (roleList.value.length + 1), name: form.name, code: form.code, members: 0, desc: form.desc, perms: ['首页'] });
-    msg.success('角色已创建');
-  }
-  formOpen.value = false;
+async function saveRole() {
+  if (!form.name.trim() || !form.code.trim()) { msg.warning('请填写角色名称与标识'); return; }
+  try {
+    if (editing.value) Object.assign(editing.value, await api.update('roles', { ...editing.value, ...form }));
+    else roleList.value.push(await api.create('roles', { ...form, members: 0, perms: ['首页'] }));
+    formOpen.value = false; msg.success('角色已保存');
+  } catch { msg.error('保存失败'); }
 }
 function removeRole(row) {
   Modal.confirm({
@@ -114,7 +110,8 @@ function removeRole(row) {
     content: `确定删除「${row.name}」？该角色下 ${row.members} 名成员将失去对应权限。`,
     okText: '删除',
     okType: 'danger',
-    onOk: () => {
+    onOk: async () => {
+      try { await api.remove('roles', row.id); } catch { msg.error('删除失败'); return; }
       roleList.value = roleList.value.filter((r) => r.id !== row.id);
       msg.success('角色已删除');
     },
@@ -139,8 +136,8 @@ function toggleGroup(g, checked) {
   const rest = currentPerms.value.filter((p) => !g.children.includes(p));
   currentPerms.value = checked ? [...rest, ...g.children] : rest;
 }
-function savePerm() {
-  current.value.perms = currentPerms.value;
+async function savePerm() {
+  try { Object.assign(current.value, await api.update('roles', { ...current.value, perms: currentPerms.value })); } catch { msg.error('保存失败'); return; }
   permOpen.value = false;
   msg.success('权限配置已保存');
 }
@@ -149,7 +146,7 @@ function savePerm() {
 <style scoped>
 .perm-tags { display: flex; flex-wrap: wrap; gap: 6px; }
 .perm-tree { display: flex; flex-direction: column; gap: 18px; }
-.perm-group { border: 1px solid #edf0f7; border-radius: 8px; padding: 12px 14px; }
+.perm-group { border: 1px solid #F2F4F7; border-radius: 8px; padding: 12px 14px; }
 .perm-group-head { margin-bottom: 10px; }
 .perm-group :deep(.ant-checkbox-group) { display: flex; flex-wrap: wrap; gap: 6px 18px; padding-left: 24px; }
 .drawer-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }

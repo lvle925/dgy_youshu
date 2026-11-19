@@ -34,7 +34,7 @@
         <div class="quota-list">
           <div v-for="q in quotas" :key="q.name" class="quota-row">
             <div class="flex" style="justify-content: space-between"><span>{{ q.name }}</span><span class="text-muted">{{ q.used }} / {{ q.total }}</span></div>
-            <a-progress :percent="Math.round((q.used / q.total) * 100)" size="small" :stroke-color="q.used / q.total > 0.8 ? '#f5a623' : '#4a62e7'" :show-info="false" />
+            <a-progress :percent="Math.round((q.used / q.total) * 100)" size="small" :stroke-color="q.used / q.total > 0.8 ? '#1652B8' : '#1652B8'" :show-info="false" />
           </div>
         </div>
         <a-button block style="margin-top: 8px" @click="msg.success('套餐续费请联系客户经理 021-6828 8888')">套餐续费</a-button>
@@ -60,7 +60,7 @@
             <span class="tag-soft" :class="record.type === '充值' ? 'green' : 'blue'">{{ record.type }}</span>
           </template>
           <template v-else-if="column.key === 'amount'">
-            <b :style="{ color: record.type === '充值' ? '#2fa45f' : '#1f2a44' }">{{ record.type === '充值' ? '+' : '-' }} ¥{{ record.amount.toFixed(2) }}</b>
+            <b :style="{ color: record.type === '充值' ? '#2fa45f' : '#303b49' }">{{ record.type === '充值' ? '+' : '-' }} ¥{{ record.amount.toFixed(2) }}</b>
           </template>
           <template v-else-if="column.key === 'status'">
             <a-badge status="success" :text="record.status" />
@@ -133,34 +133,34 @@ function doRecharge() {
 }
 const trendOption = {
   tooltip: { trigger: 'axis' },
-  legend: { top: 0, icon: 'roundRect', itemWidth: 10, itemHeight: 4, textStyle: { fontSize: 11, color: '#667085' } },
+  legend: { top: 0, icon: 'roundRect', itemWidth: 10, itemHeight: 4, textStyle: { fontSize: 11, color: '#657384' } },
   grid: { left: 45, right: 40, top: 34, bottom: 26 },
-  xAxis: { type: 'category', data: ['11-11', '11-12', '11-13', '11-14', '11-15', '11-16', '11-17'], axisLabel: { fontSize: 10, color: '#98a2b3' }, axisLine: { lineStyle: { color: '#e4e7ec' } }, axisTick: { show: false } },
+  xAxis: { type: 'category', data: ['11-11', '11-12', '11-13', '11-14', '11-15', '11-16', '11-17'], axisLabel: { fontSize: 10, color: '#657384' }, axisLine: { lineStyle: { color: '#F2F4F7' } }, axisTick: { show: false } },
   yAxis: [
-    { type: 'value', name: '金额(元)', nameTextStyle: { fontSize: 10, color: '#98a2b3' }, axisLabel: { fontSize: 10, color: '#98a2b3' }, splitLine: { lineStyle: { color: '#f2f4f7', type: 'dashed' } } },
-    { type: 'value', name: '调用次数', nameTextStyle: { fontSize: 10, color: '#98a2b3' }, axisLabel: { fontSize: 10, color: '#98a2b3' }, splitLine: { show: false } },
+    { type: 'value', name: '金额(元)', nameTextStyle: { fontSize: 10, color: '#657384' }, axisLabel: { fontSize: 10, color: '#657384' }, splitLine: { lineStyle: { color: '#F2F4F7', type: 'dashed' } } },
+    { type: 'value', name: '调用次数', nameTextStyle: { fontSize: 10, color: '#657384' }, axisLabel: { fontSize: 10, color: '#657384' }, splitLine: { show: false } },
   ],
   series: [
-    { name: '消费金额', type: 'bar', barWidth: 18, data: [820, 640, 910, 1180, 1420, 1560, 680], itemStyle: { color: '#c7d2fe', borderRadius: [4, 4, 0, 0] } },
-    { name: '接口调用', type: 'line', yAxisIndex: 1, smooth: true, symbol: 'circle', symbolSize: 5, data: [6400, 5200, 7100, 8600, 9800, 11200, 5100], lineStyle: { color: '#4a62e7', width: 2 }, itemStyle: { color: '#4a62e7' } },
+    { name: '消费金额', type: 'bar', barWidth: 18, data: [820, 640, 910, 1180, 1420, 1560, 680], itemStyle: { color: '#F2F4F7', borderRadius: [4, 4, 0, 0] } },
+    { name: '接口调用', type: 'line', yAxisIndex: 1, smooth: true, symbol: 'circle', symbolSize: 5, data: [6400, 5200, 7100, 8600, 9800, 11200, 5100], lineStyle: { color: '#1652B8', width: 2 }, itemStyle: { color: '#1652B8' } },
   ],
 };
 </script>
 
 <style scoped>
-.billing-hero { background: linear-gradient(120deg, #2f3fa8 0%, #4a62e7 58%, #7286f2 100%); border-radius: 12px; color: #fff; padding: 26px 30px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 18px; box-shadow: 0 12px 28px rgba(74, 98, 231, 0.22); }
+.billing-hero { background: linear-gradient(120deg, #1652B8 0%, #1652B8 58%, #1652B8 100%); border-radius: 12px; color: #fff; padding: 26px 30px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 18px; box-shadow: 0 12px 28px rgba(74, 98, 231, 0.22); }
 .billing-label { font-size: 13px; opacity: 0.8; }
 .billing-balance { font-size: 34px; font-weight: 700; margin: 8px 0 4px; letter-spacing: 0.5px; }
 .billing-sub { font-size: 12px; opacity: 0.75; }
 .billing-right { display: flex; align-items: center; gap: 26px; padding-right: 8px; }
 .billing-mini { display: flex; flex-direction: column; gap: 6px; font-size: 12px; opacity: 0.85; }
 .billing-mini b { font-size: 19px; font-weight: 600; }
-.plan-head { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 14px; border-bottom: 1px solid #f2f4f7; }
+.plan-head { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 14px; border-bottom: 1px solid #F2F4F7; }
 .plan-name { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
 .quota-list { padding: 14px 0 6px; display: flex; flex-direction: column; gap: 12px; font-size: 12.5px; }
 .quota-row :deep(.ant-progress) { margin: 2px 0 0; }
 .recharge-amount { display: flex; align-items: center; gap: 8px; font-size: 22px; }
 .amount-options { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
-.amount-chip { border: 1px solid #e2e6f0; border-radius: 7px; padding: 7px 16px; cursor: pointer; font-size: 13px; }
-.amount-chip.active { border-color: #4a62e7; color: #4a62e7; background: #f0f3ff; font-weight: 600; }
+.amount-chip { border: 1px solid #F2F4F7; border-radius: 7px; padding: 7px 16px; cursor: pointer; font-size: 13px; }
+.amount-chip.active { border-color: #1652B8; color: #1652B8; background: #F2F4F7; font-weight: 600; }
 </style>

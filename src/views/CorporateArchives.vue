@@ -81,10 +81,10 @@
         <a-divider />
         <div class="timeline-title">企业服务时间线</div>
         <a-timeline style="margin-top: 14px">
-          <a-timeline-item color="#4a62e7">
+          <a-timeline-item color="#1652B8">
             <b>2026-11-16</b> 招商专员上门走访，收集场地扩租需求
           </a-timeline-item>
-          <a-timeline-item color="#4a62e7">
+          <a-timeline-item color="#1652B8">
             <b>2026-09-18</b> 完成「上海市专精特新中小企业」政策申报辅导
           </a-timeline-item>
           <a-timeline-item color="#2fa45f">
@@ -103,7 +103,7 @@
 
     <a-modal v-model:open="importOpen" title="批量导入企业档案" width="520px" @ok="msg.success('导入任务已创建（演示）'); importOpen = false">
       <div class="import-box">
-        <InboxOutlined style="font-size: 40px; color: #4a62e7" />
+        <InboxOutlined style="font-size: 40px; color: #1652B8" />
         <div style="font-weight: 500; margin-top: 10px">点击或拖拽 Excel 文件到此处</div>
         <div class="text-muted">支持 .xlsx 格式，单次最多导入 500 家企业</div>
       </div>
@@ -125,10 +125,10 @@ const parkFilter = ref();
 const industryFilter = ref();
 const statusFilter = ref();
 const headStats = [
-  { label: '入驻企业总数', value: archiveStats.settled.toLocaleString(), unit: '家', color: '#1f2a44' },
-  { label: '累计迁出', value: archiveStats.migrated, unit: '家', color: '#d97706' },
+  { label: '入驻企业总数', value: archiveStats.settled.toLocaleString(), unit: '家', color: '#303b49' },
+  { label: '累计迁出', value: archiveStats.migrated, unit: '家', color: '#1652B8' },
   { label: '企业消失', value: archiveStats.vanished, unit: '家', color: '#d92d20' },
-  { label: '平均入驻年限', value: archiveStats.avgYears, unit: '年', color: '#4a62e7' },
+  { label: '平均入驻年限', value: archiveStats.avgYears, unit: '年', color: '#1652B8' },
   { label: '企业留存率', value: archiveStats.retention, unit: '', color: '#2fa45f' },
 ];
 const rows = companies.map((c, i) => ({
@@ -170,17 +170,17 @@ const importOpen = ref(false);
 
 <style scoped>
 .archive-head { display: flex; align-items: center; gap: 0; flex-wrap: wrap; }
-.archive-item { padding: 2px 28px 2px 0; margin-right: 28px; border-right: 1px dashed #eaedf5; min-width: 128px; }
+.archive-item { padding: 2px 28px 2px 0; margin-right: 28px; border-right: 1px dashed #F2F4F7; min-width: 128px; }
 .archive-item:last-of-type { border-right: none; }
 .archive-value { font-size: 28px; font-weight: 700; line-height: 1.2; }
-.archive-value span { font-size: 12px; font-weight: 500; color: #8b93a7; margin-left: 4px; }
-.archive-label { font-size: 12.5px; color: #667085; margin-top: 4px; }
+.archive-value span { font-size: 12px; font-weight: 500; color: #657384; margin-left: 4px; }
+.archive-label { font-size: 12.5px; color: #657384; margin-top: 4px; }
 .archive-side { margin-left: auto; display: flex; gap: 10px; }
 .archive-drawer-head { display: flex; gap: 14px; align-items: flex-start; }
-.company-logo { width: 52px; height: 52px; border-radius: 12px; background: #eef1fe; color: #4a62e7; display: grid; place-items: center; font-size: 22px; font-weight: 700; }
+.company-logo { width: 52px; height: 52px; border-radius: 12px; background: #F2F4F7; color: #1652B8; display: grid; place-items: center; font-size: 22px; font-weight: 700; }
 .timeline-title { font-weight: 600; font-size: 14px; }
 .drawer-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
-.import-box { border: 1px dashed #d4d9e8; border-radius: 10px; padding: 28px; text-align: center; cursor: pointer; }
-.import-box:hover { border-color: #4a62e7; background: #f8faff; }
+.import-box { border: 1px dashed #F2F4F7; border-radius: 10px; padding: 28px; text-align: center; cursor: pointer; }
+.import-box:hover { border-color: #1652B8; background: #F2F4F7; }
 @media (max-width: 1400px) { .archive-side { margin-left: 0; width: 100%; margin-top: 14px; } }
 </style>

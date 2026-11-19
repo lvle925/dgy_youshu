@@ -46,7 +46,7 @@
           <a-table :columns="buildingColumns" :data-source="buildingRows" :pagination="{ pageSize: 6 }" size="middle" :row-key="(r) => r.id">
             <template #bodyCell="{ column, record }">
               <template v-if="column.key === 'occupancy'">
-                <a-progress :percent="record.occupancy" size="small" :stroke-color="'#4a62e7'" />
+                <a-progress :percent="record.occupancy" size="small" :stroke-color="'#1652B8'" />
               </template>
               <template v-else-if="column.key === 'status'">
                 <span class="tag-soft" :class="record.status === '可租' ? 'green' : 'gray'">{{ record.status }}</span>
@@ -127,36 +127,36 @@ const enterpriseColumns = [
 const enterpriseRows = companies.filter((c) => c.park === park.value.name).concat(companies).slice(0, 8);
 const industryOption = {
   tooltip: { trigger: 'item' },
-  legend: { bottom: 0, icon: 'circle', itemWidth: 7, itemHeight: 7, textStyle: { fontSize: 10, color: '#667085' } },
+  legend: { bottom: 0, icon: 'circle', itemWidth: 7, itemHeight: 7, textStyle: { fontSize: 10, color: '#657384' } },
   series: [{
     type: 'pie', radius: ['40%', '66%'], center: ['50%', '44%'],
     label: { show: false },
     data: [
-      { value: 38, name: '生物医药', itemStyle: { color: '#4a62e7' } },
-      { value: 24, name: '医疗器械', itemStyle: { color: '#52c7b8' } },
-      { value: 18, name: '生命健康', itemStyle: { color: '#8b5cf6' } },
-      { value: 12, name: '研发服务', itemStyle: { color: '#f5a623' } },
-      { value: 8, name: '其他', itemStyle: { color: '#94a3b8' } },
+      { value: 38, name: '生物医药', itemStyle: { color: '#1652B8' } },
+      { value: 24, name: '医疗器械', itemStyle: { color: '#1652B8' } },
+      { value: 18, name: '生命健康', itemStyle: { color: '#1652B8' } },
+      { value: 12, name: '研发服务', itemStyle: { color: '#1652B8' } },
+      { value: 8, name: '其他', itemStyle: { color: '#657384' } },
     ],
   }],
 };
 </script>
 
 <style scoped>
-.detail-back { margin-bottom: 10px; font-size: 12.5px; color: #8b93a7; }
+.detail-back { margin-bottom: 10px; font-size: 12.5px; color: #657384; }
 .detail-hero { display: flex; justify-content: space-between; gap: 20px; align-items: flex-start; }
 .detail-title { font-size: 21px; font-weight: 600; line-height: 1.5; }
 .detail-tags { display: flex; gap: 8px; flex-wrap: wrap; margin: 9px 0; }
-.detail-meta { display: flex; gap: 20px; flex-wrap: wrap; color: #667085; font-size: 12.5px; }
-.detail-meta .anticon { margin-right: 4px; color: #98a2b3; }
+.detail-meta { display: flex; gap: 20px; flex-wrap: wrap; color: #657384; font-size: 12.5px; }
+.detail-meta .anticon { margin-right: 4px; color: #657384; }
 .detail-actions { display: flex; gap: 8px; flex-shrink: 0; }
 .detail-layout { display: grid; grid-template-columns: 1fr 320px; gap: 14px; margin-top: 14px; }
-.park-intro { font-size: 13px; color: #4b5563; line-height: 2; margin: 0 0 12px; }
+.park-intro { font-size: 13px; color: #657384; line-height: 2; margin: 0 0 12px; }
 .park-facts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.park-facts > div { background: #f8fafd; border-radius: 6px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; font-size: 12px; }
-.park-facts span { color: #8b93a7; }
-.park-facts b { color: #344054; font-weight: 500; }
-.service-item { font-size: 12.5px; color: #4b5563; padding: 6px 0; }
+.park-facts > div { background: #F2F4F7; border-radius: 6px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; font-size: 12px; }
+.park-facts span { color: #657384; }
+.park-facts b { color: #657384; font-weight: 500; }
+.service-item { font-size: 12.5px; color: #657384; padding: 6px 0; }
 .service-item .anticon { color: #2fa45f; margin-right: 7px; }
 @media (max-width: 1200px) { .detail-layout { grid-template-columns: 1fr; } }
 </style>

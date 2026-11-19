@@ -158,7 +158,7 @@ const sparkBarOption = computed(() => ({
   series: [{
     type: 'bar', barWidth: 14,
     data: [4, 12, 20, 26, 34, 30, 32],
-    itemStyle: { color: '#4a62e7', borderRadius: [2, 2, 0, 0] },
+    itemStyle: { color: '#1652B8', borderRadius: [2, 2, 0, 0] },
   }],
 }));
 
@@ -169,7 +169,7 @@ const sparkAreaOption = computed(() => ({
   series: [{
     type: 'line', smooth: true, symbol: 'none',
     data: [6, 10, 9, 18, 16, 28, 34, 40],
-    lineStyle: { color: '#8b5cf6', width: 2 },
+    lineStyle: { color: '#1652B8', width: 2 },
     areaStyle: {
       color: {
         type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
@@ -185,14 +185,14 @@ const hotBarOption = computed(() => ({
   xAxis: {
     type: 'category',
     data: hotPolicyRank.map((p) => (p.name.length > 7 ? p.name.slice(0, 7) + '…' : p.name)),
-    axisLabel: { fontSize: 10, color: '#667085', interval: 0, rotate: 0 },
-    axisLine: { lineStyle: { color: '#e4e7ec' } },
+    axisLabel: { fontSize: 10, color: '#657384', interval: 0, rotate: 0 },
+    axisLine: { lineStyle: { color: '#F2F4F7' } },
     axisTick: { show: false },
   },
   yAxis: {
     type: 'value',
-    axisLabel: { fontSize: 10, color: '#98a2b3' },
-    splitLine: { lineStyle: { color: '#f2f4f7', type: 'dashed' } },
+    axisLabel: { fontSize: 10, color: '#657384' },
+    splitLine: { lineStyle: { color: '#F2F4F7', type: 'dashed' } },
   },
   series: [{
     type: 'bar', barWidth: 20,
@@ -201,7 +201,7 @@ const hotBarOption = computed(() => ({
       borderRadius: [3, 3, 0, 0],
       color: {
         type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
-        colorStops: [{ offset: 0, color: '#7c92ff' }, { offset: 1, color: '#4a62e7' }],
+        colorStops: [{ offset: 0, color: '#1652B8' }, { offset: 1, color: '#1652B8' }],
       },
     },
   }],
@@ -209,16 +209,16 @@ const hotBarOption = computed(() => ({
 
 const directionOption = {
   tooltip: { trigger: 'item' },
-  legend: { bottom: 0, icon: 'circle', itemWidth: 8, itemHeight: 8, textStyle: { fontSize: 11, color: '#667085' } },
+  legend: { bottom: 0, icon: 'circle', itemWidth: 8, itemHeight: 8, textStyle: { fontSize: 11, color: '#657384' } },
   series: [{
     type: 'pie', radius: ['38%', '66%'], center: ['50%', '44%'],
-    label: { fontSize: 11, color: '#667085' },
+    label: { fontSize: 11, color: '#657384' },
     data: [
-      { value: 32, name: '先进制造', itemStyle: { color: '#4a62e7' } },
-      { value: 24, name: '数字经济', itemStyle: { color: '#52d3c2' } },
-      { value: 18, name: '生物医药', itemStyle: { color: '#8b5cf6' } },
-      { value: 14, name: '新能源', itemStyle: { color: '#f5a623' } },
-      { value: 12, name: '现代服务', itemStyle: { color: '#94a3b8' } },
+      { value: 32, name: '先进制造', itemStyle: { color: '#1652B8' } },
+      { value: 24, name: '数字经济', itemStyle: { color: '#1652B8' } },
+      { value: 18, name: '生物医药', itemStyle: { color: '#1652B8' } },
+      { value: 14, name: '新能源', itemStyle: { color: '#1652B8' } },
+      { value: 12, name: '现代服务', itemStyle: { color: '#657384' } },
     ],
   }],
 };
@@ -226,31 +226,31 @@ const directionOption = {
 const industryOption = {
   grid: { left: 90, right: 30, top: 10, bottom: 20 },
   tooltip: { trigger: 'axis' },
-  xAxis: { type: 'value', axisLabel: { fontSize: 10, color: '#98a2b3' }, splitLine: { lineStyle: { color: '#f2f4f7', type: 'dashed' } } },
+  xAxis: { type: 'value', axisLabel: { fontSize: 10, color: '#657384' }, splitLine: { lineStyle: { color: '#F2F4F7', type: 'dashed' } } },
   yAxis: {
     type: 'category', data: ['文化创意', '现代服务', '新能源', '生物医药', '数字经济', '智能制造'],
-    axisLabel: { fontSize: 11, color: '#667085' }, axisLine: { show: false }, axisTick: { show: false },
+    axisLabel: { fontSize: 11, color: '#657384' }, axisLine: { show: false }, axisTick: { show: false },
   },
   series: [{
     type: 'bar', barWidth: 12,
     data: [860, 1240, 1680, 2150, 2860, 3420],
-    itemStyle: { color: '#52c7b8', borderRadius: [0, 6, 6, 0] },
+    itemStyle: { color: '#1652B8', borderRadius: [0, 6, 6, 0] },
   }],
 };
 
 const districtPolicyOption = {
   tooltip: { trigger: 'axis' },
-  legend: { top: 0, icon: 'roundRect', itemWidth: 10, itemHeight: 4, textStyle: { fontSize: 11, color: '#667085' } },
+  legend: { top: 0, icon: 'roundRect', itemWidth: 10, itemHeight: 4, textStyle: { fontSize: 11, color: '#657384' } },
   grid: { left: 40, right: 16, top: 34, bottom: 26 },
   xAxis: {
     type: 'category', data: ['浦东', '黄浦', '徐汇', '长宁', '静安', '普陀', '虹口', '杨浦', '闵行', '宝山'],
-    axisLabel: { fontSize: 10, color: '#98a2b3' }, axisLine: { lineStyle: { color: '#e4e7ec' } }, axisTick: { show: false },
+    axisLabel: { fontSize: 10, color: '#657384' }, axisLine: { lineStyle: { color: '#F2F4F7' } }, axisTick: { show: false },
   },
-  yAxis: { type: 'value', axisLabel: { fontSize: 10, color: '#98a2b3' }, splitLine: { lineStyle: { color: '#f2f4f7', type: 'dashed' } } },
+  yAxis: { type: 'value', axisLabel: { fontSize: 10, color: '#657384' }, splitLine: { lineStyle: { color: '#F2F4F7', type: 'dashed' } } },
   series: [
-    { name: '2024', type: 'line', smooth: true, symbol: 'none', data: [120, 82, 96, 54, 60, 42, 38, 76, 88, 46], lineStyle: { color: '#a5b4fc', width: 2 } },
-    { name: '2025', type: 'line', smooth: true, symbol: 'none', data: [142, 90, 110, 62, 68, 48, 44, 86, 102, 54], lineStyle: { color: '#6d8cff', width: 2 } },
-    { name: '2026', type: 'line', smooth: true, symbol: 'none', data: [168, 102, 128, 70, 76, 55, 50, 98, 120, 62], lineStyle: { color: '#4a62e7', width: 2 }, areaStyle: { color: 'rgba(74,98,231,.08)' } },
+    { name: '2024', type: 'line', smooth: true, symbol: 'none', data: [120, 82, 96, 54, 60, 42, 38, 76, 88, 46], lineStyle: { color: '#cfd6df', width: 2 } },
+    { name: '2025', type: 'line', smooth: true, symbol: 'none', data: [142, 90, 110, 62, 68, 48, 44, 86, 102, 54], lineStyle: { color: '#1652B8', width: 2 } },
+    { name: '2026', type: 'line', smooth: true, symbol: 'none', data: [168, 102, 128, 70, 76, 55, 50, 98, 120, 62], lineStyle: { color: '#1652B8', width: 2 }, areaStyle: { color: 'rgba(74,98,231,.08)' } },
   ],
 };
 
@@ -259,13 +259,13 @@ const companyTrendOption = {
   grid: { left: 48, right: 18, top: 20, bottom: 26 },
   xAxis: {
     type: 'category', data: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月'],
-    axisLabel: { fontSize: 10, color: '#98a2b3' }, axisLine: { lineStyle: { color: '#e4e7ec' } }, axisTick: { show: false },
+    axisLabel: { fontSize: 10, color: '#657384' }, axisLine: { lineStyle: { color: '#F2F4F7' } }, axisTick: { show: false },
   },
-  yAxis: { type: 'value', axisLabel: { fontSize: 10, color: '#98a2b3' }, splitLine: { lineStyle: { color: '#f2f4f7', type: 'dashed' } } },
+  yAxis: { type: 'value', axisLabel: { fontSize: 10, color: '#657384' }, splitLine: { lineStyle: { color: '#F2F4F7', type: 'dashed' } } },
   series: [{
     type: 'line', smooth: true, symbol: 'circle', symbolSize: 4,
     data: [1280, 1520, 1860, 2100, 2380, 2620, 2940, 3180, 3460, 3690, 3920],
-    lineStyle: { color: '#52c7b8', width: 2 }, itemStyle: { color: '#52c7b8' },
+    lineStyle: { color: '#1652B8', width: 2 }, itemStyle: { color: '#1652B8' },
     areaStyle: {
       color: {
         type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
@@ -279,43 +279,43 @@ const companyTrendOption = {
 <style scoped>
 .favorites { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
 .fav-item {
-  position: relative; display: flex; align-items: center; gap: 7px; border: 1px solid #e4e9f5;
-  border-radius: 4px; padding: 7px 12px; font-size: 12.5px; color: #4b5563; cursor: pointer;
-  background: #fafbff;
+  position: relative; display: flex; align-items: center; gap: 7px; border: 1px solid #F2F4F7;
+  border-radius: 4px; padding: 7px 12px; font-size: 12.5px; color: #657384; cursor: pointer;
+  background: #F2F4F7;
 }
-.fav-item:hover { border-color: #c3cdfa; color: #4a62e7; }
-.fav-icon { color: #4a62e7; }
-.fav-close { font-size: 9px; color: #b0b7c6; }
+.fav-item:hover { border-color: #F2F4F7; color: #1652B8; }
+.fav-icon { color: #1652B8; }
+.fav-close { font-size: 9px; color: #657384; }
 .fav-add {
-  display: inline-flex; align-items: center; gap: 6px; border: 1px dashed #c9d2e3; border-radius: 4px;
-  padding: 7px 16px; font-size: 12.5px; color: #667085; cursor: pointer; background: #fff;
+  display: inline-flex; align-items: center; gap: 6px; border: 1px dashed #cfd6df; border-radius: 4px;
+  padding: 7px 16px; font-size: 12.5px; color: #657384; cursor: pointer; background: #fff;
 }
-.fav-add:hover { color: #4a62e7; border-color: #4a62e7; }
+.fav-add:hover { color: #1652B8; border-color: #1652B8; }
 .city-query {
   background: #fff; border-radius: 8px; padding: 14px 16px; display: flex; justify-content: center;
   gap: 10px; margin-bottom: 14px;
 }
 .home-stats { display: grid; grid-template-columns: 1.1fr 1fr 1fr; gap: 14px; margin-bottom: 14px; }
 .home-stat { background: #fff; border-radius: 8px; padding: 16px 18px; min-height: 178px; }
-.hs-title { font-size: 13px; color: #5f6776; }
-.hs-value { font-size: 25px; font-weight: 700; color: #4a62e7; margin: 9px 0 10px; }
-.hs-progress { height: 10px; border-radius: 5px; background: #eef0f5; overflow: hidden; margin: 18px 0 20px; }
-.hs-progress span { display: block; height: 100%; border-radius: 5px; background: linear-gradient(90deg, #4a62e7, #52d3c2); }
+.hs-title { font-size: 13px; color: #657384; }
+.hs-value { font-size: 25px; font-weight: 700; color: #1652B8; margin: 9px 0 10px; }
+.hs-progress { height: 10px; border-radius: 5px; background: #F2F4F7; overflow: hidden; margin: 18px 0 20px; }
+.hs-progress span { display: block; height: 100%; border-radius: 5px; background: linear-gradient(90deg, #1652B8, #1652B8); }
 .hs-mini-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-.hs-mini-row em { font-style: normal; font-size: 11px; color: #8b93a7; display: block; margin-bottom: 3px; }
-.hs-mini-row b { font-size: 16px; font-weight: 600; color: #344054; }
+.hs-mini-row em { font-style: normal; font-size: 11px; color: #657384; display: block; margin-bottom: 3px; }
+.hs-mini-row b { font-size: 16px; font-weight: 600; color: #657384; }
 .hot-wrap { display: flex; gap: 24px; }
 .hot-chart { flex: 1; min-width: 0; }
-.hot-rank { width: 300px; flex-shrink: 0; border-left: 1px solid #f1f3f8; padding-left: 22px; }
-.hot-rank-title { font-size: 13px; font-weight: 600; margin: 6px 0 18px; color: #344054; }
+.hot-rank { width: 300px; flex-shrink: 0; border-left: 1px solid #F2F4F7; padding-left: 22px; }
+.hot-rank-title { font-size: 13px; font-weight: 600; margin: 6px 0 18px; color: #657384; }
 .fav-picker { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 .fav-pick-item {
   position: relative; display: flex; align-items: center; gap: 8px; padding: 11px 12px;
-  border: 1px solid #e7eaf3; border-radius: 6px; cursor: pointer; color: #4b5563; font-size: 12.5px;
+  border: 1px solid #F2F4F7; border-radius: 6px; cursor: pointer; color: #657384; font-size: 12.5px;
 }
-.fav-pick-item:hover { border-color: #b7c3f6; }
-.fav-pick-item.selected { border-color: #4a62e7; background: #f5f8ff; color: #4a62e7; }
-.pick-check { margin-left: auto; color: #4a62e7; }
+.fav-pick-item:hover { border-color: #cfd6df; }
+.fav-pick-item.selected { border-color: #1652B8; background: #F2F4F7; color: #1652B8; }
+.pick-check { margin-left: auto; color: #1652B8; }
 @media (max-width: 1400px) {
   .home-stats { grid-template-columns: 1fr 1fr; }
   .hot-wrap { flex-direction: column; }

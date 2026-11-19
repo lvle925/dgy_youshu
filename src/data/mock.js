@@ -536,14 +536,14 @@ export const supplyChainNodes = [
 ];
 
 export const mapMarkers = [
-  { id: 'MM1', name: '临港新片区生命蓝湾', type: '特色园区', x: 78, y: 74, enterprises: 386, clues: 26 },
-  { id: 'MM2', name: '张江人工智能岛', type: '特色园区', x: 64, y: 52, enterprises: 132, clues: 42 },
-  { id: 'MM3', name: '漕河泾科技绿洲', type: '综合园区', x: 44, y: 48, enterprises: 528, clues: 38 },
-  { id: 'MM4', name: '嘉定氢能港', type: '特色园区', x: 28, y: 26, enterprises: 96, clues: 19 },
-  { id: 'MM5', name: '杨浦长阳创谷', type: '综合园区', x: 52, y: 34, enterprises: 312, clues: 24 },
-  { id: 'MM6', name: 'G60科创云廊', type: '特色园区', x: 20, y: 62, enterprises: 286, clues: 21 },
-  { id: 'MM7', name: '东方美谷', type: '特色园区', x: 70, y: 84, enterprises: 178, clues: 12 },
-  { id: 'MM8', name: '金桥5G产业园', type: '特色园区', x: 72, y: 44, enterprises: 198, clues: 17 },
+  { id: 'MM1', name: '临港新片区生命蓝湾', type: '特色园区', district: '浦东新区', industry: '生物医药', clueTypes: ['研发中心', '新设总部'], lng: 121.8186, lat: 30.9464, x: 78, y: 74, enterprises: 386, clues: 26 },
+  { id: 'MM2', name: '张江人工智能岛', type: '特色园区', district: '浦东新区', industry: '人工智能', clueTypes: ['增资扩产', '研发中心'], lng: 121.6025, lat: 31.2041, x: 64, y: 52, enterprises: 132, clues: 42 },
+  { id: 'MM3', name: '漕河泾科技绿洲', type: '综合园区', district: '徐汇区', industry: '软件信息', clueTypes: ['增资扩产', '迁移选址'], lng: 121.4077, lat: 31.1704, x: 44, y: 48, enterprises: 528, clues: 38 },
+  { id: 'MM4', name: '嘉定氢能港', type: '特色园区', district: '嘉定区', industry: '新能源', clueTypes: ['新设总部', '研发中心'], lng: 121.2654, lat: 31.3750, x: 28, y: 26, enterprises: 96, clues: 19 },
+  { id: 'MM5', name: '杨浦长阳创谷', type: '综合园区', district: '杨浦区', industry: '数字经济', clueTypes: ['增资扩产', '新设总部'], lng: 121.5362, lat: 31.2654, x: 52, y: 34, enterprises: 312, clues: 24 },
+  { id: 'MM6', name: 'G60科创云廊', type: '特色园区', district: '松江区', industry: '智能制造', clueTypes: ['增资扩产', '迁移选址'], lng: 121.2342, lat: 31.0258, x: 20, y: 62, enterprises: 286, clues: 21 },
+  { id: 'MM7', name: '东方美谷', type: '特色园区', district: '奉贤区', industry: '生命健康', clueTypes: ['新设总部'], lng: 121.5724, lat: 30.9149, x: 70, y: 84, enterprises: 178, clues: 12 },
+  { id: 'MM8', name: '金桥5G产业园', type: '特色园区', district: '浦东新区', industry: '高端装备', clueTypes: ['增资扩产'], lng: 121.6074, lat: 31.2534, x: 72, y: 44, enterprises: 198, clues: 17 },
 ];
 
 export const campusList = [

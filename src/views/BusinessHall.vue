@@ -224,65 +224,65 @@ function doDelete() {
 }
 const industryPie = {
   tooltip: { trigger: 'item' },
-  legend: { bottom: 0, icon: 'circle', itemWidth: 8, itemHeight: 8, textStyle: { fontSize: 11, color: '#667085' } },
+  legend: { bottom: 0, icon: 'circle', itemWidth: 8, itemHeight: 8, textStyle: { fontSize: 11, color: '#657384' } },
   series: [{
     type: 'pie', radius: ['42%', '68%'], center: ['50%', '44%'], label: { show: false },
     data: [
-      { value: 38, name: '装备制造', itemStyle: { color: '#4a62e7' } },
-      { value: 26, name: '新材料', itemStyle: { color: '#52c7b8' } },
-      { value: 18, name: '石油化工', itemStyle: { color: '#8b5cf6' } },
-      { value: 12, name: '生命健康', itemStyle: { color: '#f5a623' } },
-      { value: 6, name: '新能源', itemStyle: { color: '#94a3b8' } },
+      { value: 38, name: '装备制造', itemStyle: { color: '#1652B8' } },
+      { value: 26, name: '新材料', itemStyle: { color: '#1652B8' } },
+      { value: 18, name: '石油化工', itemStyle: { color: '#1652B8' } },
+      { value: 12, name: '生命健康', itemStyle: { color: '#1652B8' } },
+      { value: 6, name: '新能源', itemStyle: { color: '#657384' } },
     ],
   }],
 };
 const scoreBar = {
   grid: { left: 36, right: 18, top: 20, bottom: 26 },
   tooltip: { trigger: 'axis' },
-  xAxis: { type: 'category', data: ['60-70', '70-80', '80-85', '85-90', '90-95', '95+'], axisLabel: { fontSize: 10, color: '#98a2b3' }, axisLine: { lineStyle: { color: '#e4e7ec' } }, axisTick: { show: false } },
-  yAxis: { type: 'value', axisLabel: { fontSize: 10, color: '#98a2b3' }, splitLine: { lineStyle: { color: '#f2f4f7', type: 'dashed' } } },
-  series: [{ type: 'bar', barWidth: 22, data: [46, 128, 210, 286, 198, 132], itemStyle: { color: '#4a62e7', borderRadius: [3, 3, 0, 0] } }],
+  xAxis: { type: 'category', data: ['60-70', '70-80', '80-85', '85-90', '90-95', '95+'], axisLabel: { fontSize: 10, color: '#657384' }, axisLine: { lineStyle: { color: '#F2F4F7' } }, axisTick: { show: false } },
+  yAxis: { type: 'value', axisLabel: { fontSize: 10, color: '#657384' }, splitLine: { lineStyle: { color: '#F2F4F7', type: 'dashed' } } },
+  series: [{ type: 'bar', barWidth: 22, data: [46, 128, 210, 286, 198, 132], itemStyle: { color: '#1652B8', borderRadius: [3, 3, 0, 0] } }],
 };
 const ruleBar = {
   grid: { left: 100, right: 20, top: 10, bottom: 20 },
   tooltip: { trigger: 'axis' },
-  xAxis: { type: 'value', axisLabel: { fontSize: 10, color: '#98a2b3' }, splitLine: { lineStyle: { color: '#f2f4f7', type: 'dashed' } } },
-  yAxis: { type: 'category', data: ['领导考察', '项目考察', '链主客户', '融资成功', '股东变更', '对外投资'], axisLabel: { fontSize: 10, color: '#667085' }, axisLine: { show: false }, axisTick: { show: false } },
-  series: [{ type: 'bar', barWidth: 12, data: [42, 76, 108, 146, 182, 236], itemStyle: { color: '#52c7b8', borderRadius: [0, 5, 5, 0] } }],
+  xAxis: { type: 'value', axisLabel: { fontSize: 10, color: '#657384' }, splitLine: { lineStyle: { color: '#F2F4F7', type: 'dashed' } } },
+  yAxis: { type: 'category', data: ['领导考察', '项目考察', '链主客户', '融资成功', '股东变更', '对外投资'], axisLabel: { fontSize: 10, color: '#657384' }, axisLine: { show: false }, axisTick: { show: false } },
+  series: [{ type: 'bar', barWidth: 12, data: [42, 76, 108, 146, 182, 236], itemStyle: { color: '#1652B8', borderRadius: [0, 5, 5, 0] } }],
 };
 const quarterLine = {
   grid: { left: 40, right: 20, top: 20, bottom: 26 },
   tooltip: { trigger: 'axis' },
-  xAxis: { type: 'category', data: ['第1季', '第2季', '第3季', '第4季'], axisLabel: { fontSize: 10, color: '#98a2b3' }, axisLine: { lineStyle: { color: '#e4e7ec' } }, axisTick: { show: false } },
-  yAxis: { type: 'value', axisLabel: { fontSize: 10, color: '#98a2b3' }, splitLine: { lineStyle: { color: '#f2f4f7', type: 'dashed' } } },
-  series: [{ type: 'line', smooth: true, symbol: 'circle', symbolSize: 5, data: [186, 265, 318, 231], lineStyle: { color: '#8b5cf6', width: 2 }, itemStyle: { color: '#8b5cf6' }, areaStyle: { color: 'rgba(139,92,246,.1)' } }],
+  xAxis: { type: 'category', data: ['第1季', '第2季', '第3季', '第4季'], axisLabel: { fontSize: 10, color: '#657384' }, axisLine: { lineStyle: { color: '#F2F4F7' } }, axisTick: { show: false } },
+  yAxis: { type: 'value', axisLabel: { fontSize: 10, color: '#657384' }, splitLine: { lineStyle: { color: '#F2F4F7', type: 'dashed' } } },
+  series: [{ type: 'line', smooth: true, symbol: 'circle', symbolSize: 5, data: [186, 265, 318, 231], lineStyle: { color: '#1652B8', width: 2 }, itemStyle: { color: '#1652B8' }, areaStyle: { color: 'rgba(139,92,246,.1)' } }],
 };
 </script>
 
 <style scoped>
 .model-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
-.model-title { font-size: 18px; font-weight: 600; color: #1f2937; }
-.model-meta { display: flex; gap: 28px; flex-wrap: wrap; margin-top: 10px; font-size: 12.5px; color: #667085; }
-.rule-bar { width: 3px; height: 14px; background: #4a62e7; border-radius: 2px; display: inline-block; }
+.model-title { font-size: 18px; font-weight: 600; color: #303b49; }
+.model-meta { display: flex; gap: 28px; flex-wrap: wrap; margin-top: 10px; font-size: 12.5px; color: #657384; }
+.rule-bar { width: 3px; height: 14px; background: #1652B8; border-radius: 2px; display: inline-block; }
 .rule-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-.rule-item { display: flex; gap: 8px; align-items: flex-start; border: 1px solid #eef0f5; border-radius: 5px; padding: 9px 10px; font-size: 12px; color: #4b5563; line-height: 1.6; background: #fbfcff; }
-.rule-idx { width: 17px; height: 17px; border-radius: 50%; border: 1px solid #c7d2fe; color: #4a62e7; font-size: 10px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
-.filter-board { background: #fafbfe; border: 1px solid #f1f3f8; border-radius: 6px; padding: 10px 12px; margin-bottom: 14px; }
-.more-filter-panel { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 8px; padding-top: 10px; border-top: 1px dashed #e9ecf2; font-size: 12px; color: #667085; }
+.rule-item { display: flex; gap: 8px; align-items: flex-start; border: 1px solid #F2F4F7; border-radius: 5px; padding: 9px 10px; font-size: 12px; color: #657384; line-height: 1.6; background: #F2F4F7; }
+.rule-idx { width: 17px; height: 17px; border-radius: 50%; border: 1px solid #F2F4F7; color: #1652B8; font-size: 10px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+.filter-board { background: #F2F4F7; border: 1px solid #F2F4F7; border-radius: 6px; padding: 10px 12px; margin-bottom: 14px; }
+.more-filter-panel { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 8px; padding-top: 10px; border-top: 1px dashed #F2F4F7; font-size: 12px; color: #657384; }
 .match-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
-.match-card { border: 1px solid #e8ebf2; border-radius: 8px; padding: 15px; cursor: pointer; transition: all .16s; }
-.match-card:hover { border-color: #b7c3f6; box-shadow: 0 8px 20px rgba(20, 37, 100, .07); }
+.match-card { border: 1px solid #F2F4F7; border-radius: 8px; padding: 15px; cursor: pointer; transition: all .16s; }
+.match-card:hover { border-color: #cfd6df; box-shadow: 0 8px 20px rgba(20, 37, 100, .07); }
 .match-card-head { display: flex; align-items: center; gap: 9px; }
-.match-avatar { width: 32px; height: 32px; border-radius: 6px; background: #eef1fe; color: #4a62e7; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
-.match-name { font-size: 13px; font-weight: 600; color: #344054; line-height: 1.4; flex: 1; }
-.match-score { color: #4a62e7; font-size: 22px; font-weight: 700; line-height: 1; flex-shrink: 0; }
-.match-score span { font-size: 10px; font-weight: 400; color: #98a2b3; margin-left: 2px; }
+.match-avatar { width: 32px; height: 32px; border-radius: 6px; background: #F2F4F7; color: #1652B8; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
+.match-name { font-size: 13px; font-weight: 600; color: #657384; line-height: 1.4; flex: 1; }
+.match-score { color: #1652B8; font-size: 22px; font-weight: 700; line-height: 1; flex-shrink: 0; }
+.match-score span { font-size: 10px; font-weight: 400; color: #657384; margin-left: 2px; }
 .match-tags { display: flex; gap: 5px; flex-wrap: wrap; margin: 10px 0; min-height: 22px; }
-.match-info { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 11.5px; color: #667085; }
-.match-foot { display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed #eef0f5; padding-top: 10px; margin-top: 12px; font-size: 11px; }
-.score-text { color: #4a62e7; font-weight: 600; }
+.match-info { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 11.5px; color: #657384; }
+.match-foot { display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed #F2F4F7; padding-top: 10px; margin-top: 12px; font-size: 11px; }
+.score-text { color: #1652B8; font-weight: 600; }
 .drawer-company { margin: 0 0 10px; font-size: 17px; line-height: 1.5; }
-.reason-text { font-size: 12.5px; color: #667085; line-height: 2; }
+.reason-text { font-size: 12.5px; color: #657384; line-height: 2; }
 .drawer-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
 @media (max-width: 1400px) { .rule-grid, .match-grid { grid-template-columns: repeat(2, 1fr); } }
 </style>

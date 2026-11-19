@@ -128,7 +128,8 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
+import { api } from '../api';
 import { useRoute } from 'vue-router';
 import { message } from 'ant-design-vue';
 import {
@@ -137,12 +138,14 @@ import {
 } from '@ant-design/icons-vue';
 import PageCard from '../components/PageCard.vue';
 import StatCard from '../components/StatCard.vue';
-import { policies, companies } from '../data/mock';
+import { companies } from '../data/mock';
 
 const msg = message;
 const route = useRoute();
-const policy = computed(() => policies.find((p) => p.id === route.params.id) || policies[0]);
-const relatedPolicies = computed(() => policies.filter((p) => p.id !== policy.value.id && p.type === policy.value.type).slice(0, 3).concat(policies.filter((p) => p.id !== policy.value.id).slice(0, 2)).slice(0, 4));
+const policies = ref([]);
+onMounted(async () => { try { policies.value = await api.list('policies'); } catch { msg.error('无法加载政策'); } });
+const policy = computed(() => policies.value.find((p) => p.id === route.params.id));
+const relatedPolicies = computed(() => policy.value ? policies.value.filter((p) => p.id !== policy.value.id && p.type === policy.value.type).slice(0, 4) : []);
 const companyColumns = [
   { title: '企业名称', key: 'name' },
   { title: '所属区', dataIndex: 'district', width: 100 },
@@ -154,26 +157,26 @@ const posterOpen = ref(false);
 </script>
 
 <style scoped>
-.detail-back { margin-bottom: 10px; font-size: 12.5px; color: #8b93a7; }
+.detail-back { margin-bottom: 10px; font-size: 12.5px; color: #657384; }
 .detail-hero { display: flex; justify-content: space-between; gap: 20px; align-items: flex-start; }
-.detail-title { font-size: 21px; font-weight: 600; line-height: 1.5; color: #1f2937; }
+.detail-title { font-size: 21px; font-weight: 600; line-height: 1.5; color: #303b49; }
 .detail-tags { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
-.detail-meta { display: flex; gap: 20px; flex-wrap: wrap; color: #667085; font-size: 12.5px; }
-.detail-meta .anticon { margin-right: 4px; color: #98a2b3; }
+.detail-meta { display: flex; gap: 20px; flex-wrap: wrap; color: #657384; font-size: 12.5px; }
+.detail-meta .anticon { margin-right: 4px; color: #657384; }
 .detail-actions { display: flex; gap: 8px; flex-shrink: 0; }
 .detail-layout { display: grid; grid-template-columns: 1fr 320px; gap: 14px; margin-top: 14px; }
-.article { font-size: 13px; color: #4b5563; line-height: 2; }
-.article h4 { font-size: 14px; color: #1f2937; margin: 18px 0 6px; }
+.article { font-size: 13px; color: #657384; line-height: 2; }
+.article h4 { font-size: 14px; color: #303b49; margin: 18px 0 6px; }
 .article ul { padding-left: 20px; margin: 6px 0; }
-.related-item { padding: 9px 0; border-bottom: 1px solid #f4f5f9; cursor: pointer; }
+.related-item { padding: 9px 0; border-bottom: 1px solid #F2F4F7; cursor: pointer; }
 .related-item:last-child { border-bottom: none; }
-.related-name { font-size: 12.5px; color: #344054; line-height: 1.6; }
-.related-name:hover { color: #4a62e7; }
-.related-meta { font-size: 11px; color: #98a2b3; margin-top: 3px; }
-.contact-line { font-size: 12.5px; color: #4b5563; padding: 6px 0; }
-.contact-line .anticon { color: #4a62e7; margin-right: 7px; }
+.related-name { font-size: 12.5px; color: #657384; line-height: 1.6; }
+.related-name:hover { color: #1652B8; }
+.related-meta { font-size: 11px; color: #657384; margin-top: 3px; }
+.contact-line { font-size: 12.5px; color: #657384; padding: 6px 0; }
+.contact-line .anticon { color: #1652B8; margin-right: 7px; }
 .poster-wrap { display: flex; flex-direction: column; align-items: center; gap: 16px; }
-.poster { width: 360px; min-height: 500px; border-radius: 12px; padding: 26px 24px; color: #fff; background: linear-gradient(155deg, #1b2a6b 0%, #344ec2 55%, #4a62e7 100%); position: relative; overflow: hidden; }
+.poster { width: 360px; min-height: 500px; border-radius: 12px; padding: 26px 24px; color: #fff; background: linear-gradient(155deg, #1652B8 0%, #1652B8 55%, #1652B8 100%); position: relative; overflow: hidden; }
 .poster-brand { font-size: 11px; color: rgba(255, 255, 255, .7); letter-spacing: 2px; }
 .poster-title { font-size: 22px; font-weight: 600; line-height: 1.5; margin: 26px 0 22px; }
 .poster-meta { display: grid; gap: 10px; font-size: 12px; }
@@ -184,6 +187,6 @@ const posterOpen = ref(false);
 .poster-summary { font-size: 14px; }
 .poster-foot { position: absolute; bottom: 24px; left: 24px; right: 24px; display: flex; gap: 12px; align-items: center; font-size: 11px; color: rgba(255, 255, 255, .78); line-height: 1.7; }
 .poster-foot span { color: rgba(255, 255, 255, .5); font-size: 10px; }
-.qr { width: 54px; height: 54px; border-radius: 4px; flex-shrink: 0; background: repeating-conic-gradient(#fff 0% 25%, #1b2a6b 0% 50%) 0 0 / 12px 12px; border: 3px solid #fff; }
+.qr { width: 54px; height: 54px; border-radius: 4px; flex-shrink: 0; background: repeating-conic-gradient(#fff 0% 25%, #1652B8 0% 50%) 0 0 / 12px 12px; border: 3px solid #fff; }
 @media (max-width: 1200px) { .detail-layout { grid-template-columns: 1fr; } }
 </style>

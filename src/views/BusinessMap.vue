@@ -2,7 +2,7 @@
   <div>
     <div class="page-head">
       <h2>商机地图</h2>
-      <p>以空间视角呈现园区载体、商机线索与产业分布，辅助精准招商决策</p>
+      <p>查看上海园区分布、企业规模与招商线索</p>
     </div>
     <div class="stat-row grid4" style="margin-bottom: 14px">
       <StatCard title="覆盖园区" value="15" unit="个" tone="info" />
@@ -45,8 +45,8 @@
               @click="selectMarker(m)"
             >
               <div class="mp-name">{{ m.name }}</div>
-              <div class="mp-meta">{{ m.type }} · {{ m.enterprises }} 家企业</div>
-              <div class="mp-clue"><ThunderboltOutlined /> {{ m.clues }} 条商机</div>
+              <div class="mp-meta">{{ m.district }} · {{ m.industry }}</div>
+              <div class="mp-clue">{{ m.enterprises.toLocaleString() }} 家企业 <span>·</span> {{ m.clues }} 条线索</div>
             </div>
           </div>
         </PageCard>
@@ -55,52 +55,57 @@
       <PageCard class="map-card">
         <div class="map-toolbar">
           <div class="map-legend">
-            <span><i class="dot blue"></i> 特色园区</span>
-            <span><i class="dot teal"></i> 综合园区</span>
-            <span><i class="dot red"></i> 高潜商机</span>
+            <span><i class="dot pin-featured"></i> 特色园区</span>
+            <span><i class="dot pin-general"></i> 综合园区</span>
+            <span class="map-source"><span class="map-live-indicator" :class="amapState"></span>{{ amapState === 'ready' ? '高德地图 · 演示点位' : amapState === 'loading' ? '正在加载地图' : '本地示意图' }}</span>
           </div>
           <div class="flex gap8">
-            <a-button size="small" @click="msg.info('地图已刷新（演示）')"><ReloadOutlined /> 刷新</a-button>
+            <a-button size="small" @click="refreshMap"><ReloadOutlined /> 重置视野</a-button>
             <a-button size="small" @click="mapFull = !mapFull">{{ mapFull ? '退出全屏' : '全屏查看' }}</a-button>
           </div>
         </div>
         <div class="map-canvas" :class="{ full: mapFull }">
-          <svg class="map-bg" viewBox="0 0 800 520" preserveAspectRatio="none">
-            <defs>
-              <linearGradient id="mapGrad" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0" stop-color="#eef3ff" />
-                <stop offset="1" stop-color="#e7f6f4" />
-              </linearGradient>
-            </defs>
-            <rect width="800" height="520" fill="url(#mapGrad)" />
-            <path d="M60 210 C140 120, 300 80, 420 120 C520 150, 560 90, 660 130 C740 165, 760 260, 700 320 C650 370, 690 440, 580 460 C460 480, 360 430, 250 460 C140 490, 40 400, 60 320 Z" fill="#fff" stroke="#c9d7f5" stroke-width="2" />
-            <path d="M120 260 C200 200, 300 220, 340 280 C380 340, 480 300, 560 250" fill="none" stroke="#cfe0ff" stroke-width="9" stroke-linecap="round" />
-            <path d="M200 180 C280 260, 420 220, 500 340 C540 400, 620 400, 660 360" fill="none" stroke="#d9f0ec" stroke-width="7" stroke-linecap="round" />
-            <path d="M100 340 L700 340" stroke="#e2eaf8" stroke-width="1" stroke-dasharray="4 4" />
-            <path d="M400 100 L400 470" stroke="#e2eaf8" stroke-width="1" stroke-dasharray="4 4" />
-            <text x="80" y="150" fill="#9db4d9" font-size="11">嘉定区</text>
-            <text x="330" y="110" fill="#9db4d9" font-size="11">杨浦区</text>
-            <text x="470" y="200" fill="#9db4d9" font-size="11">浦东新区</text>
-            <text x="160" y="430" fill="#9db4d9" font-size="11">松江区</text>
-            <text x="590" y="450" fill="#9db4d9" font-size="11">奉贤区</text>
-          </svg>
-          <div
-            v-for="m in filteredMarkers"
-            :key="m.id"
-            class="map-marker"
-            :class="{ active: current?.id === m.id }"
-            :style="{ left: m.x + '%', top: m.y + '%' }"
-            @click="selectMarker(m)"
-          >
-            <span class="marker-pulse"></span>
-            <span class="marker-dot"><EnvironmentOutlined /></span>
-            <span class="marker-label">{{ m.name }}</span>
+          <div ref="mapRoot" class="map-live"></div>
+          <div v-if="amapState !== 'ready'" class="map-fallback">
+            <svg class="map-bg" viewBox="0 0 800 520" preserveAspectRatio="none" aria-hidden="true">
+              <rect width="800" height="520" fill="#F2F4F7" />
+              <path d="M60 210 C140 120, 300 80, 420 120 C520 150, 560 90, 660 130 C740 165, 760 260, 700 320 C650 370, 690 440, 580 460 C460 480, 360 430, 250 460 C140 490, 40 400, 60 320 Z" fill="#F2F4F7" stroke="#B7CDE9" stroke-width="2" />
+              <path d="M120 260 C200 200, 300 220, 340 280 C380 340, 480 300, 560 250" fill="none" stroke="#B7CDE9" stroke-width="8" stroke-linecap="round" />
+              <path d="M200 180 C280 260, 420 220, 500 340 C540 400, 620 400, 660 360" fill="none" stroke="#B7CDE9" stroke-width="7" stroke-linecap="round" />
+              <path d="M100 340 L700 340" stroke="#B7CDE9" stroke-width="1" stroke-dasharray="4 5" />
+              <path d="M400 100 L400 470" stroke="#B7CDE9" stroke-width="1" stroke-dasharray="4 5" />
+              <text x="80" y="150" fill="#777168" font-size="13">嘉定区</text>
+              <text x="330" y="110" fill="#777168" font-size="13">杨浦区</text>
+              <text x="470" y="200" fill="#777168" font-size="13">浦东新区</text>
+              <text x="160" y="430" fill="#777168" font-size="13">松江区</text>
+              <text x="590" y="450" fill="#777168" font-size="13">奉贤区</text>
+            </svg>
+            <div
+              v-for="m in filteredMarkers"
+              :key="m.id"
+              class="map-marker"
+              :class="[{ active: current?.id === m.id }, m.type === '特色园区' ? 'featured' : 'general']"
+              :style="{ left: m.x + '%', top: m.y + '%' }"
+              @click="selectMarker(m)"
+            >
+              <span class="marker-dot"><EnvironmentOutlined /></span>
+              <span class="marker-label">{{ m.name }}</span>
+            </div>
+            <div v-if="amapState === 'missing'" class="map-setup-note">
+              <strong>地图服务尚未配置</strong>
+              <span>接入高德地图后显示实时底图；当前为园区点位示意图。</span>
+            </div>
+            <div v-else-if="amapState === 'error'" class="map-setup-note map-error-note">
+              <strong>地图暂时无法加载</strong>
+              <span>请检查网络及高德地图配置后重试。</span>
+              <a-button size="small" @click="initAmap">重试</a-button>
+            </div>
           </div>
 
           <div v-if="current" class="map-popup">
-            <div class="popup-close" @click="current = null"><CloseOutlined /></div>
+            <button class="popup-close" aria-label="关闭园区详情" @click="current = null"><CloseOutlined /></button>
             <div class="popup-title">{{ current.name }}</div>
-            <div class="popup-tag">{{ current.type }}</div>
+            <div class="popup-tag">{{ current.district }} · {{ current.industry }}</div>
             <div class="popup-stats">
               <div><b>{{ current.enterprises }}</b><span>入驻企业</span></div>
               <div><b>{{ current.clues }}</b><span>在库商机</span></div>
@@ -129,14 +134,13 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue';
-import { message } from 'ant-design-vue';
-import { EnvironmentOutlined, ReloadOutlined, ThunderboltOutlined, CloseOutlined } from '@ant-design/icons-vue';
+import { computed, onBeforeUnmount, onMounted, nextTick, ref, shallowRef, watch } from 'vue';
+import AMapLoader from '@amap/amap-jsapi-loader';
+import { EnvironmentOutlined, ReloadOutlined, CloseOutlined } from '@ant-design/icons-vue';
 import PageCard from '../components/PageCard.vue';
 import StatCard from '../components/StatCard.vue';
 import { mapMarkers, districts, industriesShort, clues } from '../data/mock';
 
-const msg = message;
 const district = ref('');
 const industry = ref('');
 const clueTypes = ref(['增资扩产', '新设总部']);
@@ -144,54 +148,199 @@ const keyword = ref('');
 const current = ref(mapMarkers[0]);
 const clueDrawer = ref(false);
 const mapFull = ref(false);
+const amapState = ref('loading');
+const mapRoot = ref(null);
+const mapInstance = shallowRef(null);
+const amapMarkers = shallowRef([]);
+const markerPins = new Map();
+let markerSyncFrame = 0;
+const amapKey = (import.meta.env.VITE_AMAP_KEY || '').trim();
+const amapSecurityCode = (import.meta.env.VITE_AMAP_SECURITY_CODE || '').trim();
 const filteredMarkers = computed(() => mapMarkers.filter((m) => {
-  if (keyword.value && !m.name.includes(keyword.value)) return false;
+  const query = keyword.value.trim().toLowerCase();
+  if (query && !`${m.name} ${m.district} ${m.industry}`.toLowerCase().includes(query)) return false;
+  if (district.value && m.district !== district.value) return false;
+  if (industry.value && m.industry !== industry.value) return false;
+  if (clueTypes.value.length && !m.clueTypes.some((type) => clueTypes.value.includes(type))) return false;
   return true;
 }));
 const mapClues = computed(() => clues.slice(0, 4));
-function selectMarker(m) {
+
+function selectMarker(m, focusMap = true) {
+  if (!m) return;
   current.value = m;
+  updateActiveMarker();
+  if (focusMap && mapInstance.value) {
+    mapInstance.value.setZoomAndCenter(Math.max(11, mapInstance.value.getZoom()), [m.lng, m.lat]);
+  }
 }
+
+function syncAmapMarkers(fitView = false) {
+  const map = mapInstance.value;
+  const AMap = window.AMap;
+  if (!map || !AMap) return;
+  const markers = filteredMarkers.value.map((item) => {
+    const pin = document.createElement('div');
+    pin.className = `amap-park-pin ${item.type === '特色园区' ? 'featured' : 'general'}${current.value?.id === item.id ? ' active' : ''}`;
+    pin.setAttribute('role', 'img');
+    pin.setAttribute('aria-label', item.name);
+    pin.innerHTML = '<span></span>';
+    const marker = new AMap.Marker({
+      position: [item.lng, item.lat],
+      content: pin,
+      offset: new AMap.Pixel(0, -3),
+      title: item.name,
+      topWhenClick: true,
+    });
+    marker.on('click', () => selectMarker(item));
+    return marker;
+  });
+  amapMarkers.value.forEach((marker) => marker.setMap(null));
+  markerPins.clear();
+  amapMarkers.value = markers;
+  markers.forEach((marker, index) => markerPins.set(filteredMarkers.value[index].id, marker.getContent()));
+  if (markers.length) {
+    map.add(markers);
+    if (fitView && markers.length > 1) map.setFitView(markers, false, [54, 54, 54, 54], 10);
+    else if (fitView) map.setZoomAndCenter(11, [filteredMarkers.value[0].lng, filteredMarkers.value[0].lat]);
+  }
+}
+
+function updateActiveMarker() {
+  markerPins.forEach((pin, id) => pin.classList.toggle('active', current.value?.id === id));
+}
+
+function scheduleMarkerSync(fitView = false) {
+  cancelAnimationFrame(markerSyncFrame);
+  markerSyncFrame = requestAnimationFrame(() => syncAmapMarkers(fitView));
+}
+
+async function initAmap() {
+  if (!amapKey || !amapSecurityCode) {
+    amapState.value = 'missing';
+    return;
+  }
+  amapState.value = 'loading';
+  window._AMapSecurityConfig = { securityJsCode: amapSecurityCode };
+  try {
+    const AMap = await AMapLoader.load({
+      key: amapKey,
+      version: '2.0',
+      plugins: ['AMap.Scale'],
+    });
+    if (!mapRoot.value) return;
+    mapInstance.value = new AMap.Map(mapRoot.value, {
+      viewMode: '2D',
+      zoom: 9.5,
+      center: [121.4737, 31.2304],
+      resizeEnable: true,
+    });
+    mapInstance.value.addControl(new AMap.Scale());
+    amapState.value = 'ready';
+    await nextTick();
+    syncAmapMarkers(true);
+  } catch {
+    amapState.value = 'error';
+  }
+}
+
+function refreshMap() {
+  if (!mapInstance.value) {
+    selectMarker(current.value || filteredMarkers.value[0]);
+    return;
+  }
+  scheduleMarkerSync(true);
+}
+
+watch(filteredMarkers, (markers) => {
+  if (!markers.length) current.value = null;
+  else if (!markers.some((item) => item.id === current.value?.id)) current.value = markers[0];
+}, { deep: true });
+watch(filteredMarkers, () => scheduleMarkerSync(true));
+watch(current, updateActiveMarker);
+watch(mapFull, () => nextTick(() => mapInstance.value?.resize()));
+onMounted(initAmap);
+onBeforeUnmount(() => { cancelAnimationFrame(markerSyncFrame); amapMarkers.value.forEach((marker) => marker.setMap(null)); markerPins.clear(); mapInstance.value?.destroy(); });
 </script>
 
 <style scoped>
-.map-layout { display: grid; grid-template-columns: 300px 1fr; gap: 14px; align-items: start; }
-.map-side .page-card { margin-bottom: 14px; }
-.map-filter { display: flex; flex-direction: column; gap: 7px; font-size: 12px; color: #667085; }
+.map-layout { display: grid; grid-template-columns: minmax(256px, 280px) minmax(0, 1fr); gap: 14px; align-items: stretch; }
+.map-side { display:flex; flex-direction:column; gap:12px; min-width:0; }
+.map-side .page-card { margin:0; }
+.map-side .page-card:last-child { flex:1; min-height:0; }
+.map-filter { display: flex; flex-direction: column; gap: 9px; font-size: 13px; color: #555149; }
 .map-filter label { margin-top: 3px; }
-.map-park-list { max-height: 420px; overflow-y: auto; margin: -4px -4px 0; }
-.map-park-item { padding: 10px; border-radius: 6px; cursor: pointer; border: 1px solid transparent; }
-.map-park-item:hover { background: #f7f9fe; }
-.map-park-item.active { background: #f2f6ff; border-color: #c9d6fb; }
-.mp-name { font-size: 12.5px; color: #344054; font-weight: 500; line-height: 1.5; }
-.mp-meta { font-size: 11px; color: #98a2b3; margin-top: 3px; }
-.mp-clue { font-size: 11px; color: #e08a2b; margin-top: 5px; }
-.map-card { padding: 0; overflow: hidden; }
-.map-toolbar { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid #f1f3f8; }
-.map-legend { display: flex; gap: 16px; font-size: 11.5px; color: #667085; }
-.map-legend .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; }
-.dot.blue { background: #4a62e7; } .dot.teal { background: #52c7b8; } .dot.red { background: #e04a4a; }
-.map-canvas { position: relative; height: 620px; overflow: hidden; }
-.map-canvas.full { position: fixed; inset: 0; z-index: 2000; height: 100vh; background: #eef3ff; }
-.map-bg { width: 100%; height: 100%; }
+.map-park-list { height: 280px; overflow-y: auto; margin: 0 -4px -4px; padding-right:2px; }
+.map-park-item { padding: 12px 11px; border-radius: 7px; cursor: pointer; border: 1px solid transparent; }
+.map-park-item:hover { background: #F2F4F7; }
+.map-park-item.active { background: #F2F4F7; border-color: #B7CDE9; }
+.mp-name { font-size: 13.5px; color: #303b49; font-weight: 600; line-height: 1.5; }
+.mp-meta { font-size: 12px; color: #6f6a62; margin-top: 4px; }
+.mp-clue { font-size: 12px; color: #1652B8; margin-top: 5px; }
+.mp-clue span { margin-inline: 4px; color:#aaa39a; }
+.map-card { display:flex; min-width:0; flex-direction:column; padding: 0; overflow: hidden; }
+.map-toolbar { display: flex; min-height:54px; justify-content: space-between; align-items: center; gap:12px; padding: 10px 16px; border-bottom: 1px solid #F2F4F7; }
+.map-legend { display: flex; align-items:center; flex-wrap:wrap; gap: 14px; font-size: 12px; color: #5f5a52; }
+.map-legend .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+.dot.pin-featured { background: #1652B8; } .dot.pin-general { background: #647B96; }
+.map-source { display:inline-flex; align-items:center; gap:6px; margin-left:4px; padding-left:13px; border-left:1px solid #F2F4F7; color:#69645c; }
+.map-live-indicator { width:7px; height:7px; border-radius:50%; background:#1652B8; }
+.map-live-indicator.ready { background:#5d806d; }
+.map-live-indicator.error { background:#a75943; }
+.map-canvas { position: relative; flex:1; min-height:520px; height:clamp(520px, calc(var(--workspace-height, 900px) - 320px), 720px); overflow: hidden; isolation:isolate; }
+.map-canvas.full { position: fixed; inset: 0; z-index: 2000; height: 100vh; background: #F2F4F7; }
+.map-live,.map-fallback { position:absolute; inset:0; }
+.map-live { z-index:1; }
+.map-fallback { z-index:1; overflow:hidden; background:#F2F4F7; }
+.map-bg { display:block; width: 100%; height: 100%; }
 .map-marker { position: absolute; transform: translate(-50%, -100%); cursor: pointer; display: flex; flex-direction: column; align-items: center; z-index: 3; }
-.marker-dot { width: 28px; height: 28px; border-radius: 50% 50% 50% 0; background: #4a62e7; color: #fff; transform: rotate(-45deg); display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 8px rgba(74, 98, 231, .4); }
-.marker-dot .anticon { transform: rotate(45deg); font-size: 13px; }
-.marker-label { margin-top: 5px; font-size: 10.5px; color: #344054; background: rgba(255, 255, 255, .92); border-radius: 3px; padding: 1px 6px; white-space: nowrap; box-shadow: 0 1px 3px rgba(0, 0, 0, .08); }
-.marker-pulse { position: absolute; top: -6px; width: 40px; height: 40px; border-radius: 50%; background: rgba(74, 98, 231, .16); animation: pulse 2s infinite; }
-.map-marker.active .marker-dot { background: #e04a4a; box-shadow: 0 3px 10px rgba(224, 74, 74, .5); }
-.map-marker.active .marker-pulse { background: rgba(224, 74, 74, .16); }
-@keyframes pulse { 0% { transform: scale(.6); opacity: .9; } 100% { transform: scale(1.4); opacity: 0; } }
-.map-popup { position: absolute; right: 20px; bottom: 20px; width: 270px; background: #fff; border-radius: 8px; padding: 14px; box-shadow: 0 10px 30px rgba(16, 24, 40, .16); z-index: 6; }
-.popup-close { position: absolute; right: 10px; top: 8px; color: #98a2b3; cursor: pointer; font-size: 11px; }
-.popup-title { font-size: 13.5px; font-weight: 600; color: #344054; line-height: 1.5; padding-right: 14px; }
-.popup-tag { font-size: 11px; color: #4a62e7; margin: 4px 0 10px; }
-.popup-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; background: #f8fafd; border-radius: 6px; padding: 9px; margin-bottom: 10px; }
+.marker-dot { width: 27px; height: 27px; border:2px solid rgba(255,255,255,.95); border-radius: 50% 50% 50% 0; background: #1652B8; color: #fff; transform: rotate(-45deg); display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(43,37,31,.24); }
+.map-marker.general .marker-dot { background:#647B96; }
+.marker-dot .anticon { transform: rotate(45deg); font-size: 12px; }
+.marker-label { margin-top: 5px; font-size: 12px; font-weight:600; color: #303b49; background: rgba(255, 254, 250, .97); border:1px solid rgba(220,214,202,.9); border-radius: 4px; padding: 2px 7px; white-space: nowrap; box-shadow: 0 1px 3px rgba(34,31,27,.1); }
+.map-marker.active .marker-dot { background: #1652B8; box-shadow: 0 0 0 4px rgba(22,82,184,.18),0 2px 6px rgba(43,37,31,.22); }
+:global(.amap-park-pin) { position:relative; width:22px; height:22px; border:3px solid #fff; border-radius:50%; background:#1652B8; box-shadow:0 2px 7px rgba(42,37,31,.35); cursor:pointer; }
+:global(.amap-park-pin.featured) { background:#1652B8!important; }
+:global(.amap-park-pin.general) { background:#647B96; }
+:global(.amap-park-pin)::after { position:absolute; inset:4px; border-radius:50%; background:#fff; content:""; }
+:global(.amap-park-pin.active) { outline:4px solid rgba(22,82,184,.20); transform:scale(1.12); }
+.map-setup-note { position:absolute; z-index:4; left:18px; bottom:18px; display:flex; max-width:300px; flex-direction:column; gap:4px; padding:11px 14px; border:1px solid rgba(219,213,202,.92); border-radius:7px; background:rgba(255,254,250,.94); box-shadow:0 3px 12px rgba(39,35,30,.07); }
+.map-setup-note strong { color:#49443d; font-size:12px; }
+.map-setup-note span { color:#716c63; font-size:11.5px; }
+.map-error-note { border-color:#B7CDE9; }
+.map-popup { position: absolute; right: 18px; bottom: 18px; width: 292px; background: #F2F4F7; border:1px solid #F2F4F7; border-radius: 9px; padding: 16px; box-shadow: 0 8px 25px rgba(37,34,29,.16); z-index: 6; }
+.popup-close { position: absolute; display:grid; place-items:center; width:28px; height:28px; right: 8px; top: 8px; border:0; border-radius:5px; background:transparent; color: #817a70; cursor: pointer; font-size: 12px; }
+.popup-close:hover { background:#F2F4F7; color:#303b49; }
+.popup-title { font-size: 15px; font-weight: 650; color: #303b49; line-height: 1.5; padding-right: 22px; }
+.popup-tag { font-size: 12px; color: #1652B8; margin: 4px 0 12px; }
+.popup-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; background: #F2F4F7; border:1px solid #F2F4F7; border-radius: 6px; padding: 10px; margin-bottom: 12px; }
 .popup-stats div { text-align: center; }
-.popup-stats b { display: block; font-size: 15px; color: #344054; }
-.popup-stats span { font-size: 10px; color: #98a2b3; }
+.popup-stats b { display: block; font-size: 16px; color: #303b49; }
+.popup-stats span { font-size: 11px; color: #706a61; }
 .popup-actions { display: flex; gap: 8px; justify-content: flex-end; }
-.map-clue-item { border: 1px solid #eef0f5; border-radius: 6px; padding: 12px; margin-bottom: 10px; }
-.map-clue-desc { font-size: 12.5px; color: #4b5563; margin: 8px 0 5px; line-height: 1.7; }
-.map-clue-meta { font-size: 11px; color: #98a2b3; }
+.map-clue-item { border: 1px solid #F2F4F7; border-radius: 7px; padding: 13px; margin-bottom: 10px; }
+.map-clue-desc { font-size: 13px; color: #49453f; margin: 8px 0 5px; line-height: 1.7; }
+.map-clue-meta { font-size: 12px; color: #706b63; }
+@media (max-width: 1050px) {
+  .map-layout { grid-template-columns: minmax(235px, 260px) minmax(0,1fr); }
+  .map-canvas { min-height:500px; }
+}
+@media (max-width: 760px) {
+  .map-layout { grid-template-columns:1fr; }
+  .map-side { display:grid; grid-template-columns:1fr 1fr; align-items:start; }
+  .map-park-list { height:260px; min-height:260px; }
+  .map-canvas { min-height:520px; height:65vh; }
+  .map-toolbar { align-items:flex-start; }
+  .map-legend { gap:8px; }
+  .map-source { border:0; margin:0; padding:0; }
+  .map-popup { right:10px; bottom:10px; width:min(292px,calc(100% - 20px)); }
+}
+@media (max-width: 520px) {
+  .map-side { grid-template-columns:1fr; }
+  .map-filter { display:grid; grid-template-columns:1fr 1fr; align-items:center; }
+  .map-filter label { margin:0; }
+  .map-filter .ant-input-search { grid-column:1/-1; }
+  .map-canvas { min-height:470px; height:60vh; }
+  .map-toolbar { flex-direction:column; }
+}
 </style>

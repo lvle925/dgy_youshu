@@ -179,7 +179,7 @@
               <a class="link" @click="$router.push('/policy/detail/' + record.policy.id)">{{ record.policy.name }}</a>
             </template>
             <template v-else-if="column.key === 'match'">
-              <a-progress :percent="record.score" size="small" :stroke-color="'#4a62e7'" />
+              <a-progress :percent="record.score" size="small" :stroke-color="'#1652B8'" />
             </template>
             <template v-else-if="column.key === 'action'">
               <a-button size="small" type="primary" @click="openPoster(record.policy)">生成海报</a-button>
@@ -274,13 +274,14 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
+import { api } from '../api';
 import { message } from 'ant-design-vue';
 import { DownloadOutlined, PlusOutlined, CloseOutlined, BankOutlined } from '@ant-design/icons-vue';
 import PageCard from '../components/PageCard.vue';
 import FilterChips from '../components/FilterChips.vue';
 import {
-  policies as seedPolicies, policyNotices, policyPublicList, policyTopics,
+  policyNotices, policyPublicList, policyTopics,
   districts, subsidyTypes, levels, industries, industriesShort, companyNames,
 } from '../data/mock';
 
@@ -292,7 +293,8 @@ const tabs = [
   { key: 'match', label: '一键政策匹配' },
 ];
 const activeTab = ref('project');
-const policyList = ref([...seedPolicies]);
+const policyList = ref([]);
+onMounted(async () => { try { policyList.value = await api.list('policies'); } catch { message.error('无法加载政策'); } });
 const filters = reactive({ district: '', type: '', level: '', industry: '' });
 const keywordInput = ref('');
 const keyword = ref('');
@@ -467,13 +469,12 @@ function openAdd() {
   Object.assign(addForm, { name: '', org: '', level: '省级', type: '研发投入', deadline: '', district: '浦东新区', content: '' });
   addOpen.value = true;
 }
-function savePolicy() {
+async function savePolicy() {
   if (!addForm.name || !addForm.org) {
     message.warning('请填写政策名称和组织部门');
     return;
   }
-  policyList.value.unshift({
-    id: 'P' + (100 + policyList.value.length),
+  try { policyList.value.unshift(await api.create('policies', {
     name: addForm.name,
     level: addForm.level,
     org: addForm.org,
@@ -490,7 +491,7 @@ function savePolicy() {
     content: addForm.content,
     requirements: [],
     materials: [],
-  });
+  })); } catch { message.error('保存失败'); return; }
   addOpen.value = false;
   activeTab.value = 'project';
   message.success('政策新增成功');
@@ -508,20 +509,20 @@ function exportData() {
 }
 .policy-stat {
   display: flex; align-items: center; gap: 6px; background: #fff; border-radius: 6px;
-  padding: 10px 16px; font-size: 12px; color: #667085; box-shadow: 0 1px 2px rgba(16, 24, 40, .03);
+  padding: 10px 16px; font-size: 12px; color: #657384; box-shadow: 0 1px 2px rgba(16, 24, 40, .03);
 }
-.policy-stat b { color: #344054; font-size: 14px; }
-.policy-stat .ps-label { color: #4a62e7; font-weight: 600; }
-.policy-stat .ps-icon { color: #4a62e7; }
-.policy-stat .ps-coin { width: 17px; height: 17px; border: 1px solid #4a62e7; border-radius: 50%; color: #4a62e7; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; }
-.policy-stat .ps-max { color: #4a62e7; font-weight: 700; font-size: 11px; background: #eef1fe; border-radius: 3px; padding: 2px 5px; }
+.policy-stat b { color: #657384; font-size: 14px; }
+.policy-stat .ps-label { color: #1652B8; font-weight: 600; }
+.policy-stat .ps-icon { color: #1652B8; }
+.policy-stat .ps-coin { width: 17px; height: 17px; border: 1px solid #1652B8; border-radius: 50%; color: #1652B8; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; }
+.policy-stat .ps-max { color: #1652B8; font-weight: 700; font-size: 11px; background: #F2F4F7; border-radius: 3px; padding: 2px 5px; }
 .ellipsis-2 { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; max-width: 200px; }
-.simple-filter { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid #f1f3f8; flex-wrap: wrap; }
+.simple-filter { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid #F2F4F7; flex-wrap: wrap; }
 .match-form { max-width: 980px; margin: 0 auto; }
 .poster-wrap { display: flex; flex-direction: column; align-items: center; gap: 16px; }
 .poster {
   width: 360px; min-height: 500px; border-radius: 12px; padding: 26px 24px; color: #fff;
-  background: linear-gradient(155deg, #1b2a6b 0%, #344ec2 55%, #4a62e7 100%);
+  background: linear-gradient(155deg, #1652B8 0%, #1652B8 55%, #1652B8 100%);
   position: relative; overflow: hidden;
 }
 .poster::after {
@@ -541,10 +542,10 @@ function exportData() {
 .poster-foot span { color: rgba(255, 255, 255, .5); font-size: 10px; }
 .qr {
   width: 54px; height: 54px; border-radius: 4px; flex-shrink: 0;
-  background: repeating-conic-gradient(#fff 0% 25%, #1b2a6b 0% 50%) 0 0 / 12px 12px;
+  background: repeating-conic-gradient(#fff 0% 25%, #1652B8 0% 50%) 0 0 / 12px 12px;
   border: 3px solid #fff;
 }
 .poster-actions { display: flex; gap: 10px; }
 .drawer-title { font-size: 17px; margin: 0 0 8px; line-height: 1.5; }
-.drawer-meta { display: flex; gap: 14px; align-items: center; color: #8b93a7; font-size: 12px; flex-wrap: wrap; }
+.drawer-meta { display: flex; gap: 14px; align-items: center; color: #657384; font-size: 12px; flex-wrap: wrap; }
 </style>

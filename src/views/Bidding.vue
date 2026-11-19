@@ -14,7 +14,7 @@
       </div>
       <div class="bid-search">
         <a-input v-model:value="keyword" size="large" placeholder="输入关键词搜索标讯，如：智慧园区、临港、数据平台" allow-clear @press-enter="msg.success('搜索完成（演示）')">
-          <template #prefix><SearchOutlined style="color: #98a2b3" /></template>
+          <template #prefix><SearchOutlined style="color: #657384" /></template>
           <template #suffix><a-button type="primary" @click="msg.success('搜索完成（演示）')">搜索</a-button></template>
         </a-input>
         <a-button size="large" class="ai-dim" @click="aiOpen = true"><ThunderboltOutlined /> AI 拓词</a-button>
@@ -249,7 +249,7 @@ function openRecommend(r) {
 </script>
 
 <style scoped>
-.bid-banner { background: linear-gradient(120deg, #14225c 0%, #2f43b8 52%, #4a62e7 100%); border-radius: 12px; padding: 22px 26px 0; color: #fff; position: relative; overflow: hidden; }
+.bid-banner { background: linear-gradient(120deg, #303b49 0%, #1652B8 52%, #1652B8 100%); border-radius: 12px; padding: 22px 26px 0; color: #fff; position: relative; overflow: hidden; }
 .bid-banner::after { content: ''; position: absolute; right: -60px; top: -80px; width: 320px; height: 320px; border-radius: 50%; background: rgba(255, 255, 255, 0.06); }
 .bid-banner::before { content: ''; position: absolute; right: 120px; bottom: -120px; width: 240px; height: 240px; border-radius: 50%; background: rgba(255, 255, 255, 0.05); }
 .bid-banner-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; flex-wrap: wrap; }
@@ -272,44 +272,44 @@ function openRecommend(r) {
 .bid-source { margin-left: auto; font-size: 11px; opacity: 0.6; }
 .bid-layout { display: grid; grid-template-columns: 1fr 330px; gap: 14px; }
 .bid-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
-.bid-chip { font-size: 12px; padding: 4px 12px; border-radius: 14px; background: #f5f7fb; color: #4b5563; cursor: pointer; border: 1px solid transparent; }
-.bid-chip.active { background: #eef1fe; color: #4a62e7; border-color: #c7d2fe; font-weight: 600; }
-.bid-item { display: flex; justify-content: space-between; gap: 16px; padding: 16px 4px; border-bottom: 1px solid #f2f4f7; }
+.bid-chip { font-size: 12px; padding: 4px 12px; border-radius: 14px; background: #F2F4F7; color: #657384; cursor: pointer; border: 1px solid transparent; }
+.bid-chip.active { background: #F2F4F7; color: #1652B8; border-color: #F2F4F7; font-weight: 600; }
+.bid-item { display: flex; justify-content: space-between; gap: 16px; padding: 16px 4px; border-bottom: 1px solid #F2F4F7; }
 .bid-item:last-child { border-bottom: none; }
 .bid-item-main { flex: 1; min-width: 0; }
-.bid-item-title { font-size: 14px; font-weight: 600; color: #1f2a44; display: block; margin-bottom: 8px; }
-.bid-item-title:hover { color: #4a62e7; }
-.bid-meta { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 12px; color: #8b93a7; margin-bottom: 9px; }
+.bid-item-title { font-size: 14px; font-weight: 600; color: #303b49; display: block; margin-bottom: 8px; }
+.bid-item-title:hover { color: #1652B8; }
+.bid-meta { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 12px; color: #657384; margin-bottom: 9px; }
 .bid-meta span { display: inline-flex; align-items: center; gap: 4px; }
 .bid-tags { display: flex; gap: 6px; flex-wrap: wrap; }
 .bid-item-side { text-align: right; flex: none; }
-.bid-budget { font-size: 16px; font-weight: 700; color: #d97706; }
-.bid-budget-label { font-size: 11px; color: #98a2b3; margin: 2px 0 10px; }
+.bid-budget { font-size: 16px; font-weight: 700; color: #1652B8; }
+.bid-budget-label { font-size: 11px; color: #657384; margin: 2px 0 10px; }
 .bid-side { display: flex; flex-direction: column; gap: 14px; }
-.rec-item { padding: 13px 0; border-bottom: 1px solid #f2f4f7; }
+.rec-item { padding: 13px 0; border-bottom: 1px solid #F2F4F7; }
 .rec-item:last-child { border-bottom: none; padding-bottom: 4px; }
-.rec-title { font-size: 13px; font-weight: 500; color: #1f2a44; line-height: 1.5; }
-.rec-title:hover { color: #4a62e7; }
-.match-badge { flex: none; font-size: 11px; color: #d97706; background: #fff7e8; padding: 2px 7px; border-radius: 10px; }
-.rec-budget { font-size: 13px; font-weight: 600; color: #4a62e7; }
-.winner-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f7f8fb; }
+.rec-title { font-size: 13px; font-weight: 500; color: #303b49; line-height: 1.5; }
+.rec-title:hover { color: #1652B8; }
+.match-badge { flex: none; font-size: 11px; color: #1652B8; background: #F2F4F7; padding: 2px 7px; border-radius: 10px; }
+.rec-budget { font-size: 13px; font-weight: 600; color: #1652B8; }
+.winner-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #F2F4F7; }
 .winner-item:last-child { border-bottom: none; }
-.winner-rank { width: 20px; height: 20px; border-radius: 6px; background: #f2f4f7; color: #8b93a7; display: grid; place-items: center; font-size: 11px; font-weight: 600; flex: none; }
-.winner-rank.top { background: #fff3e0; color: #d97706; }
+.winner-rank { width: 20px; height: 20px; border-radius: 6px; background: #F2F4F7; color: #657384; display: grid; place-items: center; font-size: 11px; font-weight: 600; flex: none; }
+.winner-rank.top { background: #F2F4F7; color: #1652B8; }
 .winner-info { display: flex; flex-direction: column; gap: 2px; font-size: 12.5px; min-width: 0; }
 .winner-info b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .company-bid-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
-.company-bid-card { border: 1px solid #edf0f7; border-radius: 10px; padding: 16px; }
-.company-bid-logo { width: 38px; height: 38px; border-radius: 10px; background: #eef1fe; color: #4a62e7; display: grid; place-items: center; font-size: 16px; font-weight: 700; }
+.company-bid-card { border: 1px solid #F2F4F7; border-radius: 10px; padding: 16px; }
+.company-bid-logo { width: 38px; height: 38px; border-radius: 10px; background: #F2F4F7; color: #1652B8; display: grid; place-items: center; font-size: 16px; font-weight: 700; }
 .company-bid-name { font-weight: 600; margin: 10px 0 4px; font-size: 13.5px; }
-.company-bid-meta { font-size: 12px; color: #8b93a7; margin-bottom: 12px; }
-.company-bid-meta b { color: #4a62e7; }
+.company-bid-meta { font-size: 12px; color: #657384; margin-bottom: 12px; }
+.company-bid-meta b { color: #1652B8; }
 .drawer-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px; }
-.bid-desc { font-size: 13px; color: #4b5563; line-height: 1.9; }
-.bid-list { padding-left: 18px; font-size: 13px; color: #4b5563; line-height: 2; }
+.bid-desc { font-size: 13px; color: #657384; line-height: 1.9; }
+.bid-list { padding-left: 18px; font-size: 13px; color: #657384; line-height: 2; }
 .ai-words { display: flex; flex-wrap: wrap; gap: 8px; }
-.ai-word { font-size: 12.5px; background: #eef1fe; color: #4a62e7; border-radius: 14px; padding: 5px 13px; cursor: pointer; }
-.ai-word:hover { background: #dfe5ff; }
+.ai-word { font-size: 12.5px; background: #F2F4F7; color: #1652B8; border-radius: 14px; padding: 5px 13px; cursor: pointer; }
+.ai-word:hover { background: #F2F4F7; }
 .sub-title { font-weight: 600; font-size: 14px; }
 @media (max-width: 1300px) { .bid-layout { grid-template-columns: 1fr; } .company-bid-grid { grid-template-columns: 1fr; } }
 </style>

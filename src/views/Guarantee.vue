@@ -46,7 +46,7 @@
             <span :class="record.days <= 30 ? 'danger-text' : ''">{{ record.days }} 天</span>
           </template>
           <template v-else-if="column.key === 'match'">
-            <div class="match-cell"><a-progress :percent="record.match" size="small" :stroke-color="'#4a62e7'" /><b>{{ record.match }}%</b></div>
+            <div class="match-cell"><a-progress :percent="record.match" size="small" :stroke-color="'#1652B8'" /><b>{{ record.match }}%</b></div>
           </template>
           <template v-else-if="column.key === 'action'">
             <a @click="notifyOne(record)">发送提醒</a>

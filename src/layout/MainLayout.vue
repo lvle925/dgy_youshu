@@ -71,10 +71,7 @@
           <div v-if="!searchResult.length" class="no-result">未找到相关菜单</div>
         </template>
       </div>
-      <div class="old-menu-btn" @click="msg.info('旧版菜单仅作演示，当前保持新版界面')">
-        <SwapOutlined />
-        <span>切换旧版菜单</span>
-      </div>
+      <div class="sidebar-note">本地工作空间 <span>·</span> 演示数据</div>
     </aside>
 
     <div class="main-area">
@@ -84,15 +81,7 @@
           <MenuFoldOutlined v-else />
         </div>
         <div class="header-title">有数计划平台</div>
-        <div class="city-bar">
-          <span class="city-label">开通城市：</span>
-          <span
-            v-for="city in cities"
-            :key="city"
-            class="city-chip"
-            :class="{ current: city === '上海市' }"
-          >{{ city }}</span>
-        </div>
+        <div class="header-context"><span>工作空间</span><span class="context-separator">/</span><strong>{{ route.meta.title || '首页' }}</strong></div>
         <div class="header-actions">
           <a-dropdown placement="bottomRight">
             <span class="bell-btn"><BellOutlined /></span>
@@ -154,8 +143,8 @@
         </router-view>
       </main>
 
-      <div class="watermark" :style="watermarkStyle"></div>
-      <div class="footer-bar">上海喜啦科技有限公司提供技术支持</div>
+
+
       <div class="chat-fab" @click="chatOpen = true"><CustomerServiceOutlined /></div>
     </div>
 
@@ -353,7 +342,8 @@ function onMoreClick({ key }) {
     router.push(key.slice(3));
   }
 }
-function logout() {
+async function logout() {
+  try { await fetch('/api/auth/logout', { method: 'POST' }); } catch { msg.error('退出失败，请检查后端'); return; }
   localStorage.removeItem('DEMO_AUTH');
   localStorage.removeItem('DEMO_TABS');
   router.push('/login');

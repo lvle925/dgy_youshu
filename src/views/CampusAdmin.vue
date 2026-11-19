@@ -22,7 +22,7 @@
             <a-radio-button value="card">卡片</a-radio-button>
             <a-radio-button value="table">列表</a-radio-button>
           </a-radio-group>
-          <a-button type="primary" @click="formOpen = true"><PlusOutlined /> 新增园区</a-button>
+          <a-button type="primary" @click="editing = null; Object.assign(form, { name: '', district: '浦东新区', status: '运营中', buildings: 10, area: '', manager: '顾龙飞', industry: '生物医药', desc: '' }); formOpen = true"><PlusOutlined /> 新增园区</a-button>
         </div>
       </div>
     </PageCard>
@@ -44,7 +44,7 @@
             <div><b>{{ c.area }}</b><span>载体面积</span></div>
             <div><b>{{ c.occupancy }}%</b><span>入驻率</span></div>
           </div>
-          <a-progress :percent="c.occupancy" size="small" :stroke-color="c.occupancy > 90 ? '#2fa45f' : '#4a62e7'" />
+          <a-progress :percent="c.occupancy" size="small" :stroke-color="c.occupancy > 90 ? '#2fa45f' : '#1652B8'" />
           <div class="campus-owner"><UserOutlined /> 园区负责人：{{ c.manager }}</div>
         </div>
         <div class="campus-actions">
@@ -61,7 +61,7 @@
       <a-table :columns="columns" :data-source="filtered" :pagination="{ pageSize: 8 }" row-key="id" size="middle">
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'occupancy'">
-            <div style="max-width: 160px"><a-progress :percent="record.occupancy" size="small" :stroke-color="'#4a62e7'" /></div>
+            <div style="max-width: 160px"><a-progress :percent="record.occupancy" size="small" :stroke-color="'#1652B8'" /></div>
           </template>
           <template v-else-if="column.key === 'status'">
             <span class="tag-soft" :class="record.status === '运营中' ? 'green' : 'orange'">{{ record.status }}</span>
@@ -120,19 +120,21 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
+import { api } from '../api';
 import { message } from 'ant-design-vue';
 import { PlusOutlined, BankOutlined, EnvironmentOutlined, BuildOutlined, UserOutlined } from '@ant-design/icons-vue';
 import PageCard from '../components/PageCard.vue';
 import StatCard from '../components/StatCard.vue';
-import { campusList as seed, districts } from '../data/mock';
+import { districts } from '../data/mock';
 
 const msg = message;
 const keyword = ref('');
 const districtFilter = ref();
 const statusFilter = ref();
 const viewMode = ref('card');
-const campus = ref(seed.map((c) => ({ ...c })));
+const campus = ref([]);
+onMounted(async () => { try { campus.value = await api.list('campusList'); } catch { msg.error('无法连接后端，园区数据未加载'); } });
 const filtered = computed(() => campus.value.filter((c) => {
   if (keyword.value && !c.name.includes(keyword.value)) return false;
   if (districtFilter.value && c.district !== districtFilter.value) return false;
@@ -158,18 +160,22 @@ function editCampus(row) {
   Object.assign(form, row, { industry: '生物医药' });
   formOpen.value = true;
 }
-function saveCampus() {
+async function saveCampus() {
   if (!form.name) {
     msg.warning('请填写园区名称');
     return;
   }
-  if (editing.value) {
-    Object.assign(editing.value, { name: form.name, district: form.district, status: form.status, buildings: form.buildings, area: form.area, manager: form.manager });
-    msg.success('园区信息已更新');
-  } else {
-    campus.value.push({ id: 'CP' + (campus.value.length + 1), name: form.name, district: form.district, buildings: form.buildings, enterprises: 0, area: form.area, occupancy: 0, manager: form.manager, status: form.status });
-    msg.success('园区已新增');
-  }
+  try {
+    if (editing.value) {
+      const saved = await api.update('campusList', { ...editing.value, ...form });
+      Object.assign(editing.value, saved);
+      msg.success('园区信息已更新');
+    } else {
+      const saved = await api.create('campusList', { ...form, enterprises: 0, occupancy: 0 });
+      campus.value.push(saved);
+      msg.success('园区已新增');
+    }
+  } catch { msg.error('保存失败，请检查后端服务'); return; }
   formOpen.value = false;
 }
 const buildingOpen = ref(false);
@@ -203,17 +209,17 @@ const buildingColumns = [
 .campus-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
 .campus-card { background: #fff; border-radius: 10px; box-shadow: 0 2px 10px rgba(23, 35, 80, 0.05); overflow: hidden; transition: all 0.2s; }
 .campus-card:hover { box-shadow: 0 10px 24px rgba(23, 35, 80, 0.1); transform: translateY(-2px); }
-.campus-cover { position: relative; height: 104px; background: linear-gradient(120deg, #1b2b6b, #4a62e7); display: flex; align-items: flex-end; padding: 14px 16px; gap: 10px; color: #fff; }
+.campus-cover { position: relative; height: 104px; background: linear-gradient(120deg, #1652B8, #1652B8); display: flex; align-items: flex-end; padding: 14px 16px; gap: 10px; color: #fff; }
 .campus-cover-icon { position: absolute; top: 18px; left: 16px; width: 38px; height: 38px; border-radius: 10px; background: rgba(255, 255, 255, 0.16); display: grid; place-items: center; font-size: 20px; }
 .campus-cover-name { font-size: 15px; font-weight: 600; }
 .campus-body { padding: 14px 16px 8px; }
-.campus-meta { display: flex; gap: 14px; font-size: 12px; color: #8b93a7; margin-bottom: 12px; }
+.campus-meta { display: flex; gap: 14px; font-size: 12px; color: #657384; margin-bottom: 12px; }
 .campus-kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
 .campus-kpis div { display: flex; flex-direction: column; gap: 2px; }
-.campus-kpis b { font-size: 15px; color: #1f2a44; }
-.campus-kpis span { font-size: 11px; color: #98a2b3; }
-.campus-owner { font-size: 12px; color: #667085; padding: 8px 0 4px; }
-.campus-actions { display: flex; align-items: center; padding: 9px 16px; border-top: 1px solid #f2f4f7; font-size: 12.5px; }
-.campus-actions a { color: #4a62e7; }
+.campus-kpis b { font-size: 15px; color: #303b49; }
+.campus-kpis span { font-size: 11px; color: #657384; }
+.campus-owner { font-size: 12px; color: #657384; padding: 8px 0 4px; }
+.campus-actions { display: flex; align-items: center; padding: 9px 16px; border-top: 1px solid #F2F4F7; font-size: 12.5px; }
+.campus-actions a { color: #1652B8; }
 @media (max-width: 1400px) { .campus-grid { grid-template-columns: repeat(2, 1fr); } }
 </style>

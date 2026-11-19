@@ -45,12 +45,13 @@ const routes = [
 
 const router = createRouter({ history: createWebHashHistory(), routes });
 
-router.beforeEach((to) => {
+router.beforeEach(async (to) => {
   if (to.meta.public) return true;
-  if (!localStorage.getItem('DEMO_AUTH')) {
-    return { path: '/login', query: { redirect: to.fullPath } };
-  }
-  return true;
+  try {
+    const response = await fetch('/api/auth/status');
+    if (response.ok && (await response.json()).authenticated) return true;
+  } catch { /* Login page explains backend connectivity. */ }
+  return { path: '/login', query: { redirect: to.fullPath } };
 });
 
 export default router;

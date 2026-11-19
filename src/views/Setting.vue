@@ -141,8 +141,8 @@ const menus = [
 ];
 const cfg = reactive({ ...settingConfig });
 const intro = ref('上海临港产业招商服务平台面向全球企业与投资机构，提供政策查询、园区载体、商机对接、企业服务等一站式招商服务。');
-const colors = ['#4a62e7', '#2f6fed', '#0e9384', '#7c3aed', '#d97706', '#dc2626'];
-const themeColor = ref('#4a62e7');
+const colors = ['#1652B8', '#1652B8', '#1652B8', '#1652B8', '#1652B8', '#dc2626'];
+const themeColor = ref('#1652B8');
 const bannerTitle = ref('汇聚全球创新资源');
 const bannerSub = ref('共建世界级产业集群 · 临港新片区欢迎您');
 const footer = ref('© 2026 上海临港产业招商服务平台 沪ICP备2026008888号');
@@ -175,29 +175,29 @@ const notices = reactive([
 
 <style scoped>
 .setting-nav { padding: 10px; }
-.setting-nav-item { display: flex; align-items: center; gap: 10px; padding: 11px 14px; border-radius: 8px; font-size: 13.5px; color: #4b5563; cursor: pointer; margin-bottom: 4px; }
-.setting-nav-item:hover { background: #f5f7fe; color: #4a62e7; }
-.setting-nav-item.active { background: #eef1fe; color: #4a62e7; font-weight: 600; }
-.logo-upload { display: flex; align-items: center; gap: 14px; border: 1px dashed #d4d9e8; border-radius: 8px; padding: 14px; cursor: pointer; }
-.logo-upload:hover { border-color: #4a62e7; }
-.logo-mark { width: 48px; height: 48px; border-radius: 10px; background: linear-gradient(135deg, #4a62e7, #2f6fed); color: #fff; display: grid; place-items: center; font-size: 20px; font-weight: 700; }
+.setting-nav-item { display: flex; align-items: center; gap: 10px; padding: 11px 14px; border-radius: 8px; font-size: 13.5px; color: #657384; cursor: pointer; margin-bottom: 4px; }
+.setting-nav-item:hover { background: #F2F4F7; color: #1652B8; }
+.setting-nav-item.active { background: #F2F4F7; color: #1652B8; font-weight: 600; }
+.logo-upload { display: flex; align-items: center; gap: 14px; border: 1px dashed #F2F4F7; border-radius: 8px; padding: 14px; cursor: pointer; }
+.logo-upload:hover { border-color: #1652B8; }
+.logo-mark { width: 48px; height: 48px; border-radius: 10px; background: linear-gradient(135deg, #1652B8, #1652B8); color: #fff; display: grid; place-items: center; font-size: 20px; font-weight: 700; }
 .color-dot { width: 26px; height: 26px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; }
-.color-dot.active { border-color: #1f2a44; transform: scale(1.08); }
-.preview-phone { max-width: 340px; border: 1px solid #e4e7ec; border-radius: 18px; overflow: hidden; background: #f5f7fb; min-height: 540px; box-shadow: 0 12px 30px rgba(15, 30, 80, 0.08); }
+.color-dot.active { border-color: #303b49; transform: scale(1.08); }
+.preview-phone { max-width: 340px; border: 1px solid #F2F4F7; border-radius: 18px; overflow: hidden; background: #F2F4F7; min-height: 540px; box-shadow: 0 12px 30px rgba(15, 30, 80, 0.08); }
 .preview-head { color: #fff; padding: 14px 14px 0; font-size: 12px; }
 .preview-banner { margin-top: 14px; padding: 18px 14px; background: rgba(255, 255, 255, 0.12); border-radius: 10px 10px 0 0; }
 .preview-banner-title { font-size: 17px; font-weight: 700; }
 .preview-banner-sub { font-size: 10px; opacity: 0.8; margin: 4px 0 10px; }
-.preview-search { display: block; background: #fff; color: #9aa3b5; border-radius: 14px; padding: 6px 12px; font-size: 10px; }
+.preview-search { display: block; background: #fff; color: #657384; border-radius: 14px; padding: 6px 12px; font-size: 10px; }
 .preview-body { padding: 14px; }
 .preview-modules { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-.preview-module { background: #fff; border-radius: 8px; padding: 10px 4px; font-size: 9.5px; text-align: center; color: #4b5563; display: flex; flex-direction: column; align-items: center; gap: 5px; }
+.preview-module { background: #fff; border-radius: 8px; padding: 10px 4px; font-size: 9.5px; text-align: center; color: #657384; display: flex; flex-direction: column; align-items: center; gap: 5px; }
 .preview-module i { width: 20px; height: 20px; border-radius: 7px; opacity: 0.85; }
 .preview-card { background: #fff; border-radius: 10px; padding: 12px; margin-top: 10px; font-size: 11px; }
-.preview-line { height: 7px; background: #eef1f6; border-radius: 4px; margin-top: 9px; }
+.preview-line { height: 7px; background: #F2F4F7; border-radius: 4px; margin-top: 9px; }
 .preview-line.short { width: 62%; }
-.module-row { display: flex; align-items: center; gap: 14px; padding: 14px 6px; border-bottom: 1px solid #f2f4f7; }
-.module-drag { color: #c0c6d4; letter-spacing: -2px; }
+.module-row { display: flex; align-items: center; gap: 14px; padding: 14px 6px; border-bottom: 1px solid #F2F4F7; }
+.module-drag { color: #cfd6df; letter-spacing: -2px; }
 .module-info { flex: 1; display: flex; flex-direction: column; gap: 2px; font-size: 13px; }
-.notice-row { display: flex; justify-content: space-between; align-items: center; gap: 20px; padding: 15px 4px; border-bottom: 1px solid #f2f4f7; font-size: 13px; }
+.notice-row { display: flex; justify-content: space-between; align-items: center; gap: 20px; padding: 15px 4px; border-bottom: 1px solid #F2F4F7; font-size: 13px; }
 </style>

@@ -4,7 +4,7 @@
       <div class="pill-tabs" style="margin-bottom: 0">
         <span v-for="t in tabs" :key="t.key" class="pill-tab" :class="{ active: tab === t.key }" @click="tab = t.key">
           <component :is="t.icon" />
-          {{ t.label }} <span class="pill-count">{{ t.count }}</span>
+          {{ t.label }} <span class="pill-count">{{ t.count?.value ?? t.count }}</span>
         </span>
       </div>
     </PageCard>
@@ -111,9 +111,9 @@
         <a-divider />
         <div style="font-weight: 600; margin-bottom: 12px">工单流转</div>
         <a-timeline>
-          <a-timeline-item color="#4a62e7"><b>2026-11-16 10:20</b> 创建工单，指派给 {{ detail.owner }}</a-timeline-item>
-          <a-timeline-item color="#52c7b8"><b>2026-11-16 14:05</b> 已联系企业，约定走访时间</a-timeline-item>
-          <a-timeline-item :color="detail.status === '已完成' ? '#2fa45f' : '#d4d9e8'"><b>{{ detail.status === '已完成' ? detail.planDate : '待定' }}</b> {{ detail.status === '已完成' ? '完成现场走访，已提交走访记录' : '等待现场走访' }}</a-timeline-item>
+          <a-timeline-item color="#1652B8"><b>2026-11-16 10:20</b> 创建工单，指派给 {{ detail.owner }}</a-timeline-item>
+          <a-timeline-item color="#1652B8"><b>2026-11-16 14:05</b> 已联系企业，约定走访时间</a-timeline-item>
+          <a-timeline-item :color="detail.status === '已完成' ? '#2fa45f' : '#F2F4F7'"><b>{{ detail.status === '已完成' ? detail.planDate : '待定' }}</b> {{ detail.status === '已完成' ? '完成现场走访，已提交走访记录' : '等待现场走访' }}</a-timeline-item>
         </a-timeline>
         <div class="drawer-actions">
           <a-button v-if="detail.status !== '已完成'" type="primary" @click="openComplete(detail)">完成走访</a-button>
@@ -155,21 +155,23 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
+import { api } from '../api';
 import { message } from 'ant-design-vue';
 import { PlusOutlined, DownloadOutlined, FileDoneOutlined, ScheduleOutlined, CameraOutlined } from '@ant-design/icons-vue';
 import PageCard from '../components/PageCard.vue';
 import StatCard from '../components/StatCard.vue';
-import { visitOrders as seedOrders, visitRecords as seedRecords, companies } from '../data/mock';
+import { companies } from '../data/mock';
 
 const msg = message;
 const tab = ref('orders');
 const tabs = [
-  { key: 'orders', label: '走访工单', count: 126, icon: ScheduleOutlined },
-  { key: 'records', label: '走访记录', count: 486, icon: FileDoneOutlined },
+  { key: 'orders', label: '走访工单', count: computed(() => orders.value.length), icon: ScheduleOutlined },
+  { key: 'records', label: '走访记录', count: computed(() => records.value.length), icon: FileDoneOutlined },
 ];
-const orders = ref(seedOrders.map((o) => ({ ...o })));
-const records = ref(seedRecords.map((r) => ({ ...r })));
+const orders = ref([]);
+const records = ref([]);
+onMounted(async () => { try { [orders.value, records.value] = await Promise.all([api.list('visitOrders'), api.list('visitRecords')]); } catch { msg.error('无法连接后端，走访数据未加载'); } });
 const keyword = ref('');
 const ownerFilter = ref();
 const statusFilter = ref();
@@ -206,15 +208,19 @@ const recordColumns = [
 ];
 const addOpen = ref(false);
 const form = reactive({ title: '', company: '', owner: '顾龙飞', planDate: null, priority: '中', source: '手动创建', note: '' });
-function saveOrder() {
+async function saveOrder() {
   if (!form.title) {
     msg.warning('请填写工单标题');
     return;
   }
-  orders.value.unshift({
-    id: 'V' + (100 + orders.value.length), title: form.title, source: form.source, owner: form.owner,
-    planDate: form.planDate ? form.planDate.format('YYYY-MM-DD') : '2026-11-25', creator: '顾龙飞', priority: form.priority, status: '待走访', created: '2026-11-17',
-  });
+  try {
+    const saved = await api.create('visitOrders', {
+      title: form.title, company: form.company, source: form.source, owner: form.owner,
+      planDate: form.planDate ? form.planDate.format('YYYY-MM-DD') : '', creator: '顾龙飞', priority: form.priority,
+      status: '待走访', created: new Date().toISOString().slice(0, 10), note: form.note,
+    });
+    orders.value.unshift(saved);
+  } catch { msg.error('保存失败，请检查后端服务'); return; }
   addOpen.value = false;
   form.title = '';
   msg.success('走访工单已创建');
@@ -234,13 +240,16 @@ function openComplete(row) {
   completeForm.result = '';
   completeOpen.value = true;
 }
-function saveComplete() {
+async function saveComplete() {
   if (!completeForm.result) {
     msg.warning('请填写走访结果');
     return;
   }
-  current.value.status = '已完成';
-  records.value.unshift({ id: 'VR' + (100 + records.value.length), title: current.value.title, company: current.value.title, owner: current.value.owner, date: '2026-11-17', result: completeForm.result, duration: completeForm.duration });
+  try {
+    const saved = await api.completeVisit(current.value.id, completeForm);
+    Object.assign(current.value, saved.order);
+    records.value.unshift(saved.record);
+  } catch { msg.error('完成走访失败，请检查后端服务'); return; }
   completeOpen.value = false;
   detailOpen.value = false;
   msg.success('走访已完成，记录已归档');

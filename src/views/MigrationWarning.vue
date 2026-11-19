@@ -3,7 +3,7 @@
     <PageCard>
       <div class="mig-head">
         <div>
-          <div class="detail-title"><AlertOutlined style="color: #d97706" /> 迁移预警</div>
+          <div class="detail-title"><AlertOutlined style="color: #1652B8" /> 迁移预警</div>
           <div class="text-muted">基于经营、人才、招聘、投资等多维信号，识别企业迁出风险并提前干预</div>
         </div>
         <div class="flex gap8">
@@ -71,8 +71,8 @@
           </template>
           <template v-else-if="column.key === 'score'">
             <div class="score-cell">
-              <span class="score-num" :style="{ color: record.score >= 90 ? '#d92d20' : record.score >= 70 ? '#d97706' : '#4a62e7' }">{{ record.score }}</span>
-              <a-progress :percent="record.score" :show-info="false" size="small" :stroke-color="record.score >= 90 ? '#f97066' : record.score >= 70 ? '#f5a623' : '#4a62e7'" />
+              <span class="score-num" :style="{ color: record.score >= 90 ? '#d92d20' : record.score >= 70 ? '#1652B8' : '#1652B8' }">{{ record.score }}</span>
+              <a-progress :percent="record.score" :show-info="false" size="small" :stroke-color="record.score >= 90 ? '#f97066' : record.score >= 70 ? '#1652B8' : '#1652B8'" />
             </div>
           </template>
           <template v-else-if="column.key === 'trend'">
@@ -95,7 +95,7 @@
     <a-drawer v-model:open="detailOpen" :title="current?.name" width="720px">
       <template v-if="current">
         <div class="risk-hero">
-          <div class="risk-ring" :style="{ borderColor: current.score >= 90 ? '#d92d20' : current.score >= 70 ? '#f5a623' : '#4a62e7', color: current.score >= 90 ? '#d92d20' : current.score >= 70 ? '#d97706' : '#4a62e7' }">
+          <div class="risk-ring" :style="{ borderColor: current.score >= 90 ? '#d92d20' : current.score >= 70 ? '#1652B8' : '#1652B8', color: current.score >= 90 ? '#d92d20' : current.score >= 70 ? '#1652B8' : '#1652B8' }">
             <b>{{ current.score }}</b><span>风险分</span>
           </div>
           <div class="risk-hero-info">
@@ -271,43 +271,43 @@ const rules = reactive([
 .detail-title { font-size: 19px; font-weight: 600; display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
 .mig-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
 .mig-stat { display: flex; align-items: center; gap: 12px; border-radius: 10px; padding: 18px 18px; position: relative; }
-.mig-stat.high { background: #fef3f2; }
-.mig-stat.mid { background: #fff7e8; }
-.mig-stat.low { background: #eef4ff; }
-.mig-stat.safe { background: #f2fbf5; }
+.mig-stat.high { background: #F2F4F7; }
+.mig-stat.mid { background: #F2F4F7; }
+.mig-stat.low { background: #F2F4F7; }
+.mig-stat.safe { background: #F2F4F7; }
 .mig-icon { width: 40px; height: 40px; border-radius: 10px; background: #fff; display: grid; place-items: center; font-size: 19px; }
 .mig-stat.high .mig-icon { color: #d92d20; }
-.mig-stat.mid .mig-icon { color: #d97706; }
-.mig-stat.low .mig-icon { color: #4a62e7; }
+.mig-stat.mid .mig-icon { color: #1652B8; }
+.mig-stat.low .mig-icon { color: #1652B8; }
 .mig-stat.safe .mig-icon { color: #2fa45f; }
-.mig-value { font-size: 26px; font-weight: 700; color: #1f2a44; line-height: 1.2; }
-.mig-label { font-size: 12.5px; color: #667085; }
-.mig-tip { position: absolute; right: 14px; top: 14px; font-size: 10.5px; color: #98a2b3; }
-.mig-seg { display: flex; gap: 6px; border-bottom: 1px solid #f0f2f8; flex-wrap: wrap; }
-.mig-seg-item { padding: 9px 14px; font-size: 13px; color: #667085; cursor: pointer; border-bottom: 2px solid transparent; }
-.mig-seg-item b { color: #4a62e7; margin-left: 4px; font-weight: 600; }
-.mig-seg-item.active { color: #4a62e7; font-weight: 600; border-bottom-color: #4a62e7; }
+.mig-value { font-size: 26px; font-weight: 700; color: #303b49; line-height: 1.2; }
+.mig-label { font-size: 12.5px; color: #657384; }
+.mig-tip { position: absolute; right: 14px; top: 14px; font-size: 10.5px; color: #657384; }
+.mig-seg { display: flex; gap: 6px; border-bottom: 1px solid #F2F4F7; flex-wrap: wrap; }
+.mig-seg-item { padding: 9px 14px; font-size: 13px; color: #657384; cursor: pointer; border-bottom: 2px solid transparent; }
+.mig-seg-item b { color: #1652B8; margin-left: 4px; font-weight: 600; }
+.mig-seg-item.active { color: #1652B8; font-weight: 600; border-bottom-color: #1652B8; }
 .mig-checks { display: flex; align-items: center; gap: 18px; padding-top: 12px; }
 .score-cell { display: flex; flex-direction: column; gap: 2px; max-width: 130px; }
 .score-num { font-weight: 700; font-size: 14px; }
 .score-cell :deep(.ant-progress) { margin: 0; }
 .trend-up { color: #d92d20; }
 .trend-down { color: #2fa45f; }
-.trend-flat { color: #98a2b3; }
-.risk-hero { display: flex; gap: 18px; align-items: center; background: #f8faff; border-radius: 12px; padding: 18px; }
+.trend-flat { color: #657384; }
+.risk-hero { display: flex; gap: 18px; align-items: center; background: #F2F4F7; border-radius: 12px; padding: 18px; }
 .risk-ring { width: 86px; height: 86px; border-radius: 50%; border: 5px solid; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #fff; flex: none; }
 .risk-ring b { font-size: 26px; line-height: 1.1; }
-.risk-ring span { font-size: 10.5px; color: #98a2b3; }
+.risk-ring span { font-size: 10.5px; color: #657384; }
 .risk-hero-info { display: flex; flex-direction: column; gap: 7px; font-size: 12.5px; }
-.risk-hero-sub { color: #667085; }
-.signal-card { border-radius: 10px; padding: 16px; border: 1px solid #f0f2f8; }
+.risk-hero-sub { color: #657384; }
+.signal-card { border-radius: 10px; padding: 16px; border: 1px solid #F2F4F7; }
 .signal-title { font-weight: 600; font-size: 13.5px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
 .signal-card.push .signal-title { color: #d92d20; }
-.signal-card.pull .signal-title { color: #4a62e7; }
+.signal-card.pull .signal-title { color: #1652B8; }
 .signal-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
-.signal-desc { font-size: 12px; color: #8b93a7; line-height: 1.7; }
+.signal-desc { font-size: 12px; color: #657384; line-height: 1.7; }
 .drawer-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px; }
 .follow-company { font-weight: 600; font-size: 15px; }
-.rule-row { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 12px 0; border-bottom: 1px solid #f2f4f7; font-size: 13px; }
+.rule-row { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 12px 0; border-bottom: 1px solid #F2F4F7; font-size: 13px; }
 @media (max-width: 1300px) { .mig-stats { grid-template-columns: repeat(2, 1fr); } }
 </style>

@@ -83,25 +83,20 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
+import { api } from '../api';
 import { message } from 'ant-design-vue';
 import { DownloadOutlined, UploadOutlined, SyncOutlined, InboxOutlined } from '@ant-design/icons-vue';
 import PageCard from '../components/PageCard.vue';
 import StatCard from '../components/StatCard.vue';
-import { clues as seedClues } from '../data/mock';
+
 
 const msg = message;
 const keyword = ref('');
 const status = ref();
 const dateRange = ref();
-const rows = ref(seedClues.map((c, i) => ({
-  ...c,
-  project: c.intent,
-  amount: (2.6 + i * 0.8).toFixed(1) + ' 亿元',
-  status: c.status === '已签约' ? '已签约' : i % 5 === 0 ? '待更新' : '跟进中',
-  updated: '2026-11-' + String(17 - (i % 9)).padStart(2, '0'),
-  note: ['企业已完成实地考察', '正在沟通政策支持方案', '载体方案二轮修改中', '等待企业董事会决议'][i % 4],
-})));
+const rows = ref([]);
+onMounted(async () => { try { rows.value = (await api.list('clues')).map(c => ({ ...c, project: c.intent, amount: c.amount || '—', updated: c.updated || c.date, note: c.note || '暂无动态' })); } catch { msg.error('无法加载线索'); } });
 const filtered = computed(() => rows.value.filter((r) => {
   if (keyword.value && !r.company.includes(keyword.value) && !r.project.includes(keyword.value)) return false;
   if (status.value && r.status !== status.value) return false;
@@ -125,15 +120,13 @@ function openUpdate(row) {
   Object.assign(updateForm, { type: '企业实地考察', status: row.status === '已签约' ? '已签约' : '跟进中', note: '' });
   updateOpen.value = true;
 }
-function saveUpdate() {
+async function saveUpdate() {
   if (!updateForm.note.trim()) {
     msg.warning('请填写进展说明');
     return;
   }
   const row = rows.value.find((r) => r.id === current.value.id);
-  row.note = updateForm.type + '：' + updateForm.note;
-  row.status = updateForm.status;
-  row.updated = '2026-11-17';
+  try { Object.assign(row, await api.update('clues', { ...row, note: updateForm.type + '：' + updateForm.note, status: updateForm.status, updated: new Date().toISOString().slice(0, 10) })); } catch { msg.error('保存失败'); return; }
   updateOpen.value = false;
   msg.success('线索动态已更新');
 }

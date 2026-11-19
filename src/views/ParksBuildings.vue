@@ -64,7 +64,7 @@
           </div>
           <div class="park-occupancy">
             <div class="flex-between"><span>入驻率</span><b>{{ p.occupancy }}%</b></div>
-            <a-progress :percent="p.occupancy" show-info="false" :stroke-color="p.occupancy > 90 ? '#2fa45f' : '#4a62e7'" size="small" />
+            <a-progress :percent="p.occupancy" show-info="false" :stroke-color="p.occupancy > 90 ? '#2fa45f' : '#1652B8'" size="small" />
           </div>
           <div class="park-foot">
             <span><EnvironmentOutlined /> {{ p.address }}</span>
@@ -78,7 +78,7 @@
             <a class="link" @click="$router.push('/park/detail/' + record.id)">{{ record.name }}</a>
           </template>
           <template v-else-if="column.key === 'occupancy'">
-            <a-progress :percent="record.occupancy" size="small" :stroke-color="'#4a62e7'" />
+            <a-progress :percent="record.occupancy" size="small" :stroke-color="'#1652B8'" />
           </template>
           <template v-else-if="column.key === 'action'">
             <a @click="$router.push('/park/detail/' + record.id)">查看</a>
@@ -153,21 +153,21 @@ function savePark() {
 </script>
 
 <style scoped>
-.more-filters { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 12px; padding-top: 12px; border-top: 1px dashed #eef0f5; font-size: 12px; color: #667085; }
+.more-filters { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 12px; padding-top: 12px; border-top: 1px dashed #F2F4F7; font-size: 12px; color: #657384; }
 .park-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
-.park-card { border: 1px solid #e8ebf2; border-radius: 8px; padding: 16px; cursor: pointer; transition: all .16s; background: #fff; }
-.park-card:hover { border-color: #b7c3f6; box-shadow: 0 8px 24px rgba(20, 37, 100, .08); transform: translateY(-2px); }
+.park-card { border: 1px solid #F2F4F7; border-radius: 8px; padding: 16px; cursor: pointer; transition: all .16s; background: #fff; }
+.park-card:hover { border-color: #cfd6df; box-shadow: 0 8px 24px rgba(20, 37, 100, .08); transform: translateY(-2px); }
 .park-top { display: flex; gap: 10px; align-items: flex-start; }
-.park-badge { width: 38px; height: 38px; border-radius: 8px; background: linear-gradient(135deg, #4a62e7, #7c92ff); color: #fff; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.park-card-name { font-size: 13.5px; font-weight: 600; color: #344054; line-height: 1.5; }
-.park-card-meta { font-size: 11px; color: #98a2b3; margin-top: 3px; }
+.park-badge { width: 38px; height: 38px; border-radius: 8px; background: linear-gradient(135deg, #1652B8, #1652B8); color: #fff; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.park-card-name { font-size: 13.5px; font-weight: 600; color: #657384; line-height: 1.5; }
+.park-card-meta { font-size: 11px; color: #657384; margin-top: 3px; }
 .park-top .tag-soft { margin-left: auto; flex-shrink: 0; }
-.park-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 14px 0 10px; background: #f8fafd; border-radius: 6px; padding: 10px; }
-.park-metrics em { font-style: normal; display: block; font-size: 10.5px; color: #98a2b3; margin-bottom: 3px; }
-.park-metrics b { font-size: 13px; color: #344054; font-weight: 600; }
-.park-occupancy { font-size: 11px; color: #8b93a7; }
-.park-occupancy b { color: #344054; }
-.park-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 12px; padding-top: 10px; border-top: 1px dashed #eef0f5; font-size: 11px; color: #98a2b3; }
+.park-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 14px 0 10px; background: #F2F4F7; border-radius: 6px; padding: 10px; }
+.park-metrics em { font-style: normal; display: block; font-size: 10.5px; color: #657384; margin-bottom: 3px; }
+.park-metrics b { font-size: 13px; color: #657384; font-weight: 600; }
+.park-occupancy { font-size: 11px; color: #657384; }
+.park-occupancy b { color: #657384; }
+.park-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 12px; padding-top: 10px; border-top: 1px dashed #F2F4F7; font-size: 11px; color: #657384; }
 .park-foot span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .park-foot .link { flex-shrink: 0; }
 @media (max-width: 1400px) { .park-grid { grid-template-columns: repeat(2, 1fr); } }

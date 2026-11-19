@@ -1,10 +1,10 @@
 <template>
   <div>
     <div class="stat-row grid4" style="margin-bottom: 14px">
-      <StatCard title="成员总数" :value="members.length" unit="人" tone="info" foot="启用 7 人" />
-      <StatCard title="今日活跃" value="7" unit="人" tone="success" />
+      <StatCard title="成员总数" :value="members.length" unit="人" tone="info" :foot="`启用 ${members.filter(m => m.status === '启用').length} 人`" />
+      <StatCard title="今日活跃" value="—" unit="人" tone="success" />
       <StatCard title="角色数" value="6" unit="个" tone="purple" />
-      <StatCard title="待处理邀请" value="2" unit="个" tone="warning" />
+      <StatCard title="待处理邀请" value="—" unit="个" tone="warning" />
     </div>
     <PageCard>
       <div class="filter-row">
@@ -65,15 +65,17 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
+import { api } from '../api';
 import { message, Modal } from 'ant-design-vue';
 import { PlusOutlined, DownloadOutlined } from '@ant-design/icons-vue';
 import PageCard from '../components/PageCard.vue';
 import StatCard from '../components/StatCard.vue';
-import { members as seedMembers, roles, campusList } from '../data/mock';
+import { roles, campusList } from '../data/mock';
 
 const msg = message;
-const members = ref([...seedMembers]);
+const members = ref([]);
+onMounted(async () => { try { members.value = await api.list('members'); } catch { msg.error('无法连接后端，成员数据未加载'); } });
 const keyword = ref('');
 const roleFilter = ref();
 const statusFilter = ref();
@@ -105,23 +107,30 @@ function openEdit(row) {
   Object.assign(form, row);
   formOpen.value = true;
 }
-function saveMember() {
+async function saveMember() {
   if (!form.name || !form.phone) {
     msg.warning('请填写姓名与手机号');
     return;
   }
-  if (editing.value) {
-    Object.assign(editing.value, { ...form });
-    msg.success('成员信息已更新');
-  } else {
-    members.value.unshift({ id: 'U' + (100 + members.value.length), name: form.name, phone: form.phone.replace(/^(\d{3})\d{4}(\d{4})$/, '$1****$2'), role: form.role, dept: form.dept, park: form.park, status: '启用', lastLogin: '-' });
-    msg.success('成员已添加，邀请短信已发送（演示）');
-  }
+  try {
+    if (editing.value) {
+      const saved = await api.update('members', { ...editing.value, ...form });
+      Object.assign(editing.value, saved);
+      msg.success('成员信息已更新');
+    } else {
+      const saved = await api.create('members', { ...form, status: '启用', lastLogin: '-' });
+      members.value.unshift(saved);
+      msg.success('成员已添加');
+    }
+  } catch { msg.error('保存失败，请检查后端服务'); return; }
   formOpen.value = false;
 }
-function toggleStatus(row) {
-  row.status = row.status === '启用' ? '停用' : '启用';
-  msg.success(`成员已${row.status}`);
+async function toggleStatus(row) {
+  try {
+    const saved = await api.update('members', { ...row, status: row.status === '启用' ? '停用' : '启用' });
+    Object.assign(row, saved);
+    msg.success(`成员已${row.status}`);
+  } catch { msg.error('保存失败，请检查后端服务'); }
 }
 function resetPassword(row) {
   Modal.confirm({
@@ -134,5 +143,5 @@ function resetPassword(row) {
 
 <style scoped>
 .member-cell { display: flex; align-items: center; gap: 10px; }
-.member-avatar { width: 32px; height: 32px; border-radius: 50%; background: #eef1fe; color: #4a62e7; display: grid; place-items: center; font-weight: 600; font-size: 13px; }
+.member-avatar { width: 32px; height: 32px; border-radius: 50%; background: #F2F4F7; color: #1652B8; display: grid; place-items: center; font-weight: 600; font-size: 13px; }
 </style>

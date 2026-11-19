@@ -6,7 +6,7 @@
         <p>覆盖全市 108,256 家企业信息，支持按产业、区域、规模多维检索</p>
         <div class="hero-search">
           <a-input v-model:value="keyword" size="large" placeholder="请输入企业名称、统一社会信用代码或关键词" allow-clear>
-            <template #prefix><SearchOutlined style="color: #98a2b3" /></template>
+            <template #prefix><SearchOutlined style="color: #657384" /></template>
           </a-input>
           <a-button type="primary" size="large" @click="msg.success('查询完成')">搜索企业</a-button>
         </div>
@@ -166,26 +166,26 @@ const compareColumns = computed(() => {
 
 <style scoped>
 .subsidy-hero {
-  background: linear-gradient(120deg, #1f358f 0%, #3d56d8 55%, #5b74f0 100%);
-  border-radius: 8px; padding: 26px 30px; color: #fff; margin-bottom: 14px; position: relative; overflow: hidden;
+  background: #F2F4F7;
+  border:1px solid #B7CDE9; border-top:3px solid #b86d4c;
+  border-radius: 10px; padding: 24px 28px; color: #303b49; margin-bottom: 16px; position: relative; overflow: hidden;
 }
-.subsidy-hero::after { content: ''; position: absolute; right: -60px; top: -80px; width: 300px; height: 300px; border: 1px solid rgba(255,255,255,.14); border-radius: 50%; box-shadow: 0 0 0 46px rgba(255,255,255,.05); }
 .hero-content { position: relative; z-index: 2; max-width: 760px; }
-.subsidy-hero h2 { margin: 0 0 5px; font-size: 22px; }
-.subsidy-hero p { margin: 0 0 16px; font-size: 12.5px; color: rgba(255,255,255,.72); }
+.subsidy-hero h2 { margin: 0 0 8px; font-size: 25px; font-weight:650; }
+.subsidy-hero p { margin: 0 0 20px; font-size: 14px; color: #69645c; }
 .hero-search { display: flex; gap: 8px; max-width: 680px; }
 .hero-search .ant-input-affix-wrapper { flex: 1; border-radius: 6px; }
-.hero-tags { display: flex; gap: 12px; margin-top: 12px; font-size: 11.5px; color: rgba(255,255,255,.62); flex-wrap: wrap; }
-.hero-tags a { color: rgba(255,255,255,.9); }
+.hero-tags { display: flex; align-items:center; gap: 10px; margin-top: 14px; font-size: 13px; color: #6f695f; flex-wrap: wrap; }
+.hero-tags a { padding:3px 9px; border:1px solid #F2F4F7; border-radius:5px; color: #1652B8; background:#F2F4F7; }
 .hero-tags a:hover { text-decoration: underline; }
-.advanced-panel { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 12px; padding-top: 12px; border-top: 1px dashed #eef0f5; font-size: 12px; color: #667085; }
+.advanced-panel { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 12px; padding-top: 12px; border-top: 1px dashed #F2F4F7; font-size: 12px; color: #657384; }
 .company-cell { display: flex; gap: 9px; align-items: center; }
-.company-cell-logo { width: 30px; height: 30px; border-radius: 6px; background: #eef1fe; color: #4a62e7; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; }
-.company-cell-code { font-size: 10.5px; color: #98a2b3; margin-top: 2px; }
-.score-text { color: #4a62e7; font-weight: 600; }
+.company-cell-logo { width: 30px; height: 30px; border-radius: 6px; background: #F2F4F7; color: #1652B8; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; }
+.company-cell-code { font-size: 10.5px; color: #657384; margin-top: 2px; }
+.score-text { color: #1652B8; font-weight: 600; }
 .compare-bar {
   position: fixed; left: 50%; bottom: 40px; transform: translateX(-50%); background: #fff;
   border-radius: 8px; box-shadow: 0 8px 24px rgba(16, 24, 40, .16); padding: 10px 16px;
-  display: flex; align-items: center; gap: 12px; z-index: 200; font-size: 12px; color: #344054;
+  display: flex; align-items: center; gap: 12px; z-index: 200; font-size: 12px; color: #657384;
 }
 </style>

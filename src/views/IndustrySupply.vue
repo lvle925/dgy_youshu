@@ -145,11 +145,11 @@ function saveCompany() {
 <style scoped>
 .drawer-company { margin: 0 0 10px; font-size: 17px; line-height: 1.5; }
 .supply-chain { display: grid; grid-template-columns: 1fr 1.2fr 1fr; gap: 10px; align-items: center; }
-.sc-title { font-size: 11px; color: #98a2b3; text-align: center; margin-bottom: 8px; }
+.sc-title { font-size: 11px; color: #657384; text-align: center; margin-bottom: 8px; }
 .sc-col { display: flex; flex-direction: column; gap: 8px; }
-.sc-node { border: 1px solid #e7eaf3; background: #f8fafd; border-radius: 6px; padding: 9px 8px; font-size: 11px; color: #667085; text-align: center; }
-.sc-node.up { border-color: #d9e2fd; background: #f5f8ff; }
-.sc-node.down { border-color: #ccecd6; background: #f4fbf6; }
-.sc-node.main { background: #4a62e7; color: #fff; border-color: #4a62e7; padding: 16px 8px; font-size: 12px; }
+.sc-node { border: 1px solid #F2F4F7; background: #F2F4F7; border-radius: 6px; padding: 9px 8px; font-size: 11px; color: #657384; text-align: center; }
+.sc-node.up { border-color: #F2F4F7; background: #F2F4F7; }
+.sc-node.down { border-color: #F2F4F7; background: #F2F4F7; }
+.sc-node.main { background: #1652B8; color: #fff; border-color: #1652B8; padding: 16px 8px; font-size: 12px; }
 .sc-mid { display: flex; flex-direction: column; }
 </style>

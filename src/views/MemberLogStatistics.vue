@@ -38,7 +38,7 @@
               <b style="margin-left: 8px">{{ record.name }}</b>
             </template>
             <template v-else-if="column.key === 'active'">
-              <a-progress :percent="record.active" size="small" :stroke-color="'#4a62e7'" />
+              <a-progress :percent="record.active" size="small" :stroke-color="'#1652B8'" />
             </template>
           </template>
         </a-table>
@@ -76,42 +76,42 @@ const columns = [
 ];
 const trendOption = {
   tooltip: { trigger: 'axis' },
-  legend: { top: 0, icon: 'roundRect', itemWidth: 10, itemHeight: 4, textStyle: { fontSize: 11, color: '#667085' } },
+  legend: { top: 0, icon: 'roundRect', itemWidth: 10, itemHeight: 4, textStyle: { fontSize: 11, color: '#657384' } },
   grid: { left: 45, right: 20, top: 34, bottom: 26 },
-  xAxis: { type: 'category', data: logStatSeries.map((d) => d.date), axisLabel: { fontSize: 10, color: '#98a2b3' }, axisLine: { lineStyle: { color: '#e4e7ec' } }, axisTick: { show: false } },
+  xAxis: { type: 'category', data: logStatSeries.map((d) => d.date), axisLabel: { fontSize: 10, color: '#657384' }, axisLine: { lineStyle: { color: '#F2F4F7' } }, axisTick: { show: false } },
   yAxis: [
-    { type: 'value', name: '次数', nameTextStyle: { fontSize: 10, color: '#98a2b3' }, axisLabel: { fontSize: 10, color: '#98a2b3' }, splitLine: { lineStyle: { color: '#f2f4f7', type: 'dashed' } } },
-    { type: 'value', name: '人数', nameTextStyle: { fontSize: 10, color: '#98a2b3' }, axisLabel: { fontSize: 10, color: '#98a2b3' }, splitLine: { show: false } },
+    { type: 'value', name: '次数', nameTextStyle: { fontSize: 10, color: '#657384' }, axisLabel: { fontSize: 10, color: '#657384' }, splitLine: { lineStyle: { color: '#F2F4F7', type: 'dashed' } } },
+    { type: 'value', name: '人数', nameTextStyle: { fontSize: 10, color: '#657384' }, axisLabel: { fontSize: 10, color: '#657384' }, splitLine: { show: false } },
   ],
   series: [
-    { name: '操作次数', type: 'bar', barWidth: 18, data: logStatSeries.map((d) => d.count), itemStyle: { color: '#c7d2fe', borderRadius: [4, 4, 0, 0] } },
-    { name: '活跃人数', type: 'line', yAxisIndex: 1, smooth: true, symbol: 'circle', symbolSize: 5, data: logStatSeries.map((d) => d.users), lineStyle: { color: '#4a62e7', width: 2 }, itemStyle: { color: '#4a62e7' } },
+    { name: '操作次数', type: 'bar', barWidth: 18, data: logStatSeries.map((d) => d.count), itemStyle: { color: '#F2F4F7', borderRadius: [4, 4, 0, 0] } },
+    { name: '活跃人数', type: 'line', yAxisIndex: 1, smooth: true, symbol: 'circle', symbolSize: 5, data: logStatSeries.map((d) => d.users), lineStyle: { color: '#1652B8', width: 2 }, itemStyle: { color: '#1652B8' } },
   ],
 };
 const moduleOption = {
   tooltip: { trigger: 'item' },
-  legend: { bottom: 0, icon: 'circle', itemWidth: 8, itemHeight: 8, textStyle: { fontSize: 11, color: '#667085' } },
+  legend: { bottom: 0, icon: 'circle', itemWidth: 8, itemHeight: 8, textStyle: { fontSize: 11, color: '#657384' } },
   series: [{
     type: 'pie', radius: ['40%', '66%'], center: ['50%', '44%'], label: { show: false },
     data: [
-      { value: 286, name: '政策管理', itemStyle: { color: '#4a62e7' } },
-      { value: 214, name: '商机洞察', itemStyle: { color: '#52c7b8' } },
-      { value: 168, name: '企业档案', itemStyle: { color: '#8b5cf6' } },
-      { value: 142, name: '园区管理', itemStyle: { color: '#f5a623' } },
+      { value: 286, name: '政策管理', itemStyle: { color: '#1652B8' } },
+      { value: 214, name: '商机洞察', itemStyle: { color: '#1652B8' } },
+      { value: 168, name: '企业档案', itemStyle: { color: '#1652B8' } },
+      { value: 142, name: '园区管理', itemStyle: { color: '#1652B8' } },
       { value: 98, name: 'AI外呼', itemStyle: { color: '#2fa45f' } },
-      { value: 84, name: '其他', itemStyle: { color: '#cbd5e1' } },
+      { value: 84, name: '其他', itemStyle: { color: '#cfd6df' } },
     ],
   }],
 };
 const userOption = {
   grid: { left: 70, right: 30, top: 12, bottom: 22 },
   tooltip: { trigger: 'axis' },
-  xAxis: { type: 'value', axisLabel: { fontSize: 10, color: '#98a2b3' }, splitLine: { lineStyle: { color: '#f2f4f7', type: 'dashed' } } },
-  yAxis: { type: 'category', data: ['吴超', '周敏', '陈晨', '王凯', '李婷', '顾龙飞'], axisLabel: { fontSize: 10, color: '#667085' }, axisLine: { show: false }, axisTick: { show: false } },
-  series: [{ type: 'bar', barWidth: 12, data: [98, 121, 164, 185, 216, 268], itemStyle: { color: '#4a62e7', borderRadius: [0, 5, 5, 0] } }],
+  xAxis: { type: 'value', axisLabel: { fontSize: 10, color: '#657384' }, splitLine: { lineStyle: { color: '#F2F4F7', type: 'dashed' } } },
+  yAxis: { type: 'category', data: ['吴超', '周敏', '陈晨', '王凯', '李婷', '顾龙飞'], axisLabel: { fontSize: 10, color: '#657384' }, axisLine: { show: false }, axisTick: { show: false } },
+  series: [{ type: 'bar', barWidth: 12, data: [98, 121, 164, 185, 216, 268], itemStyle: { color: '#1652B8', borderRadius: [0, 5, 5, 0] } }],
 };
 </script>
 
 <style scoped>
-.member-avatar { width: 26px; height: 26px; border-radius: 50%; background: #eef1fe; color: #4a62e7; display: inline-grid; place-items: center; font-size: 12px; font-weight: 600; }
+.member-avatar { width: 26px; height: 26px; border-radius: 50%; background: #F2F4F7; color: #1652B8; display: inline-grid; place-items: center; font-size: 12px; font-weight: 600; }
 </style>

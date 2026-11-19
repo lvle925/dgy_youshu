@@ -82,17 +82,19 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
+import { api } from '../api';
 import { message } from 'ant-design-vue';
 import { PlusOutlined, DownloadOutlined } from '@ant-design/icons-vue';
 import PageCard from '../components/PageCard.vue';
 import StatCard from '../components/StatCard.vue';
-import { clues as seedClues, industriesShort } from '../data/mock';
+import { industriesShort } from '../data/mock';
 
 const msg = message;
 const keyword = ref('');
 const filters = reactive({ region: undefined, industry: undefined, level: undefined, status: undefined });
-const rows = ref([...seedClues]);
+const rows = ref([]);
+onMounted(async () => { try { rows.value = await api.list('clues'); } catch { msg.error('无法加载线索'); } });
 const regions = ['北京市', '江苏省苏州市', '广东省深圳市', '浙江省杭州市', '江苏省南京市', '广东省广州市', '四川省成都市', '湖北省武汉市', '陕西省西安市', '安徽省合肥市'];
 const filtered = computed(() => rows.value.filter((r) => {
   if (keyword.value && !r.company.includes(keyword.value)) return false;
@@ -115,15 +117,14 @@ const columns = [
 ];
 const addOpen = ref(false);
 const addForm = reactive({ company: '', intent: '', region: '', industry: '集成电路', level: 'A', source: '商机摸排', desc: '' });
-function saveClue() {
+async function saveClue() {
   if (!addForm.company) {
     msg.warning('请填写企业名称');
     return;
   }
-  rows.value.unshift({
-    id: 'D' + (100 + rows.value.length), company: addForm.company, intent: addForm.intent || '待补充', region: addForm.region || '-', industry: addForm.industry,
+  try { rows.value.unshift(await api.create('clues', { company: addForm.company, intent: addForm.intent || '待补充', region: addForm.region || '-', industry: addForm.industry,
     level: addForm.level, source: addForm.source, contact: '顾龙飞', phone: '-', date: '2026-11-17', status: '跟进中', park: '张江人工智能岛', score: 88, desc: addForm.desc,
-  });
+  })); } catch { msg.error('保存失败'); return; }
   addOpen.value = false;
   addForm.company = '';
   msg.success('商机线索新增成功');

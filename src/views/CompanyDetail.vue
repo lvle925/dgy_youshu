@@ -118,34 +118,34 @@ const subsidyRows = policies.slice(0, 4).map((p, i) => ({
 const staffOption = computed(() => ({
   grid: { left: 44, right: 20, top: 20, bottom: 26 },
   tooltip: { trigger: 'axis' },
-  xAxis: { type: 'category', data: ['2022', '2023', '2024', '2025', '2026'], axisLabel: { color: '#98a2b3', fontSize: 10 }, axisLine: { lineStyle: { color: '#e4e7ec' } } },
-  yAxis: { type: 'value', axisLabel: { color: '#98a2b3', fontSize: 10 }, splitLine: { lineStyle: { color: '#f2f4f7', type: 'dashed' } } },
+  xAxis: { type: 'category', data: ['2022', '2023', '2024', '2025', '2026'], axisLabel: { color: '#657384', fontSize: 10 }, axisLine: { lineStyle: { color: '#F2F4F7' } } },
+  yAxis: { type: 'value', axisLabel: { color: '#657384', fontSize: 10 }, splitLine: { lineStyle: { color: '#F2F4F7', type: 'dashed' } } },
   series: [{
     type: 'line', smooth: true, symbol: 'circle', symbolSize: 5,
     data: [26, 38, 52, 68, company.value.socialSecurity],
-    lineStyle: { color: '#4a62e7', width: 2 }, itemStyle: { color: '#4a62e7' },
+    lineStyle: { color: '#1652B8', width: 2 }, itemStyle: { color: '#1652B8' },
     areaStyle: { color: 'rgba(74,98,231,.1)' },
   }],
 }));
 </script>
 
 <style scoped>
-.detail-back { margin-bottom: 10px; font-size: 12.5px; color: #8b93a7; }
+.detail-back { margin-bottom: 10px; font-size: 12.5px; color: #657384; }
 .detail-hero { display: flex; justify-content: space-between; gap: 20px; align-items: flex-start; }
 .hero-left { display: flex; gap: 16px; align-items: center; }
 .company-logo {
-  width: 58px; height: 58px; border-radius: 8px; background: linear-gradient(135deg, #4a62e7, #7c92ff);
+  width: 58px; height: 58px; border-radius: 8px; background: linear-gradient(135deg, #1652B8, #1652B8);
   color: #fff; font-size: 18px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
 .detail-title { font-size: 20px; font-weight: 600; line-height: 1.5; }
 .detail-tags { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
-.detail-meta { display: flex; gap: 20px; flex-wrap: wrap; color: #667085; font-size: 12.5px; }
-.detail-meta .anticon { margin-right: 4px; color: #98a2b3; }
+.detail-meta { display: flex; gap: 20px; flex-wrap: wrap; color: #657384; font-size: 12.5px; }
+.detail-meta .anticon { margin-right: 4px; color: #657384; }
 .detail-actions { display: flex; gap: 8px; flex-shrink: 0; }
 .detail-layout { display: grid; grid-template-columns: 1fr 320px; gap: 14px; margin-top: 14px; }
-.contact-line { font-size: 12.5px; color: #4b5563; padding: 6px 0; }
-.contact-line .anticon { color: #4a62e7; margin-right: 7px; }
-.park-name { font-weight: 600; font-size: 13px; color: #344054; margin-bottom: 10px; line-height: 1.6; }
-.risk-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 12px; color: #667085; }
+.contact-line { font-size: 12.5px; color: #657384; padding: 6px 0; }
+.contact-line .anticon { color: #1652B8; margin-right: 7px; }
+.park-name { font-weight: 600; font-size: 13px; color: #657384; margin-bottom: 10px; line-height: 1.6; }
+.risk-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 12px; color: #657384; }
 @media (max-width: 1200px) { .detail-layout { grid-template-columns: 1fr; } }
 </style>

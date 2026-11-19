@@ -90,8 +90,8 @@ const detail = ref(null);
 </script>
 
 <style scoped>
-.member-avatar { width: 26px; height: 26px; border-radius: 50%; background: #eef1fe; color: #4a62e7; display: inline-grid; place-items: center; font-size: 12px; font-weight: 600; }
-.request-block { margin-top: 20px; background: #0f172a; border-radius: 8px; padding: 14px 16px; }
-.request-title { color: #94a3b8; font-size: 12px; margin-bottom: 8px; }
-.request-block pre { color: #d7e2f0; font-size: 12px; line-height: 1.7; margin: 0; white-space: pre-wrap; }
+.member-avatar { width: 26px; height: 26px; border-radius: 50%; background: #F2F4F7; color: #1652B8; display: inline-grid; place-items: center; font-size: 12px; font-weight: 600; }
+.request-block { margin-top: 20px; background: #303b49; border-radius: 8px; padding: 14px 16px; }
+.request-title { color: #657384; font-size: 12px; margin-bottom: 8px; }
+.request-block pre { color: #F2F4F7; font-size: 12px; line-height: 1.7; margin: 0; white-space: pre-wrap; }
 </style>

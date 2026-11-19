@@ -100,15 +100,15 @@ function openNode(node, layer) {
 
 const scaleOption = {
   tooltip: { trigger: 'item' },
-  legend: { bottom: 0, icon: 'circle', itemWidth: 8, itemHeight: 8, textStyle: { fontSize: 11, color: '#667085' } },
+  legend: { bottom: 0, icon: 'circle', itemWidth: 8, itemHeight: 8, textStyle: { fontSize: 11, color: '#657384' } },
   series: [{
     type: 'pie', radius: ['42%', '68%'], center: ['50%', '44%'],
     label: { show: false },
     data: [
-      { value: 68, name: '大型企业', itemStyle: { color: '#4a62e7' } },
-      { value: 42, name: '中型企业', itemStyle: { color: '#52c7b8' } },
-      { value: 56, name: '小型企业', itemStyle: { color: '#8b5cf6' } },
-      { value: 28, name: '微型企业', itemStyle: { color: '#f5a623' } },
+      { value: 68, name: '大型企业', itemStyle: { color: '#1652B8' } },
+      { value: 42, name: '中型企业', itemStyle: { color: '#1652B8' } },
+      { value: 56, name: '小型企业', itemStyle: { color: '#1652B8' } },
+      { value: 28, name: '微型企业', itemStyle: { color: '#1652B8' } },
     ],
   }],
 };
@@ -117,12 +117,12 @@ const districtOption = {
   tooltip: { trigger: 'axis' },
   xAxis: {
     type: 'category', data: ['浦东', '徐汇', '闵行', '杨浦', '嘉定', '松江', '宝山', '静安'],
-    axisLabel: { fontSize: 10, color: '#98a2b3' }, axisLine: { lineStyle: { color: '#e4e7ec' } }, axisTick: { show: false },
+    axisLabel: { fontSize: 10, color: '#657384' }, axisLine: { lineStyle: { color: '#F2F4F7' } }, axisTick: { show: false },
   },
-  yAxis: { type: 'value', axisLabel: { fontSize: 10, color: '#98a2b3' }, splitLine: { lineStyle: { color: '#f2f4f7', type: 'dashed' } } },
+  yAxis: { type: 'value', axisLabel: { fontSize: 10, color: '#657384' }, splitLine: { lineStyle: { color: '#F2F4F7', type: 'dashed' } } },
   series: [{
     type: 'bar', barWidth: 18, data: [680, 420, 310, 260, 210, 186, 160, 140],
-    itemStyle: { color: '#4a62e7', borderRadius: [3, 3, 0, 0] },
+    itemStyle: { color: '#1652B8', borderRadius: [3, 3, 0, 0] },
   }],
 };
 </script>
@@ -132,22 +132,22 @@ const districtOption = {
 .detail-title { font-size: 20px; font-weight: 600; margin-bottom: 5px; }
 .chain { display: flex; flex-direction: column; gap: 4px; }
 .chain-layer { position: relative; }
-.layer-head { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; color: #344054; margin-bottom: 12px; }
-.layer-no { width: 20px; height: 20px; border-radius: 50%; background: #eef1fe; color: #4a62e7; font-size: 11px; display: flex; align-items: center; justify-content: center; }
+.layer-head { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; color: #657384; margin-bottom: 12px; }
+.layer-no { width: 20px; height: 20px; border-radius: 50%; background: #F2F4F7; color: #1652B8; font-size: 11px; display: flex; align-items: center; justify-content: center; }
 .layer-nodes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
-.chain-node { border: 1px solid #e7eaf3; border-radius: 8px; padding: 14px; cursor: pointer; transition: all .15s; background: #fbfcff; }
-.chain-node:hover { border-color: #b7c3f6; box-shadow: 0 4px 14px rgba(74, 98, 231, .12); transform: translateY(-1px); }
-.node-name { font-size: 13.5px; font-weight: 600; color: #344054; }
-.node-count { font-size: 11px; color: #8b93a7; margin: 5px 0 8px; }
-.node-bar { height: 5px; border-radius: 3px; background: #eef0f5; overflow: hidden; }
-.node-bar span { display: block; height: 100%; background: linear-gradient(90deg, #4a62e7, #52c7b8); }
+.chain-node { border: 1px solid #F2F4F7; border-radius: 8px; padding: 14px; cursor: pointer; transition: all .15s; background: #F2F4F7; }
+.chain-node:hover { border-color: #cfd6df; box-shadow: 0 4px 14px rgba(74, 98, 231, .12); transform: translateY(-1px); }
+.node-name { font-size: 13.5px; font-weight: 600; color: #657384; }
+.node-count { font-size: 11px; color: #657384; margin: 5px 0 8px; }
+.node-bar { height: 5px; border-radius: 3px; background: #F2F4F7; overflow: hidden; }
+.node-bar span { display: block; height: 100%; background: linear-gradient(90deg, #1652B8, #1652B8); }
 .node-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 9px; }
-.node-tags span { font-size: 10px; color: #667085; background: #f2f4f8; border-radius: 2px; padding: 1px 6px; }
-.chain-arrow { display: flex; justify-content: center; color: #b7c3f6; font-size: 18px; padding: 8px 0; }
+.node-tags span { font-size: 10px; color: #657384; background: #F2F4F7; border-radius: 2px; padding: 1px 6px; }
+.chain-arrow { display: flex; justify-content: center; color: #cfd6df; font-size: 18px; padding: 8px 0; }
 .node-drawer-head { display: flex; gap: 10px; align-items: center; margin-bottom: 12px; }
-.node-company { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f4f5f9; }
-.company-avatar { width: 34px; height: 34px; border-radius: 6px; background: #eef1fe; color: #4a62e7; display: flex; align-items: center; justify-content: center; font-size: 13px; }
+.node-company { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #F2F4F7; }
+.company-avatar { width: 34px; height: 34px; border-radius: 6px; background: #F2F4F7; color: #1652B8; display: flex; align-items: center; justify-content: center; font-size: 13px; }
 .company-info { flex: 1; }
-.company-name { font-size: 12.5px; color: #344054; }
-.company-meta { font-size: 11px; color: #98a2b3; margin-top: 3px; }
+.company-name { font-size: 12.5px; color: #657384; }
+.company-meta { font-size: 11px; color: #657384; margin-top: 3px; }
 </style>

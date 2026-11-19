@@ -48,7 +48,7 @@
 
         <PageCard title="跟进记录">
           <a-timeline style="margin-top: 12px">
-            <a-timeline-item v-for="(f, i) in followUps" :key="i" :color="i === 0 ? '#4a62e7' : '#c7d2fe'">
+            <a-timeline-item v-for="(f, i) in followUps" :key="i" :color="i === 0 ? '#1652B8' : '#F2F4F7'">
               <div class="follow-row">
                 <span class="follow-user">{{ f.user }}</span>
                 <span class="follow-date">{{ f.date }}</span>
@@ -62,7 +62,7 @@
       <div class="detail-side">
         <PageCard title="企业画像">
           <div class="score-ring">
-            <a-progress type="circle" :percent="clue.score" :size="120" :stroke-color="'#4a62e7'" />
+            <a-progress type="circle" :percent="clue.score" :size="120" :stroke-color="'#1652B8'" />
             <div class="score-label">综合匹配度</div>
           </div>
           <a-descriptions :column="1" size="small">
@@ -76,7 +76,7 @@
         <PageCard title="匹配园区">
           <div class="match-park">
             <div class="match-park-name">{{ clue.park }}</div>
-            <a-progress :percent="94" size="small" :stroke-color="'#52c7b8'" />
+            <a-progress :percent="94" size="small" :stroke-color="'#1652B8'" />
             <div class="text-muted">载体条件、产业方向与政策匹配度较高</div>
           </div>
           <a-button block @click="$router.push('/parksBuildings/index')">查看园区详情</a-button>
@@ -103,7 +103,8 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
+import { api } from '../api';
 import { useRoute } from 'vue-router';
 import { message } from 'ant-design-vue';
 import {
@@ -112,50 +113,46 @@ import {
 } from '@ant-design/icons-vue';
 import PageCard from '../components/PageCard.vue';
 import StatCard from '../components/StatCard.vue';
-import { clues } from '../data/mock';
+
 
 const msg = message;
 const route = useRoute();
-const clue = computed(() => clues.find((c) => c.id === route.params.id) || clues[0]);
+const clues = ref([]);
+onMounted(async () => { try { clues.value = await api.list('clues'); } catch { msg.error('无法加载线索'); } });
+const clue = computed(() => clues.value.find((c) => c.id === route.params.id));
 const followOpen = ref(false);
 const followForm = ref({ type: '电话', text: '' });
-const followUps = ref([
-  { user: '顾龙飞', date: '2026-11-15 14:20', text: '与企业投资总监电话沟通，确认拟在上海设立研发中心，重点关心中试场地和人才政策。' },
-  { user: '李婷', date: '2026-11-12 10:05', text: '发送园区载体资料及政策汇编，企业表示将安排团队来沪实地考察。' },
-  { user: '顾龙飞', date: '2026-11-08 16:40', text: '通过产业链招商活动首次接触，企业有长三角布局规划，已加入重点跟进名单。' },
-]);
-function saveFollow() {
-  if (!followForm.value.text.trim()) {
-    msg.warning('请填写跟进内容');
-    return;
-  }
-  followUps.value.unshift({ user: '顾龙飞', date: '2026-11-17 ' + new Date().toTimeString().slice(0, 5), text: `【${followForm.value.type}】${followForm.value.text}` });
-  followOpen.value = false;
-  followForm.value.text = '';
-  msg.success('跟进记录已添加');
+const followUps = computed(() => clue.value?.followUps || []);
+async function saveFollow() {
+  if (!followForm.value.text.trim()) { msg.warning('请填写跟进内容'); return; }
+  const entry = { user: '本地用户', date: new Date().toLocaleString('zh-CN'), text: `【${followForm.value.type}】${followForm.value.text}` };
+  try { Object.assign(clue.value, await api.update('clues', { ...clue.value, followUps: [entry, ...followUps.value] })); }
+  catch { msg.error('保存失败'); return; }
+  followOpen.value = false; followForm.value.text = ''; msg.success('跟进记录已添加');
 }
-function statusChange() {
-  message.success('线索已标记为已签约（演示）');
+async function statusChange() {
+  try { Object.assign(clue.value, await api.update('clues', { ...clue.value, status: '已签约' })); msg.success('线索已标记为已签约'); }
+  catch { msg.error('保存失败'); }
 }
 </script>
 
 <style scoped>
-.detail-back { margin-bottom: 10px; font-size: 12.5px; color: #8b93a7; }
+.detail-back { margin-bottom: 10px; font-size: 12.5px; color: #657384; }
 .detail-hero { display: flex; justify-content: space-between; gap: 20px; align-items: flex-start; }
 .detail-title { font-size: 21px; font-weight: 600; line-height: 1.5; }
 .detail-tags { display: flex; gap: 8px; flex-wrap: wrap; margin: 9px 0; }
-.detail-meta { display: flex; gap: 20px; flex-wrap: wrap; color: #667085; font-size: 12.5px; }
-.detail-meta .anticon { margin-right: 4px; color: #98a2b3; }
+.detail-meta { display: flex; gap: 20px; flex-wrap: wrap; color: #657384; font-size: 12.5px; }
+.detail-meta .anticon { margin-right: 4px; color: #657384; }
 .detail-actions { display: flex; gap: 8px; flex-shrink: 0; }
 .detail-layout { display: grid; grid-template-columns: 1fr 320px; gap: 14px; margin-top: 14px; }
-.clue-desc { font-size: 13px; color: #4b5563; line-height: 2; margin: 0 0 14px; }
+.clue-desc { font-size: 13px; color: #657384; line-height: 2; margin: 0 0 14px; }
 .follow-row { display: flex; gap: 12px; align-items: center; font-size: 12px; margin-bottom: 4px; }
-.follow-user { font-weight: 600; color: #344054; }
-.follow-date { color: #98a2b3; }
-.follow-text { font-size: 12.5px; color: #667085; line-height: 1.8; }
+.follow-user { font-weight: 600; color: #657384; }
+.follow-date { color: #657384; }
+.follow-text { font-size: 12.5px; color: #657384; line-height: 1.8; }
 .score-ring { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 8px 0 14px; }
-.score-label { font-size: 12px; color: #8b93a7; }
+.score-label { font-size: 12px; color: #657384; }
 .match-park { padding: 4px 0 14px; }
-.match-park-name { font-size: 13px; font-weight: 600; margin-bottom: 10px; color: #344054; }
+.match-park-name { font-size: 13px; font-weight: 600; margin-bottom: 10px; color: #657384; }
 @media (max-width: 1200px) { .detail-layout { grid-template-columns: 1fr; } }
 </style>

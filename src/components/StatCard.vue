@@ -1,7 +1,7 @@
 <template>
   <div class="stat-card" :class="'tone-' + (tone || 'plain')">
     <div class="stat-head">
-      <component :is="icon" v-if="icon" />
+      <PlatformIcon :name="iconForTitle(title)" />
       <span>{{ title }}</span>
       <a-tooltip v-if="tip" :title="tip"><QuestionCircleOutlined style="font-size: 11px" /></a-tooltip>
     </div>
@@ -14,6 +14,8 @@
 
 <script setup>
 import { QuestionCircleOutlined } from '@ant-design/icons-vue';
+import PlatformIcon from './PlatformIcon.vue';
+import { iconForTitle } from '../icon-assets';
 defineProps({
   title: { type: String, required: true },
   value: { type: [String, Number], required: true },

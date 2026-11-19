@@ -3,7 +3,7 @@
     <PageCard>
       <div class="ai-head">
         <div>
-          <div class="detail-title"><RobotOutlined style="color: #4a62e7" /> AI 外呼中心</div>
+          <div class="detail-title"><RobotOutlined style="color: #1652B8" /> AI 外呼中心</div>
           <div class="text-muted">智能外呼提升招商触达效率，通话数据自动沉淀至线索池</div>
         </div>
         <div class="flex gap8">
@@ -44,7 +44,7 @@
           <template #bodyCell="{ column, record }">
             <template v-if="column.key === 'progress'">
               <div class="task-progress">
-                <a-progress :percent="Math.round((record.connected / record.total) * 100)" size="small" :stroke-color="'#4a62e7'" />
+                <a-progress :percent="Math.round((record.connected / record.total) * 100)" size="small" :stroke-color="'#1652B8'" />
                 <span>{{ record.connected }} / {{ record.total }}</span>
               </div>
             </template>
@@ -319,59 +319,59 @@ function openAudio(row) {
 
 const trendOption = {
   tooltip: { trigger: 'axis' },
-  legend: { top: 0, icon: 'roundRect', itemWidth: 10, itemHeight: 4, textStyle: { fontSize: 11, color: '#667085' } },
+  legend: { top: 0, icon: 'roundRect', itemWidth: 10, itemHeight: 4, textStyle: { fontSize: 11, color: '#657384' } },
   grid: { left: 45, right: 20, top: 34, bottom: 26 },
-  xAxis: { type: 'category', data: ['11-11', '11-12', '11-13', '11-14', '11-15', '11-16', '11-17'], axisLabel: { fontSize: 10, color: '#98a2b3' }, axisLine: { lineStyle: { color: '#e4e7ec' } }, axisTick: { show: false } },
-  yAxis: { type: 'value', axisLabel: { fontSize: 10, color: '#98a2b3' }, splitLine: { lineStyle: { color: '#f2f4f7', type: 'dashed' } } },
+  xAxis: { type: 'category', data: ['11-11', '11-12', '11-13', '11-14', '11-15', '11-16', '11-17'], axisLabel: { fontSize: 10, color: '#657384' }, axisLine: { lineStyle: { color: '#F2F4F7' } }, axisTick: { show: false } },
+  yAxis: { type: 'value', axisLabel: { fontSize: 10, color: '#657384' }, splitLine: { lineStyle: { color: '#F2F4F7', type: 'dashed' } } },
   series: [
-    { name: '外呼量', type: 'bar', barWidth: 14, data: [1260, 1480, 1620, 1580, 1860, 2100, 920], itemStyle: { color: '#c7d2fe', borderRadius: [3, 3, 0, 0] } },
-    { name: '接通量', type: 'line', smooth: true, symbol: 'circle', symbolSize: 4, data: [960, 1120, 1250, 1190, 1420, 1600, 706], lineStyle: { color: '#4a62e7', width: 2 }, itemStyle: { color: '#4a62e7' } },
+    { name: '外呼量', type: 'bar', barWidth: 14, data: [1260, 1480, 1620, 1580, 1860, 2100, 920], itemStyle: { color: '#F2F4F7', borderRadius: [3, 3, 0, 0] } },
+    { name: '接通量', type: 'line', smooth: true, symbol: 'circle', symbolSize: 4, data: [960, 1120, 1250, 1190, 1420, 1600, 706], lineStyle: { color: '#1652B8', width: 2 }, itemStyle: { color: '#1652B8' } },
   ],
 };
 const resultOption = {
   tooltip: { trigger: 'item' },
-  legend: { bottom: 0, icon: 'circle', itemWidth: 8, itemHeight: 8, textStyle: { fontSize: 11, color: '#667085' } },
+  legend: { bottom: 0, icon: 'circle', itemWidth: 8, itemHeight: 8, textStyle: { fontSize: 11, color: '#657384' } },
   series: [{
     type: 'pie', radius: ['42%', '68%'], center: ['50%', '44%'], label: { show: false },
     data: [
       { value: 386, name: '有意向', itemStyle: { color: '#2fa45f' } },
-      { value: 1260, name: '需跟进', itemStyle: { color: '#4a62e7' } },
-      { value: 2860, name: '未接通', itemStyle: { color: '#cbd5e1' } },
-      { value: 420, name: '拒绝', itemStyle: { color: '#f5a623' } },
+      { value: 1260, name: '需跟进', itemStyle: { color: '#1652B8' } },
+      { value: 2860, name: '未接通', itemStyle: { color: '#cfd6df' } },
+      { value: 420, name: '拒绝', itemStyle: { color: '#1652B8' } },
     ],
   }],
 };
 const intentOption = {
   grid: { left: 36, right: 18, top: 20, bottom: 26 },
   tooltip: { trigger: 'axis' },
-  xAxis: { type: 'category', data: ['高意向', '中意向', '低意向', '无意向'], axisLabel: { fontSize: 10, color: '#98a2b3' }, axisLine: { lineStyle: { color: '#e4e7ec' } }, axisTick: { show: false } },
-  yAxis: { type: 'value', axisLabel: { fontSize: 10, color: '#98a2b3' }, splitLine: { lineStyle: { color: '#f2f4f7', type: 'dashed' } } },
-  series: [{ type: 'bar', barWidth: 26, data: [386, 1260, 1820, 2860], itemStyle: { color: '#8b5cf6', borderRadius: [4, 4, 0, 0] } }],
+  xAxis: { type: 'category', data: ['高意向', '中意向', '低意向', '无意向'], axisLabel: { fontSize: 10, color: '#657384' }, axisLine: { lineStyle: { color: '#F2F4F7' } }, axisTick: { show: false } },
+  yAxis: { type: 'value', axisLabel: { fontSize: 10, color: '#657384' }, splitLine: { lineStyle: { color: '#F2F4F7', type: 'dashed' } } },
+  series: [{ type: 'bar', barWidth: 26, data: [386, 1260, 1820, 2860], itemStyle: { color: '#1652B8', borderRadius: [4, 4, 0, 0] } }],
 };
 const sceneOption = {
   grid: { left: 100, right: 30, top: 10, bottom: 20 },
   tooltip: { trigger: 'axis' },
-  xAxis: { type: 'value', axisLabel: { fontSize: 10, color: '#98a2b3' }, splitLine: { lineStyle: { color: '#f2f4f7', type: 'dashed' } } },
-  yAxis: { type: 'category', data: ['安商稳商关怀', '园区服务回访', '政策宣讲邀约', '政策申报提醒', '招商线索首访'], axisLabel: { fontSize: 10, color: '#667085' }, axisLine: { show: false }, axisTick: { show: false } },
-  series: [{ type: 'bar', barWidth: 13, data: [62, 74, 81, 88, 96], itemStyle: { color: '#52c7b8', borderRadius: [0, 5, 5, 0] } }],
+  xAxis: { type: 'value', axisLabel: { fontSize: 10, color: '#657384' }, splitLine: { lineStyle: { color: '#F2F4F7', type: 'dashed' } } },
+  yAxis: { type: 'category', data: ['安商稳商关怀', '园区服务回访', '政策宣讲邀约', '政策申报提醒', '招商线索首访'], axisLabel: { fontSize: 10, color: '#657384' }, axisLine: { show: false }, axisTick: { show: false } },
+  series: [{ type: 'bar', barWidth: 13, data: [62, 74, 81, 88, 96], itemStyle: { color: '#1652B8', borderRadius: [0, 5, 5, 0] } }],
 };
 </script>
 
 <style scoped>
 .ai-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; gap: 16px; }
 .detail-title { font-size: 19px; font-weight: 600; display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
-.ai-status { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #2fa45f; background: #f2fbf5; border: 1px solid #ccecd6; border-radius: 14px; padding: 4px 12px; }
+.ai-status { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #2fa45f; background: #F2F4F7; border: 1px solid #F2F4F7; border-radius: 14px; padding: 4px 12px; }
 .ai-status i { width: 6px; height: 6px; border-radius: 50%; background: #2fa45f; }
-.task-progress { display: flex; flex-direction: column; gap: 2px; font-size: 11px; color: #98a2b3; }
+.task-progress { display: flex; flex-direction: column; gap: 2px; font-size: 11px; color: #657384; }
 .task-progress :deep(.ant-progress) { margin: 0; }
 .drawer-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
 .audio-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
 .audio-company { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
-.audio-player { display: flex; align-items: center; gap: 12px; background: #f7f9fe; border-radius: 8px; padding: 14px 16px; margin-top: 14px; }
-.audio-play { font-size: 30px; color: #4a62e7; cursor: pointer; }
+.audio-player { display: flex; align-items: center; gap: 12px; background: #F2F4F7; border-radius: 8px; padding: 14px 16px; margin-top: 14px; }
+.audio-play { font-size: 30px; color: #1652B8; cursor: pointer; }
 .waveform { flex: 1; display: flex; align-items: center; gap: 2px; height: 38px; overflow: hidden; }
-.waveform span { flex: 1; background: #c7d2fe; border-radius: 2px; }
-.audio-time { font-size: 12px; color: #8b93a7; }
-.transcript { font-size: 12.5px; color: #4b5563; line-height: 2; }
-.tr-row b { color: #4a62e7; }
+.waveform span { flex: 1; background: #F2F4F7; border-radius: 2px; }
+.audio-time { font-size: 12px; color: #657384; }
+.transcript { font-size: 12.5px; color: #657384; line-height: 2; }
+.tr-row b { color: #1652B8; }
 </style>
