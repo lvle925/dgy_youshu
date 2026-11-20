@@ -10,7 +10,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { NumberTicker } from '@/components/ui/number-ticker';
 import { Progress } from '@/components/ui/progress';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { PlatformIcon, type PlatformIconName } from '@/components/PlatformIcon';
 
@@ -44,8 +43,7 @@ const districtsTrend = [
 ];
 const enterpriseTrend = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月']
   .map((name, index) => ({ name, value: [1280, 1520, 1860, 2100, 2380, 2620, 2940, 3180, 3460, 3690, 3920][index] }));
-const chartColors = ['#1652B8', '#4F80C4', '#82A6D5', '#A9C0DE', '#CCD9E9'];
-const cityOptions = ['上海市', '北京市', '天津市', '杭州市', '苏州市', '南京市', '深圳市'];
+const chartColors = ['#1652B8', '#147A4C', '#C8922E', '#5C8ED5', '#64748B'];
 const favoritesKey = 'DEMO_FAVORITES';
 
 function safeReadFavorites() {
@@ -74,7 +72,6 @@ function MetricCard({ title, value, detail, children, ticker = false, tone = 'se
 }
 
 export default function HomeDashboard() {
-  const [city, setCity] = useState('上海市');
   const [favorites, setFavorites] = useState(safeReadFavorites);
   const [favoriteOpen, setFavoriteOpen] = useState(false);
 
@@ -90,7 +87,6 @@ export default function HomeDashboard() {
     <div className="dashboard-page">
       <div className="dashboard-title-row">
         <div><h1>首页</h1><p>政策服务、招商动态与企业运营情况</p></div>
-        <div className="city-switcher"><span>开通城市</span><Select value={city} onValueChange={(value) => { if (value) setCity(value); }}><SelectTrigger aria-label="选择城市"><SelectValue /></SelectTrigger><SelectContent>{cityOptions.map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}</SelectContent></Select><Button onClick={() => toast.success(`已切换至 ${city}，数据已更新`)}>查询</Button></div>
       </div>
 
 

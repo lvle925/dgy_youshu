@@ -17,5 +17,10 @@
     "jsx": "react-jsx",
     "paths": { "@/*": ["./src-react/*"] }
   },
-  "include": ["src-react", "src/data/mock.js"]
+  "include": [
+    "src-react",
+    "src/components/shared",
+    "src/mocks",
+    "src/data/mock.js"
+  ]
 }

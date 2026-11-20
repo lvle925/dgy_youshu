@@ -1,12 +1,14 @@
 # 有数计划 · 本地全栈演示平台
 
-产业招商与园区服务办公工作台，涵盖政策、园区、企业、线索、人员和走访等功能。React 工作台承载 Vue 业务页面；Java 后端提供本地认证、部分业务接口和 H2 持久化。
+产业招商与园区服务办公工作台，涵盖政策、园区、企业、线索、人员和走访等功能。React 工作台承载全部业务路由，Java 后端提供本地认证、业务记录接口和 H2 持久化。
 
 > 本项目用于本机开发和演示。统计、通知、地图点位和多数企业信息为演示数据；短信、AI 外呼等尚未接入真实服务，权限控制不完整，不应直接用于生产或存放真实敏感数据。
 
+新会话交接请先阅读 [PROJECT_SESSION_SUMMARY.md](PROJECT_SESSION_SUMMARY.md)。
+
 ## 技术栈
 
-- 前端：React 19、React Router、Vite 5、Tailwind CSS 4、shadcn/ui（Base UI）、Recharts；业务页面使用 Vue 3、Vue Router、Ant Design Vue、ECharts。
+- 前端：React 19、React Router、Vite 5、Tailwind CSS 4、shadcn/ui（Base UI）、Recharts、Cloudflare Turnstile。
 - 后端：Java 21、Spring Boot 3.4.5、Spring JDBC、H2 文件数据库、springdoc-openapi。
 - 地图：高德 Web JS API 2.0，园区和商机点位为演示数据。
 
@@ -33,6 +35,23 @@ VITE_AMAP_SECURITY_CODE=你的安全密钥
 
 配置成功后显示高德底图；缺少配置或网络不可用时显示本地示意图。`.env.local` 已加入 Git 忽略规则。该版本的前端配置会发送到浏览器，部署时应按照高德要求配置安全代理与域名限制。
 
+### 认证配置
+
+Compose 的本机演示环境默认开启演示登录。登录页手机号预填 `127127`，点击「127127 免验证码演示登录」可以直接进入工作台。也可以点击「发送验证码」，使用服务端返回的演示短信码 `127127` 完成短信登录。演示短信码只在 `APP_AUTH_DEMO_LOGIN_ENABLED=true` 时有效，应用配置默认关闭该开关。
+
+账号密码登录使用 Cloudflare Turnstile。`compose.yaml` 内置 Cloudflare 官方测试 site key 和 secret key，便于本机验收。部署到真实环境时，用环境变量覆盖它们，并把 `APP_AUTH_DEMO_LOGIN_ENABLED` 设为 `false`。
+
+```dotenv
+APP_AUTH_DEMO_LOGIN_ENABLED=false
+APP_AUTH_DEMO_PHONE=127127
+APP_AUTH_DEMO_SMS_CODE=127127
+APP_AUTH_DEVICE_VERIFICATION_ENABLED=true
+APP_AUTH_TURNSTILE_SITE_KEY=你的 Turnstile Site Key
+APP_AUTH_TURNSTILE_SECRET_KEY=你的 Turnstile Secret Key
+```
+
+当前仓库没有真实短信服务商凭证，因此其他手机号会得到「尚未配置真实短信服务」的明确响应。短信接口契约已经保留在 `/api/auth/sms/send` 和 `/api/auth/sms/login`，接入供应商时只需替换服务端发送实现。账号密码首次登录或未信任设备时，服务端可以发起短信设备验证，并在勾选信任设备后保存 90 天可信设备 token。
+
 ### 停止与数据
 
 前端终端按 `Ctrl+C`，然后执行：
@@ -47,11 +66,13 @@ docker compose -p youshu-local down
 
 以下为隔离演示环境中的实际浏览器截图；为展示工作台使用了测试认证状态，数据与通知均为演示内容。
 
-### 1. 创建管理员与登录
+### 1. 演示登录与管理员登录
 
-首次打开时创建本地管理员：账号至少 3 个字符、密码至少 10 个字符。输入图片中的 4 位验证码，点击图片可换一张；验证码不区分大小写、5 分钟有效，提交后失效。以后使用该账号、密码和新的验证码登录。
+本机演示环境打开即显示短信登录。手机号默认是 `127127`，可使用免验证码按钮进入，也可发送并输入演示码 `127127`。账号密码登录仍要求账号至少 3 个字符、密码至少 10 个字符和 Turnstile 人机验证。关闭 Turnstile 配置时，后端会回退到绑定 Session 的高质量图片验证码，验证码 5 分钟有效且提交后失效。
 
-![首次创建管理员与验证码](docs/screenshots/login.png)
+![短信演示登录与本机免验证码入口](docs/screenshots/login.png)
+
+![账号密码与 Turnstile 安全验证](docs/screenshots/login-password.png)
 
 ### 2. 工作台与菜单
 
@@ -73,7 +94,7 @@ docker compose -p youshu-local down
 - **走访管理**：创建走访工单，完成时填写结果；完成操作会生成走访记录并保存。
 - **人员和角色**：在“平台管理 → 账号权限”中维护成员及角色。角色设置可保存，但目前没有细粒度权限校验。
 
-筛选、详情和保存能力以各页面实际实现为准；部分指标及导出、外呼、计费等为演示交互。
+筛选、详情和保存能力以各页面实际实现为准。政策、成员、角色、园区、线索和走访等已接入本地记录 API，导出会生成浏览器下载文件；真实外呼、计费、第三方企业数据和短信发送仍需要外部服务。
 
 ### 5. 商机地图
 
@@ -83,18 +104,19 @@ docker compose -p youshu-local down
 
 ## API 文档与数据范围
 
-启动后访问 [Swagger UI](http://127.0.0.1:8080/swagger-ui.html) 或 [OpenAPI JSON](http://127.0.0.1:8080/v3/api-docs)。先在同一浏览器登录系统再调用业务 API；直接调用认证接口时，先请求 `/api/auth/captcha`，在同一会话中提交验证码 ID 与图片字符。
+启动后访问 [Swagger UI](http://127.0.0.1:8080/swagger-ui.html) 或 [OpenAPI JSON](http://127.0.0.1:8080/v3/api-docs)。先在同一浏览器登录系统再调用业务 API。账号密码登录提交 Turnstile token，图片验证码回退模式提交 `captchaId` 和图片字符。演示短信登录先调用 `/api/auth/sms/send` 获取 challenge，再把 `challengeId` 和短信码提交给 `/api/auth/sms/login`。
 
-后端提供 `/api/auth/*`、`/api/health`、`/api/records/{collection}` 和 `/api/visits/{id}/complete`。持久化数据集包括 `members`、`campusList`、`visitOrders`、`visitRecords`、`roles`、`policies`、`clues`。并非所有界面操作均接入这些接口。
+后端提供 `/api/auth/*`、`/api/health`、`/api/records/{collection}` 和 `/api/visits/{id}/complete`。认证接口包含演示登录、图片验证码、Turnstile 校验、短信验证码、账号密码登录、设备验证和退出登录。持久化数据集包括 `members`、`campusList`、`visitOrders`、`visitRecords`、`roles`、`policies`、`clues`。
 
 ## 本次更新（相对 v1.0.0 / 54c660e）
 
 - 新增 Java 后端、H2 初始化数据、会话认证、图片验证码、业务记录接口、Swagger 和 Docker 配置。
-- 新增 React 工作台与 shadcn 组件体系，保留嵌入的 Vue 业务页面。
+- 新增 React 工作台与 shadcn 组件体系，完成业务路由从 iframe 兼容层到 React 页面迁移。
 - 更新配色、品牌、导航层级、图标、页签、搜索、通知快捷跳转和登录界面，增加界面素材。
 - 接入高德底图与演示点位，优化点位更新和页面监听，调整弹窗遮罩、内容宽度及滚动。
-- 更新政策、园区、人员、角色、走访和线索等页面的部分本地 API 操作，其他演示交互仍保留。
-- 增加验证码测试、地图配置示例、截图和操作文档。完整逐文件变更可查看本次 GitHub 提交 diff。
+- 更新政策、园区、人员、角色、走访和线索等页面的本地 API 操作，增加 CSV 导出和服务工单联动。
+- 增加 Cloudflare Turnstile、`127127` 本机演示登录、短信 challenge、设备可信 90 天记录和验证码测试。
+- 更新登录、密码安全验证和工作台实例截图。
 
 ## 验证
 
