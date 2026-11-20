@@ -1,9 +1,9 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Check, ChevronRight, Plus, X } from 'lucide-react';
-import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip as ChartTooltip, XAxis, YAxis } from 'recharts';
-import { homeStats, hotPolicyRank } from '../src/data/mock.js';
+import { AlertTriangle, Check, ChevronRight, Download, MapPinned, Plus, X } from 'lucide-react';
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, ComposedChart, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip as ChartTooltip, XAxis, YAxis } from 'recharts';
+import { homeStats, hotPolicyRank, mapMarkers, migrationStats } from '../src/data/mock.js';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -43,6 +43,14 @@ const districtsTrend = [
 ];
 const enterpriseTrend = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月']
   .map((name, index) => ({ name, value: [1280, 1520, 1860, 2100, 2380, 2620, 2940, 3180, 3460, 3690, 3920][index] }));
+const monthlyOperations = [
+  { name: '1月', policies: 118, approved: 72, projects: 18 }, { name: '2月', policies: 146, approved: 86, projects: 22 },
+  { name: '3月', policies: 168, approved: 98, projects: 26 }, { name: '4月', policies: 204, approved: 121, projects: 31 },
+  { name: '5月', policies: 228, approved: 139, projects: 37 }, { name: '6月', policies: 248, approved: 152, projects: 42 },
+  { name: '7月', policies: 276, approved: 174, projects: 47 }, { name: '8月', policies: 294, approved: 189, projects: 54 },
+  { name: '9月', policies: 322, approved: 211, projects: 61 }, { name: '10月', policies: 346, approved: 232, projects: 67 },
+  { name: '11月', policies: 382, approved: 256, projects: 74 },
+];
 const chartColors = ['#1652B8', '#147A4C', '#C8922E', '#5C8ED5', '#64748B'];
 const favoritesKey = 'DEMO_FAVORITES';
 
@@ -60,7 +68,7 @@ function MetricCard({ title, value, detail, children, ticker = false, tone = 'se
   const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   const numeric = typeof value === 'number' ? value : null;
   return (
-    <Card className={`metric-card metric-card--${tone}`}>
+    <Card className={`metric-card metric-card--${tone} ${tone === 'primary' ? 'os-hero-card' : 'os-glass-card'}`}>
       <CardHeader className="metric-card-header"><CardDescription><PlatformIcon name={icon} className="metric-heading-icon" />{title}</CardDescription></CardHeader>
       <CardContent>
         <div className="metric-value">{ticker && numeric !== null && !prefersReducedMotion ? <NumberTicker value={numeric} startValue={Math.floor(numeric * 0.99)} className="metric-ticker" /> : value}</div>
@@ -91,18 +99,31 @@ export default function HomeDashboard() {
 
 
 
-      <section className="metric-grid" aria-label="首页数据概览">
+      <section className="dashboard-bento-kpi" aria-label="首页数据概览">
         <MetricCard title="政策总数据" icon="policy" value={homeStats.policyTotal} tone="primary" ticker detail={<span>项目政策 <strong>{homeStats.projectPolicy.toLocaleString()}</strong><span className="metric-divider" />政策通知 <strong>{homeStats.notice.toLocaleString()}</strong><span className="metric-divider" />政策公告 <strong>{homeStats.announce.toLocaleString()}</strong></span>}>
           <Progress value={73} className="policy-progress" />
+          <span className="dashboard-kpi-note"><span className="status-led" />同比 +12.8%</span>
         </MetricCard>
-        <MetricCard title="补贴企业金额" icon="billing" value={`¥ ${homeStats.subsidyAmount}`} detail={<span>获批企业 <strong>{homeStats.fundedCompanies.toLocaleString()}</strong><span className="metric-divider" />监控企业 <strong>{homeStats.monitored}</strong><span className="metric-divider" />报告导出 <strong>{homeStats.reports}</strong></span>}>
-          <div className="metric-spark"><ResponsiveContainer width="100%" height="100%"><BarChart data={[4, 12, 20, 26, 34, 30, 32].map((value, index) => ({ index, value }))}><XAxis dataKey="index" hide /><YAxis hide domain={[0, 40]} /><Bar dataKey="value" fill="var(--chart-1)" radius={[3, 3, 0, 0]} isAnimationActive={false} /></BarChart></ResponsiveContainer></div>
+        <MetricCard title="高意愿项目线索池" icon="folder" value="128" detail={<span>本周新增 <strong>34</strong><span className="metric-divider" />重点跟进 <strong>19</strong></span>}>
+          <span className="dashboard-kpi-note is-success"><span className="status-led" />转化率 24.6%</span>
         </MetricCard>
-        <MetricCard title="访问总量" icon="users" value={homeStats.visits} tone="tertiary" ticker detail={<span>昨日 <strong>{homeStats.yesterdayVisit.toLocaleString()}</strong><span className="metric-divider" />7 天 <strong>{homeStats.weekVisit.toLocaleString()}</strong><span className="metric-divider" />30 天 <strong>{homeStats.monthVisit.toLocaleString()}</strong></span>}>
-          <div className="metric-spark"><ResponsiveContainer width="100%" height="100%"><AreaChart data={[6, 10, 9, 18, 16, 28, 34, 40].map((value, index) => ({ index, value }))}><XAxis dataKey="index" hide /><YAxis hide domain={[0, 42]} /><Area type="monotone" dataKey="value" stroke="var(--chart-2)" fill="var(--chart-2)" fillOpacity={0.12} strokeWidth={2} isAnimationActive={false} /></AreaChart></ResponsiveContainer></div>
+        <MetricCard title="安商迁移高风险预警" icon="shield" value={migrationStats.high} detail={<span>中风险 <strong>{migrationStats.mid}</strong><span className="metric-divider" />低风险 <strong>{migrationStats.low}</strong></span>}>
+          <span className="dashboard-kpi-note is-warning"><AlertTriangle size={12} />需要优先跟进</span>
         </MetricCard>
       </section>
 
+      <section className="dashboard-bento-grid" aria-label="首页趋势与空间洞察">
+        <Card className="chart-card os-glass-card dashboard-trend-card">
+          <CardHeader className="section-heading"><div><CardTitle><PlatformIcon name="activity" className="section-heading-icon" />招商转化趋势</CardTitle><CardDescription>政策申报、审核通过与项目落地按月变化</CardDescription></div><Button variant="ghost" size="sm" onClick={() => toast.info('趋势数据已准备，可从报表中心导出')}><Download data-icon="inline-start" />导出</Button></CardHeader>
+          <CardContent className="chart-content"><ResponsiveContainer width="100%" height="100%"><ComposedChart data={monthlyOperations} margin={{ left: -10, right: 10, top: 12, bottom: 0 }}><CartesianGrid stroke="rgba(100,116,139,.14)" strokeDasharray="3 5" vertical={false} /><XAxis dataKey="name" tickLine={false} axisLine={false} tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }} /><YAxis yAxisId="left" tickLine={false} axisLine={false} tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }} width={30} /><YAxis yAxisId="right" orientation="right" tickLine={false} axisLine={false} tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }} width={28} /><ChartTooltip contentStyle={{ borderRadius: 10, borderColor: 'rgba(22,82,184,.10)', boxShadow: '0 8px 24px rgba(15,39,68,.10)' }} formatter={(value, name) => [Number(value).toLocaleString(), name === 'policies' ? '政策申报' : name === 'approved' ? '审核通过' : '商机落地']} /><Bar yAxisId="left" dataKey="policies" name="policies" fill="#93C5FD" radius={[4, 4, 0, 0]} barSize={18} isAnimationActive={false} /><Bar yAxisId="left" dataKey="approved" name="approved" fill="#1652B8" radius={[4, 4, 0, 0]} barSize={18} isAnimationActive={false} /><Line yAxisId="right" type="monotone" dataKey="projects" name="projects" stroke="#C8922E" strokeWidth={2.5} dot={{ r: 3, fill: '#C8922E', strokeWidth: 0 }} activeDot={{ r: 4 }} isAnimationActive={false} /></ComposedChart></ResponsiveContainer></CardContent>
+        </Card>
+        <Card className="chart-card os-glass-card dashboard-map-card">
+          <CardHeader className="section-heading"><div><CardTitle><MapPinned className="section-heading-icon" />电子围栏与空间载体</CardTitle><CardDescription>上海市重点产业空间实时分布</CardDescription></div><Button variant="ghost" size="sm" render={<Link to="/businessMap/index" />}>全屏地图 <ChevronRight data-icon="inline-end" /></Button></CardHeader>
+          <CardContent className="dashboard-map-content"><div className="map-miniature">{mapMarkers.map((marker) => <Link key={marker.id} to="/businessMap/index" className="dashboard-map-pin" style={{ left: `${marker.x}%`, top: `${marker.y}%` }} aria-label={`查看${marker.name}`}><MapPinned size={11} /></Link>)}<div className="dashboard-map-footer"><strong>上海市产业空间</strong><span>{mapMarkers.length} 个重点载体</span></div></div></CardContent>
+        </Card>
+      </section>
+
+      <section className="dashboard-third-row" aria-label="常用功能与热门政策">
       <Card className="favorites-card">
         <CardHeader className="favorites-header"><div><CardTitle>常用功能</CardTitle><CardDescription>快速进入日常工作模块</CardDescription></div><Button variant="outline" size="sm" onClick={() => setFavoriteOpen(true)}><Plus data-icon="inline-start" />管理功能 <Badge variant="secondary">{favorites.length}/10</Badge></Button></CardHeader>
         <CardContent className="favorites-list">
@@ -118,6 +139,7 @@ export default function HomeDashboard() {
           <div className="policy-rank-list"><Table><TableHeader><TableRow><TableHead>政策名称</TableHead><TableHead className="rank-table-value">浏览量</TableHead></TableRow></TableHeader><TableBody>{hotPolicyRank.map((policy, index) => <TableRow key={policy.name}><TableCell><Link to="/policy/index" className="rank-table-link"><span className={`rank-index ${index < 3 ? `rank-index-${index + 1}` : ''}`}>{String(index + 1).padStart(2, '0')}</span><span className="rank-policy-name" title={policy.name}>{policy.name}</span></Link></TableCell><TableCell className="rank-table-value"><strong>{policy.value.toLocaleString()}</strong></TableCell></TableRow>)}</TableBody></Table></div>
         </CardContent>
       </Card>
+      </section>
 
       <section className="dashboard-chart-grid">
         <Card className="chart-card"><CardHeader><CardTitle><PlatformIcon name="landmark" className="section-heading-icon" />产业政策扶持方向</CardTitle><CardDescription>各重点产业项目占比</CardDescription></CardHeader><CardContent className="chart-content"><ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={policyDirection} dataKey="value" nameKey="name" innerRadius={62} outerRadius={93} paddingAngle={3} stroke="none" isAnimationActive={false}>{policyDirection.map((item, index) => <Cell fill={chartColors[index]} key={item.name} />)}</Pie><ChartTooltip formatter={(value, name) => [`${value}%`, name]} contentStyle={{ borderRadius: 10, borderColor: 'var(--border)' }} /></PieChart></ResponsiveContainer><div className="chart-legend">{policyDirection.map((item, index) => <div key={item.name}><i style={{ background: chartColors[index] }} /><span>{item.name}</span><strong>{item.value}%</strong></div>)}</div></CardContent></Card>

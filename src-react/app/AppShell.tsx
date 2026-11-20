@@ -75,6 +75,7 @@ import {
   Bell,
   ChevronDown,
   ChevronRight,
+  FileDown,
   LogOut,
   PanelLeft,
   Search,
@@ -307,7 +308,7 @@ function WorkspaceFrame({
   const normalizedQuery = menuQuery.trim();
   return (
     <>
-      <Sidebar collapsible="icon" className="workspace-sidebar">
+      <Sidebar collapsible="icon" className="workspace-sidebar os-floating-rail">
         <SidebarHeader className="sidebar-brand-wrap">
           <Link
             className="sidebar-brand"
@@ -417,15 +418,21 @@ function WorkspaceFrame({
           })}
         </SidebarContent>
         <SidebarFooter className="sidebar-footer">
-          <div className="workspace-status">
-            <span className="status-led" />
-            <span>本地工作空间</span>
-            <Badge variant="outline">演示数据</Badge>
+          <div className="workspace-status-card">
+            <div className="workspace-quota">
+              <div><span>每日积分配额</span><strong>80 / 100</strong></div>
+              <span className="workspace-quota-track"><i style={{ width: "80%" }} /></span>
+            </div>
+            <div className="workspace-status">
+              <span className="status-led" />
+              <span>本地工作空间</span>
+              <Badge variant="outline">演示数据</Badge>
+            </div>
           </div>
         </SidebarFooter>
       </Sidebar>
       <SidebarInset className="workspace-main">
-        <header className="workspace-header">
+        <header className="workspace-header os-glass-topbar">
           <div className="workspace-header-left">
             <Button
               variant="ghost"
@@ -443,9 +450,9 @@ function WorkspaceFrame({
               <ChevronRight />
               <b>{titleFor(activePath)}</b>
             </div>
+            <CityPicker city={city} onChange={setCity} />
           </div>
           <div className="workspace-header-right">
-            <CityPicker city={city} onChange={setCity} />
             <Button
               className="global-search-trigger"
               variant="outline"
@@ -454,6 +461,16 @@ function WorkspaceFrame({
               <Search data-icon="inline-start" />
               <span>全局搜索</span>
               <kbd>⌘ K</kbd>
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="report-queue-trigger"
+              aria-label="报告导出队列"
+              title="报告导出队列"
+              onClick={() => toast.info("当前没有等待导出的报告")}
+            >
+              <FileDown />
             </Button>
             <Button
               variant="ghost"
@@ -643,7 +660,7 @@ function WorkspaceTabs({
   closeAllTabs: () => void;
 }) {
   return (
-    <div className="workspace-tabs-wrap">
+    <div className="workspace-tabs-wrap os-tabs-strip">
       <div className="workspace-tablist" role="tablist" aria-label="已打开页面">
         {tabs.map((tab, index) => {
           const Icon = iconForPath(tab.path);
