@@ -75,13 +75,15 @@ import {
   Bell,
   ChevronDown,
   ChevronRight,
-  FileDown,
   LogOut,
   PanelLeft,
   Search,
   X,
 } from "lucide-react";
-import { CityContext } from "./CityContext";
+import { CityContext, useCurrentCity } from "./CityContext";
+import { allowsRoute, usePrincipal } from "./AccessContext";
+import { usePoints } from "./PointsContext";
+import { ReportQueueTrigger } from "./ReportQueue";
 
 const TABS_KEY = "DEMO_TABS";
 const TAB_LIMIT = 12;
@@ -158,6 +160,20 @@ export function AppShell({
   const [city, setCity] = useState(
     () => localStorage.getItem("workspace_city") || "上海市",
   );
+  const principal = usePrincipal();
+  const permittedTabs = tabs.filter(tab => allowsRoute(principal, tab.path));
+  const [readNotices, setReadNotices] = useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem("notice-read:" + userName) || "[]"); } catch { return []; }
+  });
+  function markRead(ids: string[]) {
+    setReadNotices(current => {
+      const next = [...new Set([...current, ...ids])];
+      localStorage.setItem("notice-read:" + userName, JSON.stringify(next));
+      return next;
+    });
+  }
+  const noticeIds = notices.filter(notice => allowsRoute(principal, notice.path)).map(notice => notice.id);
+  const hasUnread = noticeIds.some(id => !readNotices.includes(id));
   const [searchOpen, setSearchOpen] = useState(false);
   const [noticesOpen, setNoticesOpen] = useState(false);
   const [expanded, setExpanded] = useState<Record<string, boolean>>(() =>
@@ -174,6 +190,7 @@ export function AppShell({
   );
 
   useEffect(() => {
+    if (!allowsRoute(principal, activePath)) return;
     setTabs((current) => {
       if (current.some((tab) => tab.path === activePath)) return current;
       const next = [
@@ -193,7 +210,7 @@ export function AppShell({
       return limited;
     });
     document.title = `${titleFor(activePath)} · 有数计划`;
-  }, [activePath]);
+  }, [activePath, principal]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -212,8 +229,8 @@ export function AppShell({
   }
   function closeTab(path: string) {
     if (path === HOME_TAB.path) return;
-    const currentIndex = tabs.findIndex((tab) => tab.path === path);
-    const next = tabs.filter((tab) => tab.path !== path);
+    const currentIndex = permittedTabs.findIndex((tab) => tab.path === path);
+    const next = permittedTabs.filter((tab) => tab.path !== path);
     persistTabs(next);
     if (activePath === path)
       navigate(next[Math.max(0, currentIndex - 1)]?.path ?? HOME_TAB.path);
@@ -221,14 +238,14 @@ export function AppShell({
   function closeOtherTabs() {
     persistTabs([
       HOME_TAB,
-      ...tabs.filter(
+      ...permittedTabs.filter(
         (tab) => tab.path === activePath && tab.path !== HOME_TAB.path,
       ),
     ]);
   }
   function closeAllTabs() {
     persistTabs([HOME_TAB]);
-    navigate(HOME_TAB.path);
+    navigate(permittedTabs[0]?.path ?? "/");
   }
 
   return (
@@ -251,9 +268,10 @@ export function AppShell({
           setMenuQuery={setMenuQuery}
           onOpenSearch={() => setSearchOpen(true)}
           onOpenNotifications={() => setNoticesOpen(true)}
+          hasUnread={hasUnread}
         >
           <WorkspaceTabs
-            tabs={tabs}
+            tabs={permittedTabs}
             activePath={activePath}
             navigate={navigate}
             closeTab={closeTab}
@@ -267,7 +285,7 @@ export function AppShell({
           onOpenChange={setSearchOpen}
           onNavigate={(path) => navigate(path)}
         />
-        <NotificationDrawer open={noticesOpen} onOpenChange={setNoticesOpen} />
+        <NotificationDrawer open={noticesOpen} onOpenChange={setNoticesOpen} readIds={readNotices} markRead={markRead} />
       </SidebarProvider>
     </CityContext.Provider>
   );
@@ -288,6 +306,7 @@ function WorkspaceFrame({
   setMenuQuery,
   onOpenSearch,
   onOpenNotifications,
+  hasUnread,
 }: {
   children: ReactNode;
   userName: string;
@@ -303,8 +322,12 @@ function WorkspaceFrame({
   setMenuQuery: (value: string) => void;
   onOpenSearch: () => void;
   onOpenNotifications: () => void;
+  hasUnread: boolean;
 }) {
   const { toggleSidebar } = useSidebar();
+  const principal = usePrincipal();
+  const brandPath = navigationGroups.flatMap(group => group.sections.flatMap(section => section.items)).find(item => allowsRoute(principal, item.path))?.path ?? "/";
+  const { balance } = usePoints();
   const normalizedQuery = menuQuery.trim();
   return (
     <>
@@ -312,7 +335,7 @@ function WorkspaceFrame({
         <SidebarHeader className="sidebar-brand-wrap">
           <Link
             className="sidebar-brand"
-            to="/home/index"
+            to={brandPath}
             aria-label="有数计划首页"
           >
             <BrandMark />
@@ -348,14 +371,14 @@ function WorkspaceFrame({
             const matchingSections = navGroup.sections
               .map((section) => ({
                 ...section,
-                items: section.items.filter((item) =>
+                items: section.items.filter((item) => allowsRoute(principal, item.path) &&
                   `${navGroup.title} ${section.title} ${item.title}`.includes(
                     normalizedQuery,
                   ),
                 ),
               }))
               .filter((section) => section.items.length > 0);
-            if (normalizedQuery && matchingSections.length === 0) return null;
+            if (matchingSections.length === 0) return null;
             const NavGroupIcon = navGroup.icon;
             return (
               <SidebarGroup key={navGroup.title}>
@@ -420,8 +443,8 @@ function WorkspaceFrame({
         <SidebarFooter className="sidebar-footer">
           <div className="workspace-status-card">
             <div className="workspace-quota">
-              <div><span>每日积分配额</span><strong>80 / 100</strong></div>
-              <span className="workspace-quota-track"><i style={{ width: "80%" }} /></span>
+              <div><span>每日积分配额</span><strong>{balance ? balance.remaining + " / " + balance.limit : "—"}</strong></div>
+              <span className="workspace-quota-track" role="progressbar" aria-label="今日剩余积分" aria-valuemin={0} aria-valuemax={balance?.limit ?? 100} aria-valuenow={balance?.remaining}><i style={{ width: (balance ? balance.remaining / balance.limit * 100 : 0) + "%" }} /></span>
             </div>
             <div className="workspace-status">
               <span className="status-led" />
@@ -462,16 +485,7 @@ function WorkspaceFrame({
               <span>全局搜索</span>
               <kbd>⌘ K</kbd>
             </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="report-queue-trigger"
-              aria-label="报告导出队列"
-              title="报告导出队列"
-              onClick={() => toast.info("当前没有等待导出的报告")}
-            >
-              <FileDown />
-            </Button>
+            <ReportQueueTrigger />
             <Button
               variant="ghost"
               size="icon"
@@ -479,7 +493,7 @@ function WorkspaceFrame({
               onClick={onOpenNotifications}
             >
               <Bell />
-              <i className="notification-dot" />
+              {hasUnread && <i className="notification-dot" />}
             </Button>
             <Separator orientation="vertical" className="header-separator" />
             <UserMenu userName={userName} onLogout={onLogout} />
@@ -728,6 +742,7 @@ function GlobalSearch({
   onOpenChange: (open: boolean) => void;
   onNavigate: (path: string) => void;
 }) {
+  const principal = usePrincipal();
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="command-dialog">
@@ -742,7 +757,7 @@ function GlobalSearch({
             {navigationGroups.map((navGroup) => (
               <CommandGroup heading={navGroup.title} key={navGroup.title}>
                 {navGroup.sections.flatMap((section) =>
-                  section.items.map((item) => {
+                  section.items.filter(item => allowsRoute(principal, item.path)).map((item) => {
                     const Icon = item.icon;
                     return (
                       <CommandItem
@@ -769,12 +784,40 @@ function GlobalSearch({
   );
 }
 
+const notices = [
+    {
+      id: "clue-followup",
+      title: "新的高潜商机线索待跟进",
+      detail: "有 3 条线索等待分派处理",
+      time: "10 分钟前",
+      path: "/business/projectCluesUpdate/index",
+    },
+    {
+      id: "policy-update",
+      title: "政策信息已更新",
+      detail: "政策项目库新增申报信息",
+      time: "2 小时前",
+      path: "/policy/index",
+    },
+    {
+      id: "park-reminder",
+      title: "园区企业年报申报提醒",
+      detail: "请跟进重点企业的年报申报进度",
+      time: "昨天",
+      path: "/myCampus/guarantee/index",
+    },
+  ];
+
 function NotificationDrawer({
   open,
   onOpenChange,
+  readIds,
+  markRead,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  readIds: string[];
+  markRead: (ids: string[]) => void;
 }) {
   const navigate = useNavigate();
   useEffect(() => {
@@ -782,45 +825,33 @@ function NotificationDrawer({
     window.addEventListener("open-notifications", listener);
     return () => window.removeEventListener("open-notifications", listener);
   }, [onOpenChange]);
-  const notices = [
-    {
-      title: "新的高潜商机线索待跟进",
-      detail: "有 3 条线索等待分派处理",
-      time: "10 分钟前",
-      path: "/business/projectCluesUpdate/index",
-    },
-    {
-      title: "政策信息已更新",
-      detail: "上海市政策项目库新增申报信息",
-      time: "2 小时前",
-      path: "/policy/index",
-    },
-    {
-      title: "园区企业年报申报提醒",
-      detail: "请跟进重点企业的年报申报进度",
-      time: "昨天",
-      path: "/myCampus/guarantee/index",
-    },
-  ];
+  const principal = usePrincipal();
+  const { city } = useCurrentCity();
+  const visible = notices.filter(notice => allowsRoute(principal, notice.path));
+  const unread = visible.filter(notice => !readIds.includes(notice.id));
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="notification-drawer">
         <SheetHeader>
           <SheetTitle>通知消息</SheetTitle>
-          <SheetDescription>工作台服务提醒</SheetDescription>
+          <SheetDescription>{city} · {unread.length} 条未读</SheetDescription>
         </SheetHeader>
+        <div className="notification-actions"><Button variant="outline" size="sm" disabled={!unread.length} onClick={() => markRead(unread.map(notice => notice.id))}>全部标为已读</Button></div>
         <div className="notification-list">
-          {notices.map((notice) => (
+          {!visible.length && <p className="business-empty-hint">暂无通知</p>}
+          {visible.map((notice) => (
             <button
               type="button"
               className="notification-row"
-              key={notice.title}
+              key={notice.id}
+              data-unread={!readIds.includes(notice.id)}
               onClick={() => {
+                markRead([notice.id]);
                 navigate(notice.path);
                 onOpenChange(false);
               }}
             >
-              <span className="notification-unread" />
+              <span className="notification-unread" aria-label={readIds.includes(notice.id) ? "已读" : "未读"} />
               <span className="notification-copy">
                 <strong>{notice.title}</strong>
                 <span>{notice.detail}</span>

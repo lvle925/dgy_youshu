@@ -1,9 +1,15 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useDashboardData } from "@/lib/useDashboardData";
+import { useReportExport } from "@/app/ReportQueue";
+import { ActionButton, allowsRoute, usePrincipal } from "@/app/AccessContext";
+import { isShanghaiArea, regionMatches } from "@/lib/cityData";
+import { SpatialMap } from "@/components/SpatialMap";
+import { useNavigate } from "react-router-dom";
+import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { AlertTriangle, Check, ChevronRight, Download, MapPinned, Plus, X } from 'lucide-react';
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, ComposedChart, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip as ChartTooltip, XAxis, YAxis } from 'recharts';
-import { homeStats, hotPolicyRank, mapMarkers, migrationStats } from '../src/data/mock.js';
+import { mapMarkers, migrationEnterprises } from '../src/data/mock.js';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -34,23 +40,8 @@ const industrySupport = [
   { name: '文化创意', value: 860 }, { name: '现代服务', value: 1240 }, { name: '新能源', value: 1680 },
   { name: '生物医药', value: 2150 }, { name: '数字经济', value: 2860 }, { name: '智能制造', value: 3420 },
 ];
-const districtsTrend = [
-  { name: '浦东', '2024': 120, '2025': 142, '2026': 168 }, { name: '黄浦', '2024': 82, '2025': 90, '2026': 102 },
-  { name: '徐汇', '2024': 96, '2025': 110, '2026': 128 }, { name: '长宁', '2024': 54, '2025': 62, '2026': 70 },
-  { name: '静安', '2024': 60, '2025': 68, '2026': 76 }, { name: '普陀', '2024': 42, '2025': 48, '2026': 55 },
-  { name: '虹口', '2024': 38, '2025': 44, '2026': 50 }, { name: '杨浦', '2024': 76, '2025': 86, '2026': 98 },
-  { name: '闵行', '2024': 88, '2025': 102, '2026': 120 }, { name: '宝山', '2024': 46, '2025': 54, '2026': 62 },
-];
 const enterpriseTrend = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月']
   .map((name, index) => ({ name, value: [1280, 1520, 1860, 2100, 2380, 2620, 2940, 3180, 3460, 3690, 3920][index] }));
-const monthlyOperations = [
-  { name: '1月', policies: 118, approved: 72, projects: 18 }, { name: '2月', policies: 146, approved: 86, projects: 22 },
-  { name: '3月', policies: 168, approved: 98, projects: 26 }, { name: '4月', policies: 204, approved: 121, projects: 31 },
-  { name: '5月', policies: 228, approved: 139, projects: 37 }, { name: '6月', policies: 248, approved: 152, projects: 42 },
-  { name: '7月', policies: 276, approved: 174, projects: 47 }, { name: '8月', policies: 294, approved: 189, projects: 54 },
-  { name: '9月', policies: 322, approved: 211, projects: 61 }, { name: '10月', policies: 346, approved: 232, projects: 67 },
-  { name: '11月', policies: 382, approved: 256, projects: 74 },
-];
 const chartColors = ['#1652B8', '#147A4C', '#C8922E', '#5C8ED5', '#64748B'];
 const favoritesKey = 'DEMO_FAVORITES';
 
@@ -80,6 +71,16 @@ function MetricCard({ title, value, detail, children, ticker = false, tone = 'se
 }
 
 export default function HomeDashboard() {
+  const { city, localPolicies, localProjects, monthlyOperations, districtsTrend, hotPolicyRank } = useDashboardData();
+  const enqueue = useReportExport();
+  const principal = usePrincipal();
+  const navigate = useNavigate();
+  const allowMap = allowsRoute(principal, "/businessMap/index");
+  const allowPolicyDetail = allowsRoute(principal, "/policy/index");
+  const points = isShanghaiArea(city) ? mapMarkers.filter(marker => city === "上海市" || regionMatches(marker.district, city)) : [];
+  const highIntent = localProjects.filter(row => row.score >= 85).length;
+  const riskRows = isShanghaiArea(city) ? migrationEnterprises.filter(row => city === "上海市" || ("district" in row && row.district === city)) : [];
+  const risks = riskRows.filter(row => row.risk === "高风险").length;
   const [favorites, setFavorites] = useState(safeReadFavorites);
   const [favoriteOpen, setFavoriteOpen] = useState(false);
 
@@ -94,32 +95,31 @@ export default function HomeDashboard() {
   return (
     <div className="dashboard-page">
       <div className="dashboard-title-row">
-        <div><h1>首页</h1><p>政策服务、招商动态与企业运营情况</p></div>
+        <div><h1>首页</h1><p>{city} · 政策服务、招商动态与企业运营情况</p></div>
       </div>
 
 
 
       <section className="dashboard-bento-kpi" aria-label="首页数据概览">
-        <MetricCard title="政策总数据" icon="policy" value={homeStats.policyTotal} tone="primary" ticker detail={<span>项目政策 <strong>{homeStats.projectPolicy.toLocaleString()}</strong><span className="metric-divider" />政策通知 <strong>{homeStats.notice.toLocaleString()}</strong><span className="metric-divider" />政策公告 <strong>{homeStats.announce.toLocaleString()}</strong></span>}>
-          <Progress value={73} className="policy-progress" />
-          <span className="dashboard-kpi-note"><span className="status-led" />同比 +12.8%</span>
+        <MetricCard title="政策总数据" icon="policy" value={localPolicies.length} tone="primary" detail={<span>区级政策 <strong>{localPolicies.filter(row => row.level === "区级").length}</strong><span className="metric-divider" />各类扶持 <strong>{localPolicies.reduce((sum, row) => sum + (Number(row.companies) || 0), 0).toLocaleString()}</strong> 家次</span>}>
+          <span className="dashboard-kpi-note"><span className="status-led" />{city}</span>
         </MetricCard>
-        <MetricCard title="高意愿项目线索池" icon="folder" value="128" detail={<span>本周新增 <strong>34</strong><span className="metric-divider" />重点跟进 <strong>19</strong></span>}>
-          <span className="dashboard-kpi-note is-success"><span className="status-led" />转化率 24.6%</span>
+        <MetricCard title="高意愿项目线索池" icon="folder" value={highIntent} detail={<span>地区线索共 <strong>{localProjects.length}</strong> 条</span>}>
+          <span className="dashboard-kpi-note is-success"><span className="status-led" />意愿度 85 分及以上</span>
         </MetricCard>
-        <MetricCard title="安商迁移高风险预警" icon="shield" value={migrationStats.high} detail={<span>中风险 <strong>{migrationStats.mid}</strong><span className="metric-divider" />低风险 <strong>{migrationStats.low}</strong></span>}>
-          <span className="dashboard-kpi-note is-warning"><AlertTriangle size={12} />需要优先跟进</span>
+        <MetricCard title="安商迁移高风险预警" icon="shield" value={risks} detail={<span>监测企业 <strong>{riskRows.length}</strong> 家</span>}>
+          <span className="dashboard-kpi-note is-warning"><AlertTriangle size={12} />高风险企业</span>
         </MetricCard>
       </section>
 
       <section className="dashboard-bento-grid" aria-label="首页趋势与空间洞察">
         <Card className="chart-card os-glass-card dashboard-trend-card">
-          <CardHeader className="section-heading"><div><CardTitle><PlatformIcon name="activity" className="section-heading-icon" />招商转化趋势</CardTitle><CardDescription>政策申报、审核通过与项目落地按月变化</CardDescription></div><Button variant="ghost" size="sm" onClick={() => toast.info('趋势数据已准备，可从报表中心导出')}><Download data-icon="inline-start" />导出</Button></CardHeader>
-          <CardContent className="chart-content"><ResponsiveContainer width="100%" height="100%"><ComposedChart data={monthlyOperations} margin={{ left: -10, right: 10, top: 12, bottom: 0 }}><CartesianGrid stroke="rgba(100,116,139,.14)" strokeDasharray="3 5" vertical={false} /><XAxis dataKey="name" tickLine={false} axisLine={false} tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }} /><YAxis yAxisId="left" tickLine={false} axisLine={false} tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }} width={30} /><YAxis yAxisId="right" orientation="right" tickLine={false} axisLine={false} tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }} width={28} /><ChartTooltip contentStyle={{ borderRadius: 10, borderColor: 'rgba(22,82,184,.10)', boxShadow: '0 8px 24px rgba(15,39,68,.10)' }} formatter={(value, name) => [Number(value).toLocaleString(), name === 'policies' ? '政策申报' : name === 'approved' ? '审核通过' : '商机落地']} /><Bar yAxisId="left" dataKey="policies" name="policies" fill="#93C5FD" radius={[4, 4, 0, 0]} barSize={18} isAnimationActive={false} /><Bar yAxisId="left" dataKey="approved" name="approved" fill="#1652B8" radius={[4, 4, 0, 0]} barSize={18} isAnimationActive={false} /><Line yAxisId="right" type="monotone" dataKey="projects" name="projects" stroke="#C8922E" strokeWidth={2.5} dot={{ r: 3, fill: '#C8922E', strokeWidth: 0 }} activeDot={{ r: 4 }} isAnimationActive={false} /></ComposedChart></ResponsiveContainer></CardContent>
+          <CardHeader className="section-heading"><div><CardTitle><PlatformIcon name="activity" className="section-heading-icon" />招商转化趋势</CardTitle><CardDescription>政策发布、已有获批记录及签约项目按月汇总</CardDescription></div><ActionButton action="导出" variant="ghost" size="sm" onClick={() => enqueue(city + "招商趋势.csv", [{ header: "月份", value: row => row.name }, { header: "政策发布", value: row => row.policies }, { header: "已有获批记录的政策", value: row => row.approved }, { header: "已签约线索", value: row => row.projects }], monthlyOperations)}><Download data-icon="inline-start" />导出</ActionButton></CardHeader>
+          <CardContent className="chart-content"><ResponsiveContainer width="100%" height="100%"><ComposedChart data={monthlyOperations} margin={{ left: 2, right: 10, top: 12, bottom: 0 }}><CartesianGrid stroke="rgba(100,116,139,.14)" strokeDasharray="3 5" vertical={false} /><XAxis dataKey="name" tickLine={false} axisLine={false} tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }} /><YAxis yAxisId="left" tickLine={false} axisLine={false} tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }} width={30} /><YAxis yAxisId="right" orientation="right" tickLine={false} axisLine={false} tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }} width={28} /><ChartTooltip contentStyle={{ borderRadius: 10, borderColor: 'rgba(22,82,184,.10)', boxShadow: '0 8px 24px rgba(15,39,68,.10)' }} formatter={(value, name) => [Number(value).toLocaleString(), name === 'policies' ? '政策发布' : name === 'approved' ? '获批政策' : '已签约线索']} /><Bar yAxisId="left" dataKey="policies" name="policies" fill="#93C5FD" radius={[4, 4, 0, 0]} barSize={18} isAnimationActive={false} /><Bar yAxisId="left" dataKey="approved" name="approved" fill="#1652B8" radius={[4, 4, 0, 0]} barSize={18} isAnimationActive={false} /><Line yAxisId="right" type="monotone" dataKey="projects" name="projects" stroke="#C8922E" strokeWidth={2.5} dot={{ r: 3, fill: '#C8922E', strokeWidth: 0 }} activeDot={{ r: 4 }} isAnimationActive={false} /></ComposedChart></ResponsiveContainer></CardContent>
         </Card>
         <Card className="chart-card os-glass-card dashboard-map-card">
-          <CardHeader className="section-heading"><div><CardTitle><MapPinned className="section-heading-icon" />电子围栏与空间载体</CardTitle><CardDescription>上海市重点产业空间实时分布</CardDescription></div><Button variant="ghost" size="sm" render={<Link to="/businessMap/index" />}>全屏地图 <ChevronRight data-icon="inline-end" /></Button></CardHeader>
-          <CardContent className="dashboard-map-content"><div className="map-miniature">{mapMarkers.map((marker) => <Link key={marker.id} to="/businessMap/index" className="dashboard-map-pin" style={{ left: `${marker.x}%`, top: `${marker.y}%` }} aria-label={`查看${marker.name}`}><MapPinned size={11} /></Link>)}<div className="dashboard-map-footer"><strong>上海市产业空间</strong><span>{mapMarkers.length} 个重点载体</span></div></div></CardContent>
+          <CardHeader className="section-heading"><div><CardTitle><MapPinned className="section-heading-icon" />电子围栏与空间载体</CardTitle><CardDescription>{city} · 产业载体示意</CardDescription></div>{allowMap && <Button variant="ghost" size="sm" render={<Link to="/businessMap/index" />}>全屏地图 <ChevronRight data-icon="inline-end" /></Button>}</CardHeader>
+          <CardContent className="dashboard-map-content">{points.length ? <SpatialMap compact parks={points} onSelect={() => { if (allowMap) navigate("/businessMap/index"); }} /> : <div className="business-empty-hint">当前地区暂无园区点位</div>}</CardContent>
         </Card>
       </section>
 
@@ -127,17 +127,17 @@ export default function HomeDashboard() {
       <Card className="favorites-card">
         <CardHeader className="favorites-header"><div><CardTitle>常用功能</CardTitle><CardDescription>快速进入日常工作模块</CardDescription></div><Button variant="outline" size="sm" onClick={() => setFavoriteOpen(true)}><Plus data-icon="inline-start" />管理功能 <Badge variant="secondary">{favorites.length}/10</Badge></Button></CardHeader>
         <CardContent className="favorites-list">
-          {favorites.map((item) => <Link to={item.path} className="favorite-link" key={item.path}><PlatformIcon name={item.icon} className="favorite-icon" /><span className="favorite-link-label">{item.title}</span><button aria-label={`移除${item.title}`} onClick={(event) => { event.preventDefault(); toggleFavorite(item); }}><X /></button></Link>)}
+          {favorites.filter(item => allowsRoute(principal, item.path)).map((item) => <Link to={item.path} className="favorite-link" key={item.path}><PlatformIcon name={item.icon} className="favorite-icon" /><span className="favorite-link-label">{item.title}</span><button aria-label={`移除${item.title}`} onClick={(event) => { event.preventDefault(); toggleFavorite(item); }}><X /></button></Link>)}
           {!favorites.length && <p className="favorite-empty">常用功能还未设置，选择管理功能添加常用模块。</p>}
         </CardContent>
       </Card>
 
       <Card className="policy-rank-card">
-        <CardHeader className="section-heading"><div><CardTitle><PlatformIcon name="dashboard" className="section-heading-icon" />热门政策榜单</CardTitle><CardDescription>按浏览热度排序</CardDescription></div><Button variant="ghost" size="sm" render={<Link to="/policy/index" />}>查看政策 <ChevronRight data-icon="inline-end" /></Button></CardHeader>
-        <CardContent className="policy-rank-content">
+        <CardHeader className="section-heading"><div><CardTitle><PlatformIcon name="dashboard" className="section-heading-icon" />热门政策榜单</CardTitle><CardDescription>按当前地区政策浏览量排序</CardDescription></div>{allowPolicyDetail && <Button variant="ghost" size="sm" render={<Link to="/policy/index" />}>查看政策 <ChevronRight data-icon="inline-end" /></Button>}</CardHeader>
+        {hotPolicyRank.length ? <CardContent className="policy-rank-content">
           <div className="policy-bar-chart"><ResponsiveContainer width="100%" height="100%"><BarChart data={hotPolicyRank.slice(0, 6).map((policy) => ({ ...policy, shortName: policy.name.length > 15 ? `${policy.name.slice(0, 15)}…` : policy.name }))} layout="vertical" margin={{ left: 8, right: 18, top: 4, bottom: 4 }}><CartesianGrid stroke="var(--border)" strokeDasharray="3 5" vertical={false} /><XAxis type="number" tickLine={false} axisLine={false} tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }} /><YAxis type="category" dataKey="shortName" width={150} tickLine={false} axisLine={false} tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }} /><ChartTooltip cursor={{ fill: 'var(--muted)' }} contentStyle={{ borderRadius: 10, borderColor: 'var(--border)' }} formatter={(value) => [Number(value).toLocaleString(), '浏览量']} /><Bar dataKey="value" fill="var(--chart-1)" radius={[0, 5, 5, 0]} barSize={14} isAnimationActive={false}>{hotPolicyRank.slice(0, 6).map((entry, index) => <Cell fill={index === 0 ? 'var(--primary)' : 'var(--chart-1)'} fillOpacity={1 - index * 0.08} key={entry.name} />)}</Bar></BarChart></ResponsiveContainer></div>
-          <div className="policy-rank-list"><Table><TableHeader><TableRow><TableHead>政策名称</TableHead><TableHead className="rank-table-value">浏览量</TableHead></TableRow></TableHeader><TableBody>{hotPolicyRank.map((policy, index) => <TableRow key={policy.name}><TableCell><Link to="/policy/index" className="rank-table-link"><span className={`rank-index ${index < 3 ? `rank-index-${index + 1}` : ''}`}>{String(index + 1).padStart(2, '0')}</span><span className="rank-policy-name" title={policy.name}>{policy.name}</span></Link></TableCell><TableCell className="rank-table-value"><strong>{policy.value.toLocaleString()}</strong></TableCell></TableRow>)}</TableBody></Table></div>
-        </CardContent>
+          <div className="policy-rank-list"><Table><TableHeader><TableRow><TableHead>政策名称</TableHead><TableHead className="rank-table-value">浏览量</TableHead></TableRow></TableHeader><TableBody>{hotPolicyRank.map((policy, index) => <TableRow key={policy.name}><TableCell><span className="rank-table-link"><span className={`rank-index ${index < 3 ? `rank-index-${index + 1}` : ''}`}>{String(index + 1).padStart(2, '0')}</span>{allowPolicyDetail ? <Link className="rank-policy-name" title={policy.name} to={`/policy/detail/${policy.id}`}>{policy.name}</Link> : <span className="rank-policy-name" title={policy.name}>{policy.name}</span> }</span></TableCell><TableCell className="rank-table-value"><strong>{policy.value.toLocaleString()}</strong></TableCell></TableRow>)}</TableBody></Table></div>
+        </CardContent> : <CardContent className="business-empty-hint">当前地区暂无政策浏览记录</CardContent>}
       </Card>
       </section>
 
@@ -148,7 +148,7 @@ export default function HomeDashboard() {
         <Card className="chart-card"><CardHeader><CardTitle><PlatformIcon name="users" className="section-heading-icon" />扶持企业数量趋势</CardTitle><CardDescription>2026 年累计扶持企业</CardDescription></CardHeader><CardContent className="chart-content"><ResponsiveContainer width="100%" height="100%"><AreaChart data={enterpriseTrend} margin={{ left: 0, right: 12, top: 10, bottom: 0 }}><CartesianGrid stroke="var(--border)" strokeDasharray="3 5" vertical={false} /><XAxis dataKey="name" tickLine={false} axisLine={false} tick={{ fill: 'var(--muted-foreground)', fontSize: 12 }} /><YAxis tickLine={false} axisLine={false} tick={{ fill: 'var(--muted-foreground)', fontSize: 12 }} width={44} /><ChartTooltip contentStyle={{ borderRadius: 10, borderColor: 'var(--border)', boxShadow: '0 8px 24px rgba(15,39,68,.10)' }} formatter={(value) => [`${Number(value).toLocaleString()} 家`, '累计扶持企业']} /><Area type="monotone" dataKey="value" stroke="var(--chart-2)" strokeWidth={2.4} fill="var(--chart-2)" fillOpacity={0.13} isAnimationActive={false} /></AreaChart></ResponsiveContainer></CardContent></Card>
       </section>
 
-      <Dialog open={favoriteOpen} onOpenChange={setFavoriteOpen}><DialogContent className="favorite-dialog"><DialogHeader><DialogTitle>管理常用功能</DialogTitle><DialogDescription>最多可添加 10 个模块，点击切换。</DialogDescription></DialogHeader><div className="favorite-picker">{favoriteOptions.map((item) => { const selected = favorites.some((saved) => saved.path === item.path); return <Button key={item.path} variant={selected ? 'secondary' : 'outline'} className="favorite-choice" onClick={() => toggleFavorite(item)}>{item.title}{selected && <Check className="favorite-check" />}</Button>; })}</div></DialogContent></Dialog>
+      <Dialog open={favoriteOpen} onOpenChange={setFavoriteOpen}><DialogContent className="favorite-dialog"><DialogHeader><DialogTitle>管理常用功能</DialogTitle><DialogDescription>最多可添加 10 个模块，点击切换。</DialogDescription></DialogHeader><div className="favorite-picker">{favoriteOptions.filter(item => allowsRoute(principal, item.path)).map((item) => { const selected = favorites.some((saved) => saved.path === item.path); return <Button key={item.path} variant={selected ? 'secondary' : 'outline'} className="favorite-choice" onClick={() => toggleFavorite(item)}>{item.title}{selected && <Check className="favorite-check" />}</Button>; })}</div></DialogContent></Dialog>
     </div>
   );
 }

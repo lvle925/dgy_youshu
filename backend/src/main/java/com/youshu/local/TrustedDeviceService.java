@@ -84,6 +84,10 @@ public class TrustedDeviceService {
         return Map.of("user", pending.username());
     }
 
+    String pendingUsername(String challengeId, HttpServletRequest request) {
+        return pending(request.getSession(false), challengeId).username();
+    }
+
     private Pending pending(HttpSession session, String challengeId) {
         Object value = session == null ? null : session.getAttribute(CHALLENGE_KEY);
         if (!(value instanceof Pending pending) || !pending.challengeId().equals(challengeId)) {

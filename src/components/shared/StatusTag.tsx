@@ -1,4 +1,3 @@
-import { Circle } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
@@ -70,7 +69,7 @@ export function StatusTag({
         className,
       )}
     >
-      <Circle aria-hidden="true" />
+      <span className="status-led" aria-hidden="true" />
       {mapping?.label ?? label}
     </span>
   );

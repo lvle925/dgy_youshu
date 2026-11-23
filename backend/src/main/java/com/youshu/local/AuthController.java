@@ -27,16 +27,18 @@ public class AuthController {
     private final CaptchaService captcha;
     private final SmsVerificationService sms;
     private final TrustedDeviceService trustedDevices;
+    private final WorkspaceAccess access;
 
     @Value("${app.auth.demo-login-enabled:false}")
     private boolean demoLoginEnabled;
 
     public AuthController(JdbcTemplate jdbc, CaptchaService captcha, SmsVerificationService sms,
-                          TrustedDeviceService trustedDevices) {
+                          TrustedDeviceService trustedDevices, WorkspaceAccess access) {
         this.jdbc = jdbc;
         this.captcha = captcha;
         this.sms = sms;
         this.trustedDevices = trustedDevices;
+        this.access = access;
     }
 
     @Operation(summary = "生成一次性图片验证码", description = "验证码与当前会话绑定，5分钟内有效，提交后作废。")
@@ -49,8 +51,17 @@ public class AuthController {
     @GetMapping("/status") public Map<String,Object> status(HttpServletRequest req) {
         Map<String, Object> status = new LinkedHashMap<>();
         HttpSession session = req.getSession(false);
-        status.put("initialized", count() > 0);
-        status.put("authenticated", session != null && session.getAttribute("user") != null);
+        status.put("initialized", count() > 0 || jdbc.queryForObject("SELECT COUNT(*) FROM member_account", Integer.class) > 0);
+        status.put("authenticated", false);
+        if (session != null && session.getAttribute("user") != null) {
+            try {
+                status.put("principal", access.current(session));
+                status.put("authenticated", true);
+            } catch (ResponseStatusException ex) {
+                session.invalidate();
+                status.put("reason", ex.getReason());
+            }
+        }
         status.put("demoLoginEnabled", demoLoginEnabled);
         status.put("demoPhone", demoLoginEnabled ? sms.demoPhone() : "");
         return status;
@@ -58,7 +69,7 @@ public class AuthController {
 
     private int count() { return jdbc.queryForObject("SELECT COUNT(*) FROM local_account", Integer.class); }
 
-    private String hash(String password, byte[] salt) {
+    static String hash(String password, byte[] salt) {
         try {
             byte[] digest = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256").generateSecret(new PBEKeySpec(password.toCharArray(), salt, 210000, 256)).getEncoded();
             return Base64.getEncoder().encodeToString(salt) + ":" + Base64.getEncoder().encodeToString(digest);
@@ -82,15 +93,21 @@ public class AuthController {
                                                              HttpServletRequest req, HttpServletResponse res) {
         captcha.verify(req.getSession(false), body.get("captchaId"), body.get("captcha"),
                 body.get("captchaToken"), req.getRemoteAddr());
-        var users = jdbc.queryForList("SELECT username,password_hash FROM local_account WHERE id=1");
-        if (users.isEmpty()) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "请先创建管理员");
+        String loginName = body.getOrDefault("username", "").trim();
+        var users = jdbc.queryForList("SELECT username,password_hash FROM local_account WHERE username=? UNION ALL SELECT username,password_hash FROM member_account WHERE username=?", loginName, loginName);
+        if (users.isEmpty()) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "账号或密码错误");
         String username = String.valueOf(users.get(0).get("USERNAME"));
         String stored = String.valueOf(users.get(0).get("PASSWORD_HASH"));
         String password = body.getOrDefault("password", "");
         boolean valid = password.length() <= 128 && MessageDigest.isEqual(
                 stored.getBytes(StandardCharsets.UTF_8),
                 hash(password, Base64.getDecoder().decode(stored.split(":")[0])).getBytes(StandardCharsets.UTF_8));
-        if (!username.equals(body.getOrDefault("username", "")) || !valid) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "账号或密码错误");
+        if (!valid) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "账号或密码错误");
+        access.resolve(username);
+        if (req.getSession(false) != null) {
+            req.getSession(false).removeAttribute("demo");
+            req.getSession(false).removeAttribute("user");
+        }
         return trustedDevices.login(username, req, res);
     }
 
@@ -105,6 +122,7 @@ public class AuthController {
         if (session == null) req.getSession(true);
         else req.changeSessionId();
         req.getSession(true).setAttribute("user", "本地演示管理员");
+        req.getSession(true).setAttribute("demo", true);
         return Map.of("user", "本地演示管理员", "demo", "true");
     }
 
@@ -128,6 +146,7 @@ public class AuthController {
         if (session == null) req.getSession(true);
         else req.changeSessionId();
         req.getSession(true).setAttribute("user", "本地演示管理员");
+        req.getSession(true).setAttribute("demo", true);
         return Map.of("user", "本地演示管理员", "demo", "true");
     }
 
@@ -140,6 +159,7 @@ public class AuthController {
     @Operation(summary = "验证新设备并选择是否信任 90 天")
     @PostMapping("/device/verify") public Map<String,String> verifyDevice(
             @RequestBody Map<String,Object> body, HttpServletRequest req, HttpServletResponse res) {
+        access.resolve(trustedDevices.pendingUsername(String.valueOf(body.getOrDefault("challengeId", "")), req));
         return trustedDevices.verify(
                 String.valueOf(body.getOrDefault("challengeId", "")),
                 String.valueOf(body.getOrDefault("code", "")),
@@ -153,10 +173,13 @@ public class AuthController {
 }
 @Configuration
 class ApiSecurity implements WebMvcConfigurer {
+    private final WorkspaceAccess access;
+
+    ApiSecurity(WorkspaceAccess access) { this.access = access; }
     @Override public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(new HandlerInterceptor() {
             @Override public boolean preHandle(HttpServletRequest req, HttpServletResponse res, Object handler) throws Exception {
-                if (req.getSession(false) == null || req.getSession(false).getAttribute("user") == null) { res.sendError(401); return false; }
+                access.current(req.getSession(false));
                 return true;
             }
         }).addPathPatterns("/api/**").excludePathPatterns("/api/auth/**", "/api/health");

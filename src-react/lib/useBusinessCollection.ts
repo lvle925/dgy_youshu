@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { api } from "../../src/api.js";
 
-export type CollectionSource = "loading" | "server" | "local";
+export type CollectionSource = "loading" | "server" | "local" | "unavailable";
 export type BusinessRecord = { id: string | number; [key: string]: unknown };
 
 function readCache<T extends BusinessRecord>(key: string) {
@@ -35,13 +35,12 @@ export function useBusinessCollection<T extends BusinessRecord>({
   seed: T[];
   apiCollection?: string;
 }) {
-  const [rows, setRows] = useState<T[]>(() => readCache<T>(key) ?? seed);
+  const [rows, setRows] = useState<T[]>(() => apiCollection ? [] : readCache<T>(key) ?? seed);
   const [source, setSource] = useState<CollectionSource>("loading");
   const [error, setError] = useState("");
-  const sourceRef = useRef<CollectionSource>("loading");
+
 
   const updateSource = useCallback((next: CollectionSource) => {
-    sourceRef.current = next;
     setSource(next);
   }, []);
 
@@ -54,13 +53,12 @@ export function useBusinessCollection<T extends BusinessRecord>({
     try {
       const result = (await api.list(apiCollection)) as T[];
       setRows(result);
-      writeCache(key, result);
+
       updateSource("server");
     } catch (cause) {
-      const cached = readCache<T>(key);
-      setRows(cached ?? seed);
+      setRows([]);
       setError(cause instanceof Error ? cause.message : "数据接口暂不可用");
-      updateSource("local");
+      updateSource("unavailable");
     }
   }, [apiCollection, key, seed, updateSource]);
 
@@ -76,15 +74,15 @@ export function useBusinessCollection<T extends BusinessRecord>({
       .then((result: T[]) => {
         if (!active) return;
         setRows(result);
-        writeCache(key, result);
+
         setError("");
         updateSource("server");
       })
       .catch((cause: unknown) => {
         if (!active) return;
-        setRows(readCache<T>(key) ?? seed);
+        setRows([]);
         setError(cause instanceof Error ? cause.message : "数据接口暂不可用");
-        updateSource("local");
+        updateSource("unavailable");
       });
     return () => {
       active = false;
@@ -92,11 +90,11 @@ export function useBusinessCollection<T extends BusinessRecord>({
   }, [apiCollection, key, seed, updateSource]);
 
   useEffect(() => {
-    if (source !== "loading") writeCache(key, rows);
-  }, [key, rows, source]);
+    if (!apiCollection && source !== "loading") writeCache(key, rows);
+  }, [apiCollection, key, rows, source]);
 
   const createRecord = useCallback(async (input: Omit<T, "id">) => {
-    if (apiCollection && sourceRef.current === "server") {
+    if (apiCollection) {
       const saved = (await api.create(apiCollection, input)) as T;
       setRows((current) => [saved, ...current]);
       return saved;
@@ -110,15 +108,15 @@ export function useBusinessCollection<T extends BusinessRecord>({
     const current = rows.find((row) => String(row.id) === String(id));
     if (!current) throw new Error("记录已不存在，请刷新后重试");
     const next = { ...current, ...patch };
-    const saved = apiCollection && sourceRef.current === "server"
-      ? ((await api.update(apiCollection, next)) as T)
+    const saved = apiCollection
+      ? ((await api.update(apiCollection, { ...patch, id })) as T)
       : next;
     setRows((items) => items.map((row) => String(row.id) === String(id) ? saved : row));
     return saved;
   }, [apiCollection, rows]);
 
   const removeRecord = useCallback(async (id: T["id"]) => {
-    if (apiCollection && sourceRef.current === "server") {
+    if (apiCollection) {
       await api.remove(apiCollection, id);
     }
     setRows((items) => items.filter((row) => String(row.id) !== String(id)));

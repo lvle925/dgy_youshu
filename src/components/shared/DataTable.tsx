@@ -49,6 +49,7 @@ export function DataTable<T extends { id?: string | number }>({
   detailTitle = "记录详情",
   pageSizeOptions = [10, 20, 50],
   emptyText = "暂无数据",
+  defaultSort,
   className,
 }: {
   columns: DataColumn<T>[];
@@ -59,6 +60,7 @@ export function DataTable<T extends { id?: string | number }>({
   detailTitle?: string;
   pageSizeOptions?: number[];
   emptyText?: string;
+  defaultSort?: { key: string; direction: "asc" | "desc" };
   className?: string;
 }) {
   const [page, setPage] = useState(1);
@@ -66,7 +68,7 @@ export function DataTable<T extends { id?: string | number }>({
   const [sort, setSort] = useState<{
     key: string;
     direction: "asc" | "desc";
-  } | null>(null);
+  } | null>(defaultSort ?? null);
   const [selectedRow, setSelectedRow] = useState<T | null>(null);
   const [visible, setVisible] = useState(() =>
     Object.fromEntries(
@@ -123,7 +125,7 @@ export function DataTable<T extends { id?: string | number }>({
     : [];
 
   return (
-    <div className={cn("data-table-shell", className)}>
+    <div className={cn("data-table-shell os-glass-card", className)}>
       <div className="data-table-toolbar">
         <span>
           {data.length ? `共 ${data.length.toLocaleString()} 条` : "数据列表"}
@@ -197,7 +199,7 @@ export function DataTable<T extends { id?: string | number }>({
           {rows.map((row, index) => (
             <TableRow
               key={String(row.id ?? index)}
-              className={cn(onRowClick && "data-table-row-clickable")}
+              className={cn((onRowClick || openRowDetails) && "data-table-row-clickable")}
               onClick={(event) => {
                 if (
                   (event.target as HTMLElement).closest(
@@ -298,7 +300,7 @@ export function DataTable<T extends { id?: string | number }>({
           if (!open) setSelectedRow(null);
         }}
       >
-        <SheetContent side="right" className="data-table-detail-drawer">
+        <SheetContent side="right" className="data-table-detail-drawer os-glass-card">
           <SheetHeader>
             <SheetTitle>{detailTitle}</SheetTitle>
             <SheetDescription>当前记录的字段信息</SheetDescription>

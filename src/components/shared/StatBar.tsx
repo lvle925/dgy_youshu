@@ -9,7 +9,7 @@ export type StatBarItem = {
 };
 export function StatBar({
   items,
-  scope = "当前筛选",
+  scope = "当前筛选结果",
   className,
 }: {
   items: StatBarItem[];
@@ -17,10 +17,10 @@ export function StatBar({
   className?: string;
 }) {
   return (
-    <section className={cn("stat-bar", className)} aria-label={`${scope}统计`}>
+    <section className={cn("stat-bar os-glass-card", className)} aria-label={`${scope}统计`}>
       <div className="stat-bar-scope">
         <span className="stat-bar-dot" />
-        {scope}
+        {scope === "全库口径" ? "全库总量" : scope === "当前筛选" ? "当前筛选结果" : scope}
       </div>
       <div className="stat-bar-items">
         {items.slice(0, 5).map((item) => (

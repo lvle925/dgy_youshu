@@ -56,7 +56,7 @@ export function FilterDrawer({
   };
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="filter-drawer">
+      <SheetContent side="right" className="filter-drawer os-glass-card">
         <SheetHeader className="filter-drawer-header">
           <SheetTitle>{title}</SheetTitle>
           <SheetDescription>可组合多个维度筛选数据</SheetDescription>

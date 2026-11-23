@@ -8,10 +8,13 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { BrandMark } from '@/components/BrandMark';
+import { AccessContext, allowsRoute, permissionPath, type Principal } from './app/AccessContext';
+import { PointsProvider } from './app/PointsContext';
+import { ReportProvider } from './app/ReportQueue';
 import { AppShell } from './app/AppShell';
 import { NewDeviceVerificationDialog } from './components/auth/NewDeviceVerificationDialog';
 import { CaptchaField, type CaptchaChallenge } from './components/auth/CaptchaField';
-import { navigationByPath } from './app/navigation';
+import { navigationByPath, navigationItems } from './app/navigation';
 import './business-pages.css';
 
 const TABS_KEY = 'DEMO_TABS';
@@ -25,48 +28,52 @@ function getTitle(path: string) {
   return '业务模块';
 }
 
+type AuthStatus = { initialized: boolean; authenticated: boolean; demoLoginEnabled?: boolean; demoPhone?: string; principal?: Principal; reason?: string };
+
 function useAuthStatus() {
-  const [status, setStatus] = useState<{ initialized: boolean; authenticated: boolean; demoLoginEnabled?: boolean; demoPhone?: string } | null>(null);
+  const [status, setStatus] = useState<AuthStatus | null>(null);
   const refresh = useCallback(async () => {
     const response = await fetch('/api/auth/status', { credentials: 'same-origin' });
     if (!response.ok) throw new Error('无法连接后端服务');
     const result = await response.json();
     setStatus(result);
-    return result as { initialized: boolean; authenticated: boolean; demoLoginEnabled?: boolean; demoPhone?: string };
+    return result as AuthStatus;
   }, []);
   useEffect(() => { refresh().catch(() => setStatus({ initialized: false, authenticated: false })); }, [refresh]);
   return { status, refresh };
 }
 
 const HomeDashboard = lazy(() => import('./HomeDashboard'));
-const PolicyPage = lazy(() => import('./pages/InvestmentPages').then((module) => ({ default: module.PolicyPage })));
-const PolicyDetailPage = lazy(() => import('./pages/InvestmentPages').then((module) => ({ default: module.PolicyDetailPage })));
-const IndustryChartPage = lazy(() => import('./pages/InvestmentPages').then((module) => ({ default: module.IndustryChartPage })));
-const IndustrySupplyPage = lazy(() => import('./pages/InvestmentPages').then((module) => ({ default: module.IndustrySupplyPage })));
-const ParksBuildingsPage = lazy(() => import('./pages/InvestmentPages').then((module) => ({ default: module.ParksBuildingsPage })));
-const BusinessMapPage = lazy(() => import('./pages/InvestmentPages').then((module) => ({ default: module.BusinessMapPage })));
-const CompanySearchPage = lazy(() => import('./pages/InvestmentPages').then((module) => ({ default: module.CompanySearchPage })));
-const CompanyDetailPage = lazy(() => import('./pages/InvestmentPages').then((module) => ({ default: module.CompanyDetailPage })));
-const ParkDetailPage = lazy(() => import('./pages/InvestmentPages').then((module) => ({ default: module.ParkDetailPage })));
-const BiddingPage = lazy(() => import('./pages/InvestmentPages').then((module) => ({ default: module.BiddingPage })));
-const BusinessInvestigatePage = lazy(() => import('./pages/OpportunityPages').then((module) => ({ default: module.BusinessInvestigatePage })));
-const BusinessHallPage = lazy(() => import('./pages/OpportunityPages').then((module) => ({ default: module.BusinessHallPage })));
-const ExpansionPage = lazy(() => import('./pages/OpportunityPages').then((module) => ({ default: module.ExpansionPage })));
-const ProjectCluesPage = lazy(() => import('./pages/OpportunityPages').then((module) => ({ default: module.ProjectCluesPage })));
-const ClueDetailPage = lazy(() => import('./pages/OpportunityPages').then((module) => ({ default: module.ClueDetailPage })));
-const AiOutboundPage = lazy(() => import('./pages/OpportunityPages').then((module) => ({ default: module.AiOutboundPage })));
-const PanoramicInsightPage = lazy(() => import('./pages/StabilityPages').then((module) => ({ default: module.PanoramicInsightPage })));
-const CampusAdminPage = lazy(() => import('./pages/StabilityPages').then((module) => ({ default: module.CampusAdminPage })));
-const CorporateArchivesPage = lazy(() => import('./pages/StabilityPages').then((module) => ({ default: module.CorporateArchivesPage })));
-const MigrationWarningPage = lazy(() => import('./pages/StabilityPages').then((module) => ({ default: module.MigrationWarningPage })));
-const GuaranteePage = lazy(() => import('./pages/StabilityPages').then((module) => ({ default: module.GuaranteePage })));
-const VisitManagePage = lazy(() => import('./pages/StabilityPages').then((module) => ({ default: module.VisitManagePage })));
-const SettingPage = lazy(() => import('./pages/AdministrationPages').then((module) => ({ default: module.SettingPage })));
-const MemberPage = lazy(() => import('./pages/AdministrationPages').then((module) => ({ default: module.MemberPage })));
-const RolePage = lazy(() => import('./pages/AdministrationPages').then((module) => ({ default: module.RolePage })));
-const MemberLogPage = lazy(() => import('./pages/AdministrationPages').then((module) => ({ default: module.MemberLogPage })));
-const MemberLogStatisticsPage = lazy(() => import('./pages/AdministrationPages').then((module) => ({ default: module.MemberLogStatisticsPage })));
-const InterfaceBillingPage = lazy(() => import('./pages/AdministrationPages').then((module) => ({ default: module.InterfaceBillingPage })));
+const PolicyPage = lazy(() => import('./pages/investment/PolicyPage').then((module) => ({ default: module.PolicyPage })));
+const PolicyDetailPage = lazy(() => import('./pages/investment/PolicyDetailPage').then((module) => ({ default: module.PolicyDetailPage })));
+const IndustryChartPage = lazy(() => import('./pages/investment/IndustryChartPage').then((module) => ({ default: module.IndustryChartPage })));
+const IndustrySupplyPage = lazy(() => import('./pages/investment/IndustrySupplyPage').then((module) => ({ default: module.IndustrySupplyPage })));
+const ParksBuildingsPage = lazy(() => import('./pages/investment/ParksBuildingsPage').then((module) => ({ default: module.ParksBuildingsPage })));
+const BusinessMapPage = lazy(() => import('./pages/investment/BusinessMapPage').then((module) => ({ default: module.BusinessMapPage })));
+const CompanySearchPage = lazy(() => import('./pages/investment/CompanySearchPage').then((module) => ({ default: module.CompanySearchPage })));
+const CompanyDetailPage = lazy(() => import('./pages/investment/CompanyDetailPage').then((module) => ({ default: module.CompanyDetailPage })));
+const ParkDetailPage = lazy(() => import('./pages/investment/ParkDetailPage').then((module) => ({ default: module.ParkDetailPage })));
+const BiddingPage = lazy(() => import('./pages/investment/BiddingPage').then((module) => ({ default: module.BiddingPage })));
+const BusinessInvestigatePage = lazy(() => import('./pages/opportunity/BusinessInvestigatePage').then((module) => ({ default: module.BusinessInvestigatePage })));
+const BusinessHallPage = lazy(() => import('./pages/opportunity/BusinessHallPage').then((module) => ({ default: module.BusinessHallPage })));
+const EnterpriseExpansionPage = lazy(() => import('./pages/opportunity/EnterpriseExpansionPage'));
+const ProjectCluesPage = lazy(() => import('./pages/opportunity/ProjectCluesPage').then((module) => ({ default: module.ProjectCluesPage })));
+const ClueDetailPage = lazy(() => import('./pages/opportunity/ClueDetailPage').then((module) => ({ default: module.ClueDetailPage })));
+const AiOutboundTasksPage = lazy(() => import('./pages/opportunity/AiOutboundTasksPage'));
+const AiOutboundRecordsPage = lazy(() => import('./pages/opportunity/AiOutboundRecordsPage'));
+const AiOutboundDashboardPage = lazy(() => import('./pages/opportunity/AiOutboundDashboardPage'));
+const PanoramicInsightPage = lazy(() => import('./pages/stability/PanoramicInsightPage').then((module) => ({ default: module.PanoramicInsightPage })));
+const CampusAdminPage = lazy(() => import('./pages/stability/CampusAdminPage').then((module) => ({ default: module.CampusAdminPage })));
+const CorporateArchivesPage = lazy(() => import('./pages/stability/CorporateArchivesPage').then((module) => ({ default: module.CorporateArchivesPage })));
+const MigrationWarningPage = lazy(() => import('./pages/stability/MigrationWarningPage').then((module) => ({ default: module.MigrationWarningPage })));
+const GuaranteePage = lazy(() => import('./pages/stability/GuaranteePage').then((module) => ({ default: module.GuaranteePage })));
+const VisitManagePage = lazy(() => import('./pages/stability/VisitManagePage').then((module) => ({ default: module.VisitManagePage })));
+const SettingPage = lazy(() => import('./pages/admin/SettingPage').then((module) => ({ default: module.SettingPage })));
+const MemberPage = lazy(() => import('./pages/admin/MemberPage').then((module) => ({ default: module.MemberPage })));
+const RolePage = lazy(() => import('./pages/admin/RolePage').then((module) => ({ default: module.RolePage })));
+const MemberLogPage = lazy(() => import('./pages/admin/MemberLogPage').then((module) => ({ default: module.MemberLogPage })));
+const MemberLogStatisticsPage = lazy(() => import('./pages/admin/MemberLogStatisticsPage').then((module) => ({ default: module.MemberLogStatisticsPage })));
+const InterfaceBillingPage = lazy(() => import('./pages/admin/InterfaceBillingPage').then((module) => ({ default: module.InterfaceBillingPage })));
 
 function PageFallback({ children }: { children: ReactNode }) {
   return <Suspense fallback={<div className="business-loading"><Skeleton className="h-10 w-56" /><Skeleton className="h-32 w-full" /><Skeleton className="h-64 w-full" /></div>}>{children}</Suspense>;
@@ -92,12 +99,13 @@ function App() {
           <Route path="/subsidy/company/:id" element={<PageFallback><CompanyDetailPage /></PageFallback>} />
           <Route path="/business/businessInvestigate/index" element={<PageFallback><BusinessInvestigatePage /></PageFallback>} />
           <Route path="/business/businessHall/index" element={<PageFallback><BusinessHallPage /></PageFallback>} />
-          <Route path="/business/projectClues/index" element={<PageFallback><ExpansionPage /></PageFallback>} />
+          <Route path="/business/projectClues/index" element={<PageFallback><EnterpriseExpansionPage /></PageFallback>} />
+          <Route path="/business/enterpriseExpansion/index" element={<Navigate replace to="/business/projectClues/index" />} />
           <Route path="/business/projectCluesUpdate/index" element={<PageFallback><ProjectCluesPage /></PageFallback>} />
           <Route path="/clue/detail/:id" element={<PageFallback><ClueDetailPage /></PageFallback>} />
-          <Route path="/business/aiOutbound/tasks" element={<PageFallback><AiOutboundPage /></PageFallback>} />
-          <Route path="/business/aiOutbound/records" element={<PageFallback><AiOutboundPage /></PageFallback>} />
-          <Route path="/business/aiOutbound/dashboard" element={<PageFallback><AiOutboundPage /></PageFallback>} />
+          <Route path="/business/aiOutbound/tasks" element={<PageFallback><AiOutboundTasksPage /></PageFallback>} />
+          <Route path="/business/aiOutbound/records" element={<PageFallback><AiOutboundRecordsPage /></PageFallback>} />
+          <Route path="/business/aiOutbound/dashboard" element={<PageFallback><AiOutboundDashboardPage /></PageFallback>} />
           <Route path="/myCampus/panoramicLnsight/index" element={<PageFallback><PanoramicInsightPage /></PageFallback>} />
           <Route path="/myCampus/campusAdmin/index" element={<PageFallback><CampusAdminPage /></PageFallback>} />
           <Route path="/myCampus/corporateArchives/index" element={<PageFallback><CorporateArchivesPage /></PageFallback>} />
@@ -128,7 +136,8 @@ function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
+  const loginLocation = useLocation();
+  const [error, setError] = useState(() => (loginLocation.state as { reason?: string } | null)?.reason ?? '');
   const [showPassword, setShowPassword] = useState(false);
   const [captcha, setCaptcha] = useState('');
   const [captchaToken, setCaptchaToken] = useState('');
@@ -347,16 +356,31 @@ function LoginPage() {
 }
 
 function ProtectedShell() {
-  const { status } = useAuthStatus();
+  const { status, refresh } = useAuthStatus();
   const location = useLocation();
+  useEffect(() => {
+    const recheck = () => void refresh().catch(() => undefined);
+    window.addEventListener("workspace-access-changed", recheck);
+    window.addEventListener("focus", recheck);
+    return () => {
+      window.removeEventListener("workspace-access-changed", recheck);
+      window.removeEventListener("focus", recheck);
+    };
+  }, [refresh]);
   if (!status) return <div className="loading-screen"><BrandMark /><p>正在加载工作台</p></div>;
-  if (!status.authenticated) return <Navigate to="/login" replace state={{ from: `${location.pathname}${location.search}` }} />;
-  return <Workspace />;
+  if (!status.authenticated || !status.principal) return <Navigate to="/login" replace state={{ from: location.pathname + location.search, reason: status.reason }} />;
+  const principal = status.principal;
+  const knownRoute = navigationByPath.has(permissionPath(location.pathname));
+  const firstRoute = navigationItems.find(item => allowsRoute(principal, item.path));
+  if (location.pathname === "/" && firstRoute) return <Navigate replace to={firstRoute.path} />;
+  if (location.pathname === "/home/index" && firstRoute && !allowsRoute(principal, location.pathname)) {
+    return <Navigate replace to={firstRoute.path} />;
+  }
+  return <AccessContext.Provider value={principal}><PointsProvider><ReportProvider><Workspace userName={principal.user}>{knownRoute && !allowsRoute(principal, location.pathname) ? <Alert className="os-glass-card"><AlertTitle>没有页面访问权限</AlertTitle><AlertDescription>请选择左侧已有权限的业务菜单，或联系管理员调整角色。</AlertDescription></Alert> : <Outlet />}</Workspace></ReportProvider></PointsProvider></AccessContext.Provider>;
 }
 
-function Workspace() {
+function Workspace({ userName, children }: { userName: string; children: ReactNode }) {
   const navigate = useNavigate();
-  const userName = localStorage.getItem('DEMO_USER') || '本地管理员';
   async function logout() {
     try {
       const response = await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
@@ -367,7 +391,7 @@ function Workspace() {
       toast.success('已退出登录');
     } catch { toast.error('退出失败，请检查后端服务'); }
   }
-  return <AppShell userName={userName} onLogout={() => void logout()}><Outlet /></AppShell>;
+  return <AppShell userName={userName} onLogout={() => void logout()}>{children}</AppShell>;
 }
 
 export default App;

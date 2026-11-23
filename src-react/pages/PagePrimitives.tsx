@@ -33,6 +33,7 @@ export function PageHeading({
       <div>
         <h1>{title}</h1>
         {description && <p>{description}</p>}
+        {dataSource === "unavailable" && <div className="business-data-source" role="status"><Database aria-hidden="true" />业务数据暂不可用</div>}
         {dataSource === "local" && (
           <div className="business-data-source" role="status">
             <Database aria-hidden="true" />
@@ -41,7 +42,7 @@ export function PageHeading({
         )}
         {city !== "上海市" && (
           <div className="business-city-scope" role="status">
-            当前选择 {city}，演示数据主要覆盖上海市
+            当前地区 {city}
           </div>
         )}
       </div>
@@ -60,11 +61,11 @@ export function PageSection({
   title?: string;
   description?: string;
   actions?: ReactNode;
-  children: ReactNode;
+  children?: ReactNode;
   className?: string;
 }) {
   return (
-    <Card className={`business-section ${className}`}>
+    <Card className={`business-section os-glass-card ${className}`}>
       {(title || description || actions) && (
         <CardHeader className="business-section-header">
           <div>
@@ -168,7 +169,7 @@ export function FormDialog({
   onOpenChange: (open: boolean) => void;
   title: string;
   description?: string;
-  children: ReactNode;
+  children?: ReactNode;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   submitLabel?: string;
   busy?: boolean;

@@ -74,7 +74,7 @@ export function ChipFilter({
       [group]: (value[group] ?? []).filter((item) => item !== option),
     });
   return (
-    <div className="chip-filter" aria-label="筛选条件">
+    <div className="chip-filter os-glass-card" aria-label="筛选条件">
       {selected.length > 0 && (
         <div className="chip-filter-selected">
           <span className="chip-filter-label">已选条件</span>

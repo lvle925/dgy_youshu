@@ -10,7 +10,12 @@ function formatCsvValue(value: unknown) {
     : typeof value === "object"
       ? JSON.stringify(value)
       : String(value);
-  return `"${text.replace(/"/g, '""')}"`;
+  const safe = /^[=+\-@\t\r]/.test(text) && typeof value !== "number" ? "'" + text : text;
+  return `"${safe.replace(/"/g, '""')}"`;
+}
+
+export function csvLine(values: unknown[]) {
+  return values.map(formatCsvValue).join(",");
 }
 
 export function downloadCsv<Row>(
@@ -27,6 +32,10 @@ export function downloadCsv<Row>(
   const file = new Blob([`\uFEFF${lines.join("\r\n")}`], {
     type: "text/csv;charset=utf-8",
   });
+  saveBlob(filename, file);
+}
+
+export function saveBlob(filename: string, file: Blob) {
   const url = URL.createObjectURL(file);
   const link = document.createElement("a");
   link.href = url;

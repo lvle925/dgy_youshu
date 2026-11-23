@@ -1,0 +1,36 @@
+import { createContext, useContext } from "react";
+import { useLocation } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { navigationGroups } from "./navigation";
+
+export type Principal = { user: string; role: string; administrator: boolean; permissions: string[] };
+export type Action = "新增" | "编辑" | "删除" | "导出";
+export const AccessContext = createContext<Principal | null>(null);
+export const usePrincipal = () => useContext(AccessContext);
+
+export function permissionPath(path: string) {
+  if (/^\/policy\/detail\//i.test(path)) return "/policy/index";
+  if (/^\/subsidy\/company\//i.test(path)) return "/subsidy/index";
+  if (/^\/park\/detail\//i.test(path)) return "/parksBuildings/index";
+  if (/^\/clue\/detail\//i.test(path)) return "/business/projectCluesUpdate/index";
+  if (path === "/") return "/home/index";
+  if (/^\/business\/enterpriseExpansion\/index$/i.test(path)) return "/business/projectClues/index";
+  return navigationGroups.flatMap(g => g.sections.flatMap(s => s.items)).find(item => item.path.toLowerCase() === path.toLowerCase())?.path ?? path;
+}
+
+export function allowsRoute(principal: Principal | null, path: string) {
+  return Boolean(principal?.administrator || principal?.permissions.includes("route:" + permissionPath(path)));
+}
+
+export function useAllowedAction(action: Action, target?: string) {
+  const principal = usePrincipal();
+  const location = useLocation();
+  const path = permissionPath(target ?? location.pathname);
+  const group = navigationGroups.find(g => g.sections.some(s => s.items.some(item => item.path === path)));
+  if (principal?.administrator) return true;
+  return allowsRoute(principal, path) && !!principal?.permissions.includes("button:" + group?.title + ":" + action);
+}
+
+export function ActionButton({ action, target, ...props }: React.ComponentProps<typeof Button> & { action: Action; target?: string }) {
+  return useAllowedAction(action, target) ? <Button {...props} /> : null;
+}

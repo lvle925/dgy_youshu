@@ -86,6 +86,7 @@ export const navigationGroups: NavigationGroup[] = [
         icon: Building2,
         items: [
           { title: "企业查询", path: "/subsidy/index", icon: Building2 },
+          { title: "招投标查询", path: "/bidding/index", icon: FileSearch },
           {
             title: "商机大厅",
             path: "/business/businessHall/index",
