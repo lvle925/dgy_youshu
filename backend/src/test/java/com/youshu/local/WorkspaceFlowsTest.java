@@ -2,15 +2,22 @@ package com.youshu.local;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mock.web.MockHttpSession;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
+import java.time.Clock;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -21,15 +28,29 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest(properties = {
-    "spring.datasource.url=jdbc:h2:mem:workspace_flows;DB_CLOSE_DELAY=-1",
     "app.auth.demo-login-enabled=true",
     "app.auth.device-verification-enabled=false"
 })
 @AutoConfigureMockMvc
 class WorkspaceFlowsTest {
+    @DynamicPropertySource
+    static void configureDatabase(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url", () -> System.getenv().getOrDefault(
+            "TEST_MYSQL_URL",
+            "jdbc:mysql://127.0.0.1:3307/youshu_test?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai"));
+        registry.add("spring.datasource.username", () -> System.getenv().getOrDefault("TEST_MYSQL_USERNAME", "youshu_test"));
+        registry.add("spring.datasource.password", () -> System.getenv().getOrDefault("TEST_MYSQL_PASSWORD", "youshu_test_password"));
+    }
+
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper json;
+    @Autowired JdbcTemplate jdbc;
     @MockitoBean CaptchaService captcha;
+
+    @BeforeEach
+    void resetDailyProjectUnlocks() {
+        jdbc.update("DELETE FROM project_unlock");
+    }
 
     @Test
     void concurrentUnlockChargesOnlyOnceAndRevealsContact() throws Exception {
@@ -89,6 +110,24 @@ class WorkspaceFlowsTest {
             .content(json.writeValueAsBytes(script))).andExpect(status().isOk());
         mvc.perform(get("/api/records/aiScripts").session(owner))
             .andExpect(jsonPath("$[0].city").value("苏州市")).andExpect(jsonPath("$[0].opening").value("验收开场"));
+    }
+
+    @Test
+    void verifiesTrustedDeviceUsingMySql() {
+        var sms = new SmsVerificationService(Clock.systemUTC(), true, "127127", "127127");
+        var trustedDevices = new TrustedDeviceService(jdbc, sms, true);
+        String username = "trusted-" + UUID.randomUUID();
+        var request = new MockHttpServletRequest();
+        var response = new MockHttpServletResponse();
+
+        var challenge = trustedDevices.login(username, request, response);
+        assertEquals(true, challenge.get("requiresDeviceVerification"));
+
+        var verified = trustedDevices.verify(
+            String.valueOf(challenge.get("deviceChallengeId")), "127127", true, request, response);
+        assertEquals(username, verified.get("user"));
+        assertEquals(1, jdbc.queryForObject(
+            "SELECT COUNT(*) FROM trusted_device WHERE username=?", Integer.class, username));
     }
 
     private MockHttpSession demo() throws Exception {

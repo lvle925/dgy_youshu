@@ -52,7 +52,8 @@ public class RecordsController {
         catch (IOException ex) { throw new IllegalArgumentException(ex); }
     }
     private void save(String collection, String id, Map<String, Object> row) {
-        jdbc.update("MERGE INTO records(collection,id,payload) KEY(collection,id) VALUES(?,?,?)", collection, id, encode(row));
+        jdbc.update("INSERT INTO records(collection,id,payload) VALUES(?,?,?) " +
+                "ON DUPLICATE KEY UPDATE payload=VALUES(payload)", collection, id, encode(row));
     }
     private WorkspaceAccess.Principal authorize(HttpSession session, String collection, String action) {
         check(collection);
@@ -105,7 +106,8 @@ public class RecordsController {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "密码须为 10 到 128 个字符");
             byte[] salt = new byte[16];
             new SecureRandom().nextBytes(salt);
-            jdbc.update("MERGE INTO member_account(member_id,username,password_hash) KEY(member_id) VALUES(?,?,?)",
+            jdbc.update("INSERT INTO member_account(member_id,username,password_hash) VALUES(?,?,?) " +
+                    "ON DUPLICATE KEY UPDATE username=VALUES(username), password_hash=VALUES(password_hash)",
                 id, username, AuthController.hash(password, salt));
         }
         row.put("username", username);

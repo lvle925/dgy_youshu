@@ -1,6 +1,6 @@
 # 有数计划复刻项目 · 会话交接总结
 
-更新时间：2026-11-20。当前代码在 main 分支，最近一次提交包含 React 工作台认证与 Bento 视觉层改造。
+更新时间：2026-11-23。当前代码在 main 分支，最近一次提交包含 React 工作台认证与 Bento 视觉层改造，后续截图与 MySQL 8 改造正在工作区中。
 
 仓库地址：https://github.com/lvle925/dgy_youshu
 
@@ -36,15 +36,16 @@
 ### 兼容业务页面
 
 - Vue 3、Vue Router、Ant Design Vue、ECharts
-- `src-react/App.tsx` 是唯一前端入口，26 个业务路由和详情路由均由 React Router 渲染
+- `src-react/App.tsx` 是唯一前端入口，27 个主导航路由和详情路由均由 React Router 渲染
 - Vue 源文件和 `legacy.html` 仅作为逆向参考，不参与 Vite 构建和运行
 - 共享组件位于 `src/components/shared/`，业务页面位于 `src-react/pages/`
 
 ### 后端
 
-- Java 21、Spring Boot 3.4.5、Spring JDBC、H2 文件数据库、springdoc-openapi
+- Java 21、Spring Boot 3.4.5、Spring JDBC、MySQL 8.4、springdoc-openapi
 - Docker Compose 服务名 api，默认绑定 127.0.0.1:8080
-- 数据卷为 youshu-local_youshu_data
+- MySQL 服务默认绑定 127.0.0.1:3307，容器内部使用标准 3306，数据卷为 `youshu-local_youshu_mysql_data`
+- 可执行 DDL 与 108 条演示记录 SQL 位于 `backend/sql/mysql/`
 
 ## 三、功能逻辑结论
 
@@ -61,7 +62,7 @@
 9. 点击账号菜单的退出登录调用 POST /api/auth/logout，并清理前端用户和页签状态。
 10. Spring MVC 拦截器保护业务 API，未认证请求返回 401。
 
-账号至少 3 个字符，密码至少 10 个字符。当前后端只支持一个本地管理员账号，尚未实现细粒度角色鉴权。真实短信供应商尚未配置，非 `127127` 手机号会得到明确的服务未配置响应。
+账号至少 3 个字符，密码至少 10 个字符。角色菜单和按钮权限会过滤导航、守卫路由并控制后端业务 API。真实短信供应商尚未配置，非 `127127` 手机号会得到明确的服务未配置响应。
 
 ### 2. React 工作台
 
@@ -127,8 +128,8 @@
 ### 8. 人员、角色和线索
 
 - 人员管理使用 members 数据集，支持列表、编辑、新增和启停状态
-- 角色管理使用 roles 数据集，可以保存角色配置
-- 当前角色配置没有参与后端细粒度鉴权
+- 角色管理使用 roles 数据集保存菜单和按钮权限，并与成员角色绑定
+- 导航、前端路由和后端业务 API 按成员角色权限校验
 - 项目线索页面使用 clues 数据集，支持更新跟进状态和备注
 - 企业、AI 外呼、真实短信和部分计费能力仍是本地模拟数据或演示交互
 
@@ -184,7 +185,7 @@
 
 ## 六、已经处理的问题
 
-- 增加 Java 本地后端、H2 持久化、Turnstile / 图片验证码回退、演示短信登录和可信设备认证
+- 增加 Java 本地后端、MySQL 8.4 持久化、Turnstile / 图片验证码回退、演示短信登录和可信设备认证
 - 增加 Swagger UI 和 OpenAPI JSON
 - 增加 React 工作台和 shadcn 组件
 - 完成 Vue/iframe 页面到 React 路由页面迁移，Vue 文件仅作参考
@@ -202,7 +203,7 @@
 
 - 企业、AI 外呼、计费和部分统计仍使用模拟数据
 - 真实短信供应商和真实企业数据服务尚未配置。`127127` 仅是本机演示账号，生产环境必须关闭演示开关
-- 当前只支持本地管理员，没有完整的多用户和角色权限校验
+- 当前账号和角色均为本地演示配置，短信服务未接入真实供应商
 - 高德地图依赖浏览器 Key、安全密钥、网络和域名配置
 - 园区楼宇检索页的部分演示数据仍使用前端 seed，园区管理页已接入持久化 API
 - 构建存在部分大 chunk 提示，当前不影响构建成功
@@ -221,7 +222,8 @@ npm run dev
 ~~~
 npx tsc --noEmit
 npm run build
-docker run --rm -v "$PWD/backend:/app" -w /app maven:3.9-eclipse-temurin-21 mvn -q test
+docker compose -p youshu-test --profile test run --rm backend-test
+docker compose -p youshu-test --profile test down
 ~~~
 
 停止服务时使用以下命令保留数据卷：
@@ -230,7 +232,7 @@ docker run --rm -v "$PWD/backend:/app" -w /app maven:3.9-eclipse-temurin-21 mvn 
 docker compose -p youshu-local down
 ~~~
 
-不要执行 docker compose down -v，否则会删除本地 H2 数据卷。
+`docker compose -p youshu-local down` 会保留 MySQL 数据卷。不要加 `-v`，否则会删除数据。
 
 ## 九、相关文件
 
@@ -243,6 +245,7 @@ docker compose -p youshu-local down
 - src/views/BusinessMap.vue：商机地图
 - backend/src/main/java/com/youshu/local/AuthController.java：认证接口
 - backend/src/main/java/com/youshu/local/RecordsController.java：业务记录接口
+- backend/sql/mysql/schema.sql 和 seed.sql：MySQL 8 建表及演示数据
 - docs/screenshots：实际浏览器截图
 
 新会话开始后，先阅读本文件和 README.md，再检查 git status、当前分支和前后端服务状态。

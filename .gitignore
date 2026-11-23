@@ -10,5 +10,4 @@ dist/
 Thumbs.db
 
 backend/target/
-backend/data/
 output/

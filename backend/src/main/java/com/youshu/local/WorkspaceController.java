@@ -44,7 +44,7 @@ public class WorkspaceController {
             throw WorkspaceAccess.denied("没有解锁项目权限");
         String user = principal.subject();
         LocalDate today = LocalDate.now(QUOTA_ZONE);
-        jdbc.update("MERGE INTO project_wallet(username) KEY(username) VALUES(?)", user);
+        jdbc.update("INSERT INTO project_wallet(username) VALUES(?) ON DUPLICATE KEY UPDATE username=VALUES(username)", user);
         jdbc.queryForObject("SELECT username FROM project_wallet WHERE username=? FOR UPDATE", String.class, user);
         if (jdbc.queryForObject("SELECT COUNT(*) FROM records WHERE collection='clues' AND id=?", Integer.class, id) == 0)
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "项目已不存在");
