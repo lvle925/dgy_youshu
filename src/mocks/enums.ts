@@ -216,5 +216,3 @@ export type StatusValue =
   | "停用"
   | "正常"
   | "异常"
-  | "已解锁"
-  | "待解锁";

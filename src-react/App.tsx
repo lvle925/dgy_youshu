@@ -9,7 +9,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { BrandMark } from '@/components/BrandMark';
 import { AccessContext, allowsRoute, permissionPath, type Principal } from './app/AccessContext';
-import { PointsProvider } from './app/PointsContext';
 import { ReportProvider } from './app/ReportQueue';
 import { AppShell } from './app/AppShell';
 import { NewDeviceVerificationDialog } from './components/auth/NewDeviceVerificationDialog';
@@ -71,9 +70,10 @@ const VisitManagePage = lazy(() => import('./pages/stability/VisitManagePage').t
 const SettingPage = lazy(() => import('./pages/admin/SettingPage').then((module) => ({ default: module.SettingPage })));
 const MemberPage = lazy(() => import('./pages/admin/MemberPage').then((module) => ({ default: module.MemberPage })));
 const RolePage = lazy(() => import('./pages/admin/RolePage').then((module) => ({ default: module.RolePage })));
+const DepartmentPage = lazy(() => import('./pages/admin/DepartmentPage').then((module) => ({ default: module.DepartmentPage })));
 const MemberLogPage = lazy(() => import('./pages/admin/MemberLogPage').then((module) => ({ default: module.MemberLogPage })));
 const MemberLogStatisticsPage = lazy(() => import('./pages/admin/MemberLogStatisticsPage').then((module) => ({ default: module.MemberLogStatisticsPage })));
-const InterfaceBillingPage = lazy(() => import('./pages/admin/InterfaceBillingPage').then((module) => ({ default: module.InterfaceBillingPage })));
+const InterfaceMonitoringPage = lazy(() => import('./pages/admin/InterfaceMonitoringPage').then((module) => ({ default: module.InterfaceMonitoringPage })));
 
 function PageFallback({ children }: { children: ReactNode }) {
   return <Suspense fallback={<div className="business-loading"><Skeleton className="h-10 w-56" /><Skeleton className="h-32 w-full" /><Skeleton className="h-64 w-full" /></div>}>{children}</Suspense>;
@@ -113,11 +113,12 @@ function App() {
           <Route path="/myCampus/guarantee/index" element={<PageFallback><GuaranteePage /></PageFallback>} />
           <Route path="/myCampus/visitManage/index" element={<PageFallback><VisitManagePage /></PageFallback>} />
           <Route path="/member/index" element={<PageFallback><MemberPage /></PageFallback>} />
+          <Route path="/member/departments" element={<PageFallback><DepartmentPage /></PageFallback>} />
           <Route path="/member/role" element={<PageFallback><RolePage /></PageFallback>} />
           <Route path="/member/log" element={<PageFallback><MemberLogPage /></PageFallback>} />
           <Route path="/member/logStatistics" element={<PageFallback><MemberLogStatisticsPage /></PageFallback>} />
           <Route path="/setting/index" element={<PageFallback><SettingPage /></PageFallback>} />
-          <Route path="/interfaceBilling/index" element={<PageFallback><InterfaceBillingPage /></PageFallback>} />
+          <Route path="/system/interface-monitoring" element={<PageFallback><InterfaceMonitoringPage /></PageFallback>} />
           <Route path="/bidding/index" element={<PageFallback><BiddingPage /></PageFallback>} />
           <Route path="/park/detail/:id" element={<PageFallback><ParkDetailPage /></PageFallback>} />
           <Route path="*" element={<PageFallback><NotFoundPage /></PageFallback>} />
@@ -319,7 +320,7 @@ function LoginPage() {
       </aside>
       <section className="login-panel">
         <div className="login-brand"><BrandMark /><span>有数计划</span></div>
-        <div className="login-brand-caption">产业招商与企业服务工作台</div>
+      <div className="login-brand-caption">政府委办局与产业园区内部专用</div>
         <div className="login-copy">
           <h1>{status.demoLoginEnabled && !status.initialized ? '进入演示工作台' : status.initialized ? '欢迎回来' : '创建本地管理员'}</h1>
           <p>{status.demoLoginEnabled && !status.initialized ? '本机演示入口可直接体验工作台。' : status.initialized ? '使用安全验证进入工作台。' : '首次使用，请创建管理员账号。'}</p>
@@ -339,7 +340,7 @@ function LoginPage() {
           <label htmlFor="username">账号</label>
           <Input id="username" autoComplete="username" value={username} onChange={(event) => setUsername(event.target.value)} placeholder="至少 3 个字符" required minLength={3} />
           <div className="login-password-label"><label htmlFor="password">密码</label>{status.initialized && <button type="button" className="login-forget-password" onClick={() => setError('当前本地服务尚未配置密码找回能力，请联系管理员重置。')}>忘记密码</button>}</div>
-          <div className="login-password-input"><Input id="password" autoComplete={status.initialized ? 'current-password' : 'new-password'} type={showPassword ? 'text' : 'password'} value={password} onChange={(event) => setPassword(event.target.value)} placeholder="至少 10 个字符" required minLength={10} /><button type="button" className="password-toggle" onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? '隐藏密码' : '显示密码'} aria-pressed={showPassword}>{showPassword ? <EyeOff /> : <Eye />}</button></div>
+          <div className="login-password-input"><Input id="password" autoComplete={status.initialized ? 'current-password' : 'new-password'} type={showPassword ? 'text' : 'password'} value={password} onChange={(event) => setPassword(event.target.value)} placeholder="至少 12 位，包含字母和数字" required minLength={12} /><button type="button" className="password-toggle" onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? '隐藏密码' : '显示密码'} aria-pressed={showPassword}>{showPassword ? <EyeOff /> : <Eye />}</button></div>
           <label className="captcha-label" htmlFor={challenge?.provider === 'turnstile' ? undefined : 'captcha'}>{challenge?.provider === 'turnstile' ? '安全验证' : '图片验证码'}</label>
           <CaptchaField challenge={challenge} answer={captcha} token={captchaToken} disabled={busy || captchaBusy} onAnswerChange={setCaptcha} onTokenChange={setCaptchaToken} onRefresh={() => void refreshCaptcha()} />
           <Button className="login-submit" type="submit" disabled={busy || captchaBusy || !challenge || (challenge.provider === 'turnstile' ? !captchaToken : captcha.length !== 4)}>
@@ -376,7 +377,39 @@ function ProtectedShell() {
   if (location.pathname === "/home/index" && firstRoute && !allowsRoute(principal, location.pathname)) {
     return <Navigate replace to={firstRoute.path} />;
   }
-  return <AccessContext.Provider value={principal}><PointsProvider><ReportProvider><Workspace userName={principal.user}>{knownRoute && !allowsRoute(principal, location.pathname) ? <Alert className="os-glass-card"><AlertTitle>没有页面访问权限</AlertTitle><AlertDescription>请选择左侧已有权限的业务菜单，或联系管理员调整角色。</AlertDescription></Alert> : <Outlet />}</Workspace></ReportProvider></PointsProvider></AccessContext.Provider>;
+  if (principal.mustChangePassword) return <ForcePasswordChange onChanged={() => void refresh()} />;
+  return <AccessContext.Provider value={principal}><ReportProvider><Workspace userName={principal.user}>{knownRoute && !allowsRoute(principal, location.pathname) ? <Alert className="os-glass-card"><AlertTitle>没有页面访问权限</AlertTitle><AlertDescription>请选择左侧已有权限的业务菜单，或联系管理员调整角色。</AlertDescription></Alert> : <Outlet />}</Workspace></ReportProvider></AccessContext.Provider>;
+}
+
+function ForcePasswordChange({ onChanged }: { onChanged: () => void }) {
+  const [password, setPassword] = useState('');
+  const [confirmation, setConfirmation] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (password !== confirmation) return setError('两次输入的密码不一致。');
+    setBusy(true);
+    setError('');
+    try {
+      const response = await fetch('/api/auth/change-password', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password }) });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.message || '密码更新失败。');
+      onChanged();
+      toast.success('密码已更新');
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : '密码更新失败。');
+    } finally { setBusy(false); }
+  }
+  return <main className="force-password-page"><form className="force-password-card os-glass-card" onSubmit={submit}>
+    <BrandMark />
+    <h1>首次登录，请先修改密码</h1>
+    <p>新密码至少 12 位，并同时包含字母和数字。</p>
+    {error && <Alert variant="destructive"><AlertTitle>无法保存</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>}
+    <label htmlFor="new-password">新密码</label><Input id="new-password" type="password" autoComplete="new-password" minLength={12} value={password} onChange={(event) => setPassword(event.target.value)} required />
+    <label htmlFor="confirm-password">确认新密码</label><Input id="confirm-password" type="password" autoComplete="new-password" minLength={12} value={confirmation} onChange={(event) => setConfirmation(event.target.value)} required />
+    <Button type="submit" disabled={busy}>{busy ? '正在保存…' : '更新密码并进入工作台'}</Button>
+  </form></main>;
 }
 
 function Workspace({ userName, children }: { userName: string; children: ReactNode }) {

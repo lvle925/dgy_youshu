@@ -3,8 +3,22 @@ import { useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { navigationGroups } from "./navigation";
 
-export type Principal = { user: string; role: string; administrator: boolean; permissions: string[] };
-export type Action = "新增" | "编辑" | "删除" | "导出";
+export type Principal = {
+  user: string;
+  role: string;
+  administrator: boolean;
+  permissions: string[];
+  departmentId?: string;
+  departmentName?: string;
+  displayName?: string;
+  dataScope?: "ALL_PARKS" | "ASSIGNED_PARKS" | "SELF_ONLY";
+  parkIds?: string[];
+  memberId?: string;
+  mustChangePassword?: boolean;
+  watermarkEnabled?: boolean;
+  sessionTimeoutMinutes?: number;
+};
+export type Action = "新增" | "编辑" | "删除" | "导出" | "查看敏感信息";
 export const AccessContext = createContext<Principal | null>(null);
 export const usePrincipal = () => useContext(AccessContext);
 
@@ -28,7 +42,11 @@ export function useAllowedAction(action: Action, target?: string) {
   const path = permissionPath(target ?? location.pathname);
   const group = navigationGroups.find(g => g.sections.some(s => s.items.some(item => item.path === path)));
   if (principal?.administrator) return true;
-  return allowsRoute(principal, path) && !!principal?.permissions.includes("button:" + group?.title + ":" + action);
+  const actionId: Record<Action, string> = { 新增: "create", 编辑: "edit", 删除: "delete", 导出: "export", 查看敏感信息: "view_sensitive" };
+  return allowsRoute(principal, path) && Boolean(
+    principal?.permissions.includes("action:" + path + ":" + actionId[action])
+      || principal?.permissions.includes("button:" + group?.title + ":" + action),
+  );
 }
 
 export function ActionButton({ action, target, ...props }: React.ComponentProps<typeof Button> & { action: Action; target?: string }) {

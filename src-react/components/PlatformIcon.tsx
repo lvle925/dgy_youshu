@@ -3,7 +3,7 @@ import {
   ChevronDown, ChevronRight, CircleHelp, ClipboardList, Crown, Eye, EyeOff,
   FileSearch, FileText, FolderKanban, Gavel, Globe2, History, Home, Landmark,
   LayoutDashboard, LogOut, Map, MapPinned, Network, Plus, Search, Settings2,
-  ShieldCheck, Star, Users, UsersRound, WalletCards, X, type LucideIcon,
+  ShieldCheck, Star, Users, UsersRound, X, type LucideIcon,
 } from 'lucide-react';
 
 const iconSet = {
@@ -39,7 +39,6 @@ const iconSet = {
   shield: ShieldCheck,
   star: Star,
   users: UsersRound,
-  billing: WalletCards,
   close: X,
 } satisfies Record<string, LucideIcon>;
 
@@ -52,7 +51,7 @@ const generatedAssets: Partial<Record<keyof typeof iconSet, string>> = {
   folder:'folder', bidding:'bidding', globe:'globe', history:'history',
   home:'dashboard', landmark:'building', dashboard:'dashboard', map:'map',
   network:'network', search:'search', settings:'settings', shield:'shield',
-  star:'policy', users:'users', billing:'billing',
+  star:'policy', users:'users',
 };
 
 export type PlatformIconName = keyof typeof iconSet;

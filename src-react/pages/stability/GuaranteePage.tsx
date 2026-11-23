@@ -1,40 +1,114 @@
-import { useReportExport } from "@/app/ReportQueue";
 import { ActionButton } from "@/app/AccessContext";
-import { useMemo, useState } from "react";
-import { Download, FilePlus2 } from "lucide-react";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
+import { useBusinessCollection } from "@/lib/useBusinessCollection";
 import { DataTable, type DataColumn } from "@/../src/components/shared/DataTable";
 import { MetricCard } from "@/../src/components/shared/MetricCard";
+import { StatusTag } from "@/../src/components/shared/StatusTag";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { guaranteeRecords } from "../../../src/data/mock.js";
-import { useBusinessCollection } from "@/lib/useBusinessCollection";
-import { NativeSelect, PageHeading, PageSection, SearchField, SectionTabs, StatusValue } from "@/pages/PagePrimitives";
+import { useNavigate } from "react-router-dom";
+import { ClipboardCheck, Plus, ShieldAlert } from "lucide-react";
+import { useMemo, useState, type FormEvent } from "react";
+import { toast } from "sonner";
+import { useReportExport } from "@/app/ReportQueue";
+import { FormDialog, FormField, NativeSelect, PageHeading, PageSection, SearchField } from "@/pages/PagePrimitives";
 
 type Row = Record<string, any> & { id: string | number };
+const emptyRequests: Row[] = [];
+
+function isOverdue(row: Partial<Row>) {
+  return row.status !== "已办结" && Boolean(row.dueAt) && String(row.dueAt) < new Date().toISOString().slice(0, 10);
+}
 
 export function GuaranteePage() {
+  const data = useBusinessCollection<Row>({ key: "youshu-service-requests", seed: emptyRequests, apiCollection: "serviceRequests" });
   const enqueue = useReportExport();
-  const data = useBusinessCollection<Row>({ key: "youshu-guarantee-records", seed: guaranteeRecords });
-  const [tab, setTab] = useState("report");
+  const navigate = useNavigate();
   const [keyword, setKeyword] = useState("");
+  const [status, setStatus] = useState("");
   const [park, setPark] = useState("");
-  const [owner, setOwner] = useState("");
   const [selected, setSelected] = useState<Row | null>(null);
-  const taskRows: Row[] = useMemo(() => {
-    if (tab === "tech") return data.rows.map((row, index) => ({ ...row, status: ["培育中", "待匹配", "已對接"][index % 3], date: `2026-11-${String(10 + index).padStart(2, "0")}` }));
-    if (tab === "expire") return data.rows.map((row, index) => ({ ...row, status: index % 3 ? "即将到期" : "已提醒", date: `2026-12-${String(5 + index).padStart(2, "0")}`, days: [12, 26, 45, 68, 30, 55, 88, 21, 39, 72, 18, 60][index] }));
-    if (tab === "match") return data.rows.map((row, index) => ({ ...row, status: ["待匹配", "已匹配", "申报中"][index % 3], date: `2026-11-${String(10 + index).padStart(2, "0")}`, match: [96, 92, 89, 95, 87, 91, 84, 93, 88, 90, 86, 80][index] }));
-    return data.rows;
-  }, [data.rows, tab]);
-  const filtered = taskRows.filter((row) => (!keyword || String(row.name).includes(keyword)) && (!park || row.park === park) && (!owner || row.owner === owner));
-  const tabColumns: Record<string, DataColumn<Row>[]> = {
-    report: [{ key: "name", header: "企业名称" }, { key: "park", header: "所属园区" }, { key: "owner", header: "负责人" }, { key: "status", header: "年报状态", cell: (row) => <StatusValue value={row.status} /> }, { key: "date", header: "最近申报时间" }, { key: "address", header: "注册地址" }],
-    tech: [{ key: "name", header: "企业名称" }, { key: "park", header: "所属园区" }, { key: "owner", header: "负责人" }, { key: "status", header: "培育阶段", cell: (row) => <StatusValue value={row.status} /> }, { key: "date", header: "更新时间" }, { key: "address", header: "注册地址" }],
-    expire: [{ key: "name", header: "企业名称" }, { key: "park", header: "所属园区" }, { key: "owner", header: "负责人" }, { key: "status", header: "提醒状态", cell: (row) => <StatusValue value={row.status} /> }, { key: "date", header: "到期日期" }, { key: "days", header: "剩余天数", sortable: true }],
-    match: [{ key: "name", header: "企业名称" }, { key: "park", header: "所属园区" }, { key: "owner", header: "负责人" }, { key: "status", header: "匹配状态", cell: (row) => <StatusValue value={row.status} /> }, { key: "match", header: "最高匹配度", sortable: true, cell: (row) => `${row.match}%` }, { key: "date", header: "更新时间" }],
-  };
-  async function process(row: Row) { try { await data.updateRecord(row.id, { ...row, status: row.status === "已申报" ? "已提醒" : "已申报", date: new Date().toISOString().slice(0, 10) }); toast.success(`已为 ${row.name} 创建服务提醒`); } catch (cause) { toast.error(cause instanceof Error ? cause.message : "操作失败"); } }
-  const tabItems = [{ key: "report", label: "年报报送", count: data.rows.filter((row) => String(row.status).startsWith("未报送")).length }, { key: "tech", label: "科技企业培育", count: data.rows.length }, { key: "expire", label: "政策到期提醒", count: data.rows.filter((row) => String(row.status).startsWith("未报送")).length }, { key: "match", label: "政策精准匹配", count: data.rows.length }];
-  return <div className="business-page"><PageHeading title="企服保障" description="把年报、科技企业培育、政策到期和精准匹配转成可跟进任务" source={data.source} actions={<Button variant="outline" onClick={() => toast.success(`已向 ${filtered.length} 家企业发送服务提醒`)}>批量提醒</Button>} /><div className="business-metric-grid"><MetricCard title="待年报提醒" value={data.rows.filter((row) => String(row.status).startsWith("未报送")).length} description="企业年报报送跟进" icon={<FilePlus2 />} /><MetricCard title="科技企业培育" value={data.rows.length} description="纳入培育服务" /><MetricCard title="政策到期提醒" value="238" description="未来 90 天到期" /><MetricCard title="政策匹配结果" value="1,656" description="待企业申报跟进" /></div><PageSection title="企业服务任务" description={`当前 ${filtered.length} 条任务`}><SectionTabs items={tabItems} value={tab} onChange={(value) => { setTab(value); setKeyword(""); setPark(""); setOwner(""); }} /><div className="business-toolbar"><SearchField value={keyword} onChange={setKeyword} placeholder="搜索企业名称" /><NativeSelect label="所属园区" value={park} onChange={setPark} options={[...new Set(taskRows.map((row) => row.park))]} /><NativeSelect label="负责人" value={owner} onChange={setOwner} options={[...new Set(taskRows.map((row) => row.owner))]} /><ActionButton action="导出" variant="outline" onClick={() => enqueue("企业服务.csv", [{ header: "任务", value: row => row.name }, { header: "园区", value: row => row.park }, { header: "负责人", value: row => row.owner }, { header: "状态", value: row => row.status }], filtered)}><Download data-icon="inline-start" />导出</ActionButton></div><DataTable columns={[...tabColumns[tab], { key: "action", header: "操作", cell: (row) => <Button size="sm" variant="outline" onClick={() => void process(row)}>{tab === "report" ? "发送年报提醒" : tab === "match" ? "查看匹配" : "创建服务任务"}</Button> }]} data={filtered} openRowDetails={false} onRowClick={setSelected} detailTitle="企业服务保障" /></PageSection><Sheet open={Boolean(selected)} onOpenChange={(open) => !open && setSelected(null)}><SheetContent side="right" className="business-detail-sheet"><SheetHeader><SheetTitle>{selected?.name}</SheetTitle><SheetDescription>{tabItems.find((item) => item.key === tab)?.label}</SheetDescription></SheetHeader>{selected && <><dl className="business-detail-list">{Object.entries(selected).filter(([key]) => key !== "id").map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{String(value ?? "—")}</dd></div>)}</dl><Button onClick={() => void process(selected)}>创建服务跟进</Button></>}</SheetContent></Sheet></div>;
+  const [createOpen, setCreateOpen] = useState(false);
+  const [assigning, setAssigning] = useState<Row | null>(null);
+  const [assign, setAssign] = useState({ departmentId: "", owner: "", dueAt: "" });
+  const [form, setForm] = useState({ name: "", title: "", category: "政策服务", park: "", parkId: "", priority: "普通", dueAt: "", description: "" });
+  const overdueCount = data.rows.filter(isOverdue).length;
+  const filtered = data.rows.filter((row) => (!keyword || `${row.name} ${row.title} ${row.company}`.includes(keyword)) && (!status || (status === "超期督办" ? isOverdue(row) : row.status === status)) && (!park || row.park === park));
+  const statusOptions = ["待派单", "办理中", "已办结", "超期督办"];
+  const columns: DataColumn<Row>[] = [
+    { key: "name", header: "诉求企业", sortable: true },
+    { key: "title", header: "企业诉求", sortable: true },
+    { key: "category", header: "事项类别" },
+    { key: "park", header: "所属园区" },
+    { key: "owner", header: "承办人员", cell: (row) => row.owner || "待派单" },
+    { key: "dueAt", header: "办理期限", sortable: true },
+    { key: "supervision", header: "督办状态", cell: (row) => isOverdue(row) ? <StatusTag value="超期督办" tone="danger" /> : row.status === "已办结" ? <StatusTag value="已办结" tone="success" /> : <StatusTag value={row.priority === "督办" ? "重点督办" : "按期办理"} tone={row.priority === "督办" ? "warning" : "neutral"} /> },
+    { key: "status", header: "办理状态", cell: (row) => <StatusTag value={row.status} tone={row.status === "已办结" ? "success" : isOverdue(row) ? "danger" : row.status === "办理中" ? "warning" : "neutral"} /> },
+    { key: "action", header: "操作", cell: (row) => <div className="table-action-buttons">
+      {row.status === "待派单" && <ActionButton action="编辑" size="sm" variant="outline" onClick={() => { setAssigning(row); setAssign({ departmentId: row.departmentId || "", owner: row.owner || "", dueAt: row.dueAt || "" }); }}>派单</ActionButton>}
+      {row.status === "办理中" && <ActionButton action="编辑" size="sm" variant="outline" onClick={() => navigate("/myCampus/visitManage/index", { state: { company: row.name || row.company, serviceRequestId: row.id, park: row.park, parkId: row.parkId, departmentId: row.departmentId } })}>创建走访</ActionButton>}
+    </div> },
+  ];
+
+  async function createRequest(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!form.name.trim() || !form.title.trim() || !form.dueAt) return toast.warning("请填写企业、诉求内容和办理期限");
+    try {
+      const row = await data.createRecord({ ...form, company: form.name, status: "待派单", createdAt: new Date().toISOString().slice(0, 10), source: "企业诉求受理" } as Omit<Row, "id">);
+      setCreateOpen(false);
+      setForm({ ...form, name: "", title: "", dueAt: "", description: "" });
+      toast.success(`已受理企业诉求 ${row.id}`);
+    } catch (cause) { toast.error(cause instanceof Error ? cause.message : "诉求受理失败"); }
+  }
+
+  async function assignRequest(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!assigning || !assign.departmentId.trim() || !assign.owner.trim()) return toast.warning("请选择承办部门并填写执行人");
+    try {
+      await data.updateRecord(assigning.id, { departmentId: assign.departmentId.trim(), owner: assign.owner.trim(), dueAt: assign.dueAt || assigning.dueAt, assignedAt: new Date().toISOString(), status: "办理中" });
+      setAssigning(null);
+      toast.success("诉求已派单至承办部门");
+    } catch (cause) { toast.error(cause instanceof Error ? cause.message : "派单失败"); }
+  }
+
+  async function exportRequests() {
+    enqueue("企业诉求与督办台账.csv", [
+      { header: "企业", value: (row) => row.name || row.company }, { header: "诉求", value: (row) => row.title },
+      { header: "承办部门", value: (row) => row.departmentId }, { header: "承办人", value: (row) => row.owner },
+      { header: "办理期限", value: (row) => row.dueAt }, { header: "状态", value: (row) => isOverdue(row) ? "超期督办" : row.status },
+    ], filtered);
+  }
+
+  const parks = useMemo(() => [...new Set(data.rows.map((row) => String(row.park ?? "")).filter(Boolean))], [data.rows]);
+  return <div className="business-page">
+    <PageHeading title="企服保障" description="企业诉求受理、部门派单、走访反馈和办结督办闭环" source={data.source} actions={<>
+      <ActionButton action="导出" variant="outline" onClick={() => void exportRequests()}>导出诉求台账</ActionButton>
+      <ActionButton action="新增" onClick={() => setCreateOpen(true)}><Plus data-icon="inline-start" />受理企业诉求</ActionButton>
+    </>} />
+    <div className="business-metric-grid">
+      <MetricCard title="在办诉求" value={data.rows.filter((row) => row.status !== "已办结").length} description="待派单与办理中" icon={<ClipboardCheck />} />
+      <MetricCard title="待派单" value={data.rows.filter((row) => row.status === "待派单").length} description="等待部门承办" />
+      <MetricCard title="已办结" value={data.rows.filter((row) => row.status === "已办结").length} description="已完成走访与反馈" />
+      <MetricCard title="超期督办" value={overdueCount} description="按办理期限自动识别" icon={<ShieldAlert />} />
+    </div>
+    <PageSection title="诉求办理台账" description={`筛选结果 ${filtered.length} 项`}>
+      <div className="business-toolbar"><SearchField value={keyword} onChange={setKeyword} placeholder="企业、诉求或事项类别" /><NativeSelect label="办理状态" value={status} onChange={setStatus} options={statusOptions} /><NativeSelect label="所属园区" value={park} onChange={setPark} options={parks} /></div>
+      <DataTable columns={columns} data={filtered} openRowDetails={false} onRowClick={setSelected} detailTitle="企业诉求详情" />
+    </PageSection>
+    <Sheet open={Boolean(selected)} onOpenChange={(open) => !open && setSelected(null)}><SheetContent side="right" className="business-detail-sheet"><SheetHeader><SheetTitle>{selected?.title}</SheetTitle><SheetDescription>{selected?.name} · {isOverdue(selected ?? {}) ? "超期督办" : selected?.status}</SheetDescription></SheetHeader>{selected && <><dl className="business-detail-list">{Object.entries(selected).filter(([key]) => key !== "id" && key !== "description").map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{String(value ?? "—")}</dd></div>)}</dl><p className="business-detail-prose">{selected.description}</p>{selected.status === "办理中" && <Button onClick={() => navigate("/myCampus/visitManage/index", { state: { company: selected.name || selected.company, serviceRequestId: selected.id, park: selected.park, parkId: selected.parkId, departmentId: selected.departmentId } })}>派生走访工单</Button>}</>}</SheetContent></Sheet>
+    <FormDialog open={createOpen} onOpenChange={setCreateOpen} title="受理企业诉求" description="提交后进入部门派单队列，完整过程将写入审计记录" onSubmit={createRequest}>
+      <FormField label="企业名称" required><Input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} required /></FormField>
+      <FormField label="诉求事项" required><Input value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} required /></FormField>
+      <FormField label="事项类别"><select className="business-input" value={form.category} onChange={(event) => setForm({ ...form, category: event.target.value })}>{["政策服务", "人才服务", "载体保障", "用工服务", "融资服务", "其他诉求"].map((item) => <option key={item}>{item}</option>)}</select></FormField>
+      <FormField label="所属园区"><Input value={form.park} onChange={(event) => setForm({ ...form, park: event.target.value, parkId: event.target.value })} /></FormField>
+      <FormField label="办理期限" required><Input type="date" value={form.dueAt} onChange={(event) => setForm({ ...form, dueAt: event.target.value })} required /></FormField>
+      <FormField label="优先级"><select className="business-input" value={form.priority} onChange={(event) => setForm({ ...form, priority: event.target.value })}><option>普通</option><option>督办</option></select></FormField>
+      <FormField label="诉求说明"><Input value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} /></FormField>
+    </FormDialog>
+    <FormDialog open={Boolean(assigning)} onOpenChange={(open) => !open && setAssigning(null)} title="派单至承办部门" description={assigning?.title} onSubmit={assignRequest}>
+      <FormField label="承办部门" required><Input value={assign.departmentId} onChange={(event) => setAssign({ ...assign, departmentId: event.target.value })} required placeholder="例如 企业服务处" /></FormField>
+      <FormField label="承办人员" required><Input value={assign.owner} onChange={(event) => setAssign({ ...assign, owner: event.target.value })} required /></FormField>
+      <FormField label="办理期限"><Input type="date" value={assign.dueAt} onChange={(event) => setAssign({ ...assign, dueAt: event.target.value })} /></FormField>
+    </FormDialog>
+  </div>;
 }

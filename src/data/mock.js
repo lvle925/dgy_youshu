@@ -339,71 +339,23 @@ export const aiRecords = [
 ];
 
 export const members = [
-  { id: 'U001', name: '顾龙飞', phone: '133****4537', role: '超级管理员', dept: '招商运营部', park: '全部园区', status: '启用', lastLogin: '2026-11-17 09:12' },
-  { id: 'U002', name: '李婷', phone: '138****2210', role: '招商主管', dept: '招商运营部', park: '临港新片区生命蓝湾生物医药特色产业园', status: '启用', lastLogin: '2026-11-17 08:50' },
-  { id: 'U003', name: '王凯', phone: '139****3355', role: '招商专员', dept: '招商运营部', park: '张江人工智能岛', status: '启用', lastLogin: '2026-11-16 18:22' },
-  { id: 'U004', name: '陈晨', phone: '137****7788', role: '招商专员', dept: '招商运营部', park: '嘉定氢能港', status: '启用', lastLogin: '2026-11-16 16:05' },
-  { id: 'U005', name: '周敏', phone: '136****1122', role: '园区管理员', dept: '园区服务部', park: '漕河泾科技绿洲', status: '启用', lastLogin: '2026-11-16 14:40' },
-  { id: 'U006', name: '吴超', phone: '135****5566', role: '数据分析师', dept: '数据运营部', park: '全部园区', status: '启用', lastLogin: '2026-11-15 11:18' },
-  { id: 'U007', name: '徐静', phone: '134****9900', role: '只读成员', dept: '综合管理部', park: '全部园区', status: '停用', lastLogin: '2026-10-28 09:36' },
-  { id: 'U008', name: '刘洋', phone: '133****3344', role: '招商专员', dept: '招商运营部', park: '紫竹高新技术产业开发区', status: '启用', lastLogin: '2026-11-14 15:22' },
+  { id: 'U001', name: '顾龙飞', phone: '133****4537', role: '系统管理员', dept: '招商运营部', park: '全部园区', status: '启用', lastLogin: '2026-11-17 09:12' },
+  { id: 'U002', name: '李婷', phone: '138****2210', role: '园区招商专员', dept: '招商运营部', park: '临港新片区生命蓝湾生物医药特色产业园', status: '启用', lastLogin: '2026-11-17 08:50' },
+  { id: 'U003', name: '王凯', phone: '139****3355', role: '园区招商专员', dept: '招商运营部', park: '张江人工智能岛', status: '启用', lastLogin: '2026-11-16 18:22' },
+  { id: 'U004', name: '陈晨', phone: '137****7788', role: '园区招商专员', dept: '招商运营部', park: '嘉定氢能港', status: '启用', lastLogin: '2026-11-16 16:05' },
+  { id: 'U005', name: '周敏', phone: '136****1122', role: '园区招商专员', dept: '园区服务部', park: '漕河泾科技绿洲', status: '启用', lastLogin: '2026-11-16 14:40' },
+  { id: 'U006', name: '吴超', phone: '135****5566', role: '只读领导视角', dept: '数据运营部', park: '全部园区', status: '启用', lastLogin: '2026-11-15 11:18' },
+  { id: 'U007', name: '徐静', phone: '134****9900', role: '只读领导视角', dept: '综合管理部', park: '全部园区', status: '停用', lastLogin: '2026-10-28 09:36' },
+  { id: 'U008', name: '刘洋', phone: '133****3344', role: '园区招商专员', dept: '招商运营部', park: '紫竹高新技术产业开发区', status: '启用', lastLogin: '2026-11-14 15:22' },
 ];
 
 export const roles = [
-  { id: 'ROLE1', name: '超级管理员', code: 'super_admin', members: 2, desc: '拥有平台全部功能权限', perms: ['全部菜单', '数据导出', '成员管理', '角色管理', '接口计费'] },
-  { id: 'ROLE2', name: '招商主管', code: 'invest_manager', members: 5, desc: '负责招商团队与商机线索管理', perms: ['首页', '政策管理', '商机洞察', '企业查询', '数据导出'] },
-  { id: 'ROLE3', name: '招商专员', code: 'invest_staff', members: 18, desc: '负责线索跟进与企业走访', perms: ['首页', '政策管理', '商机摸排', '企业查询', '走访管理'] },
-  { id: 'ROLE4', name: '园区管理员', code: 'park_admin', members: 9, desc: '负责园区、楼宇与企业档案维护', perms: ['首页', '园区楼宇', '园区管理', '企业档案'] },
-  { id: 'ROLE5', name: '数据分析师', code: 'analyst', members: 3, desc: '查看分析看板与统计数据', perms: ['首页', '全景洞察', '操作日志统计', '数据导出'] },
-  { id: 'ROLE6', name: '只读成员', code: 'viewer', members: 12, desc: '仅可查看页面数据', perms: ['首页', '政策管理', '企业查询'] },
+  { id: 'builtin-system-admin', name: '系统管理员', code: 'system_admin', members: 1, desc: '管理账号、菜单和系统运行配置', immutable: true, permissions: [] },
+  { id: 'builtin-security-officer', name: '安全保密员', code: 'security_officer', members: 0, desc: '维护数据范围、敏感信息策略与授权审批', immutable: true, permissions: [] },
+  { id: 'builtin-audit-officer', name: '安全审计员', code: 'audit_officer', members: 0, desc: '只读查看全量审计日志和统计', immutable: true, permissions: [] },
+  { id: 'builtin-park-specialist', name: '园区招商专员', code: 'park_specialist', members: 0, desc: '负责园区范围内的招商项目与企业服务', immutable: true, permissions: [] },
+  { id: 'builtin-leader-readonly', name: '只读领导视角', code: 'leader_readonly', members: 0, desc: '查看全域招商和安商稳商运行情况', immutable: true, permissions: [] },
 ];
-
-export const logs = [
-  { id: 'LOG001', user: '顾龙飞', module: '政策管理', action: '生成政策海报', target: '上海市"专精特新"中小企业认定', ip: '116.228.***.45', time: '2026-11-17 10:42' },
-  { id: 'LOG002', user: '李婷', module: '商机摸排', action: '新增摸排任务', target: '苏州晶湛半导体有限公司', ip: '116.228.***.67', time: '2026-11-17 10:20' },
-  { id: 'LOG003', user: '王凯', module: 'AI外呼中心', action: '启动外呼任务', target: '临港新片区高潜企业首轮触达', ip: '101.88.***.12', time: '2026-11-17 09:58' },
-  { id: 'LOG004', user: '顾龙飞', module: '人员管理', action: '新增成员', target: '刘洋', ip: '116.228.***.45', time: '2026-11-17 09:30' },
-  { id: 'LOG005', user: '陈晨', module: '企业查询', action: '导出企业名单', target: '嘉定区·新能源汽车产业 236 家', ip: '101.88.***.38', time: '2026-11-16 18:12' },
-  { id: 'LOG006', user: '周敏', module: '园区管理', action: '更新园区信息', target: '漕河泾科技绿洲', ip: '58.246.***.90', time: '2026-11-16 17:44' },
-  { id: 'LOG007', user: '李婷', module: '走访管理', action: '创建走访工单', target: '上海迈愈生物科技有限公司', ip: '116.228.***.67', time: '2026-11-16 16:22' },
-  { id: 'LOG008', user: '吴超', module: '全景洞察', action: '查看分析看板', target: '园区企业迁出趋势', ip: '180.168.***.24', time: '2026-11-16 15:08' },
-  { id: 'LOG009', user: '顾龙飞', module: '角色管理', action: '修改角色权限', target: '招商主管', ip: '116.228.***.45', time: '2026-11-16 14:36' },
-  { id: 'LOG010', user: '王凯', module: '商机大厅', action: '导出匹配企业', target: '洛阳中关村产业精准招商模型', ip: '101.88.***.12', time: '2026-11-16 11:52' },
-  { id: 'LOG011', user: '陈晨', module: '企服保障', action: '发送年报提醒', target: '未报送企业 290 家', ip: '101.88.***.38', time: '2026-11-16 10:14' },
-  { id: 'LOG012', user: '顾龙飞', module: '接口计费', action: '充值账户', target: '充值 5000 元', ip: '116.228.***.45', time: '2026-11-15 16:40' },
-  { id: 'LOG013', user: '徐静', module: '企业档案', action: '导出企业档案', target: '入驻企业 3105 家', ip: '58.246.***.55', time: '2026-11-15 14:22' },
-  { id: 'LOG014', user: '刘洋', module: '迁移预警', action: '提交企业反馈', target: '上海锦源晟新能源材料集团有限公司', ip: '180.168.***.71', time: '2026-11-15 11:05' },
-  { id: 'LOG015', user: '李婷', module: '政策管理', action: '新增政策', target: '上海市企业技术中心认定', ip: '116.228.***.67', time: '2026-11-14 17:30' },
-];
-
-export const logStatSeries = [
-  { date: '11-11', count: 128, users: 8 },
-  { date: '11-12', count: 156, users: 10 },
-  { date: '11-13', count: 142, users: 9 },
-  { date: '11-14', count: 188, users: 12 },
-  { date: '11-15', count: 165, users: 11 },
-  { date: '11-16', count: 210, users: 13 },
-  { date: '11-17', count: 96, users: 7 },
-];
-
-export const billing = {
-  balance: 12860.5,
-  monthlyUsage: 3260.8,
-  apiCalls: 48620,
-  successRate: 99.6,
-  plan: '企业标准版',
-  expire: '2027-06-30',
-  records: [
-    { id: 'B001', type: '接口调用', item: '企业工商信息查询', count: 12680, amount: 634.0, date: '2026-11-16', status: '已扣费' },
-    { id: 'B002', type: '接口调用', item: '企业风险信息查询', count: 8420, amount: 842.0, date: '2026-11-15', status: '已扣费' },
-    { id: 'B003', type: '充值', item: '账户充值', count: 1, amount: 5000.0, date: '2026-11-15', status: '已到账' },
-    { id: 'B004', type: '接口调用', item: '政策数据同步', count: 3560, amount: 356.0, date: '2026-11-14', status: '已扣费' },
-    { id: 'B005', type: '接口调用', item: 'AI外呼通话', count: 1260, amount: 630.0, date: '2026-11-13', status: '已扣费' },
-    { id: 'B006', type: '接口调用', item: '企业图谱查询', count: 2150, amount: 430.0, date: '2026-11-12', status: '已扣费' },
-    { id: 'B007', type: '接口调用', item: '招投标数据查询', count: 980, amount: 196.0, date: '2026-11-11', status: '已扣费' },
-    { id: 'B008', type: '充值', item: '账户充值', count: 1, amount: 10000.0, date: '2026-10-28', status: '已到账' },
-  ],
-};
 
 export const archiveStats = {
   settled: 3105,

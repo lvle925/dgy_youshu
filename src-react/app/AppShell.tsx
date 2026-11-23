@@ -1,6 +1,7 @@
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
   type Dispatch,
   type ReactNode,
@@ -15,7 +16,6 @@ import {
 import { PROVINCES, REGION_CITY_OPTIONS } from "../../src/mocks/enums";
 import { BrandMark } from "@/components/BrandMark";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -82,7 +82,6 @@ import {
 } from "lucide-react";
 import { CityContext, useCurrentCity } from "./CityContext";
 import { allowsRoute, usePrincipal } from "./AccessContext";
-import { usePoints } from "./PointsContext";
 import { ReportQueueTrigger } from "./ReportQueue";
 
 const TABS_KEY = "DEMO_TABS";
@@ -104,14 +103,16 @@ function readTabs(): WorkspaceTab[] {
           ...new Map(
             saved
               .filter((tab) => isKnownRoute(tab?.path))
-              .map((tab) => [tab.path, tab]),
+              .map((tab) => [tab.path, { path: tab.path, title: titleFor(tab.path) }]),
           ).values(),
         ].slice(-TAB_LIMIT)
       : [];
-    return [
+    const normalized = [
       HOME_TAB,
       ...valid.filter((tab) => tab.path !== HOME_TAB.path),
     ].slice(0, TAB_LIMIT);
+    localStorage.setItem(TABS_KEY, JSON.stringify(normalized));
+    return normalized;
   } catch {
     return [HOME_TAB];
   }
@@ -161,6 +162,33 @@ export function AppShell({
     () => localStorage.getItem("workspace_city") || "上海市",
   );
   const principal = usePrincipal();
+  const logoutRef = useRef(onLogout);
+  useEffect(() => { logoutRef.current = onLogout; }, [onLogout]);
+  useEffect(() => {
+    const timeoutMs = Math.max(5, principal?.sessionTimeoutMinutes ?? 30) * 60_000;
+    let timer = window.setTimeout(() => {
+      toast.info("因长时间无操作，工作台会话已结束");
+      logoutRef.current();
+    }, timeoutMs);
+    const resetTimer = () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        toast.info("因长时间无操作，工作台会话已结束");
+        logoutRef.current();
+      }, timeoutMs);
+    };
+    window.addEventListener("pointerdown", resetTimer, { passive: true });
+    window.addEventListener("keydown", resetTimer);
+    window.addEventListener("touchstart", resetTimer, { passive: true });
+    window.addEventListener("wheel", resetTimer, { passive: true });
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("pointerdown", resetTimer);
+      window.removeEventListener("keydown", resetTimer);
+      window.removeEventListener("touchstart", resetTimer);
+      window.removeEventListener("wheel", resetTimer);
+    };
+  }, [principal?.sessionTimeoutMinutes]);
   const permittedTabs = tabs.filter(tab => allowsRoute(principal, tab.path));
   const [readNotices, setReadNotices] = useState<string[]>(() => {
     try { return JSON.parse(localStorage.getItem("notice-read:" + userName) || "[]"); } catch { return []; }
@@ -327,7 +355,6 @@ function WorkspaceFrame({
   const { toggleSidebar } = useSidebar();
   const principal = usePrincipal();
   const brandPath = navigationGroups.flatMap(group => group.sections.flatMap(section => section.items)).find(item => allowsRoute(principal, item.path))?.path ?? "/";
-  const { balance } = usePoints();
   const normalizedQuery = menuQuery.trim();
   return (
     <>
@@ -442,15 +469,11 @@ function WorkspaceFrame({
         </SidebarContent>
         <SidebarFooter className="sidebar-footer">
           <div className="workspace-status-card">
-            <div className="workspace-quota">
-              <div><span>每日积分配额</span><strong>{balance ? balance.remaining + " / " + balance.limit : "—"}</strong></div>
-              <span className="workspace-quota-track" role="progressbar" aria-label="今日剩余积分" aria-valuemin={0} aria-valuemax={balance?.limit ?? 100} aria-valuenow={balance?.remaining}><i style={{ width: (balance ? balance.remaining / balance.limit * 100 : 0) + "%" }} /></span>
-            </div>
             <div className="workspace-status">
               <span className="status-led" />
-              <span>本地工作空间</span>
-              <Badge variant="outline">演示数据</Badge>
+              <span>系统运行模式</span>
             </div>
+            <small>本地政务演示环境</small>
           </div>
         </SidebarFooter>
       </Sidebar>
@@ -501,8 +524,14 @@ function WorkspaceFrame({
         </header>
         {children}
       </SidebarInset>
+      {principal?.watermarkEnabled && <WatermarkLayer principal={principal} />}
     </>
   );
+}
+
+function WatermarkLayer({ principal }: { principal: NonNullable<ReturnType<typeof usePrincipal>> }) {
+  const watermark = `${principal.displayName || principal.user} · ${principal.departmentName || principal.departmentId || "政府内部用户"} · ${new Date().toLocaleString("zh-CN", { hour12: false })}`;
+  return <div className="workspace-watermark" aria-hidden="true">{Array.from({ length: 15 }, (_, index) => <span key={index}>{watermark}</span>)}</div>;
 }
 
 function CityPicker({

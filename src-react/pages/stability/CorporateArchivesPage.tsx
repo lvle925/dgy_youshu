@@ -11,7 +11,7 @@ import { StatBar } from "@/../src/components/shared/StatBar";
 import { StatusTag } from "@/../src/components/shared/StatusTag";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { archiveStats, companies, districts, platformUsers, visitOrders } from "../../../src/data/mock.js";
+import { companies, districts, platformUsers, visitOrders } from "../../../src/data/mock.js";
 import { useBusinessCollection } from "@/lib/useBusinessCollection";
 import { PageHeading, PageSection, SearchField, StatusValue } from "@/pages/PagePrimitives";
 
@@ -22,7 +22,14 @@ export function CorporateArchivesPage() {
   const location = useLocation();
   const visitOrderData = useBusinessCollection<Row>({ key: "youshu-visit-orders", seed: visitOrders, apiCollection: "visitOrders" });
   const seed: Row[] = (companies as Row[]).map((row, index) => ({ ...row, archiveStatus: index === 9 ? "已迁出" : index === 19 ? "已消失" : "正常经营", registerCapital: row.regCapital, businessChange: ["无提示", "已更名", "未匹配"][index % 3], recruitment: ["增长", "稳定", "下降"][index % 3], patents: [0, 3, 12, 24, 38][index % 5] }));
-  const data = useBusinessCollection<Row>({ key: "youshu-company-archives", seed });
+  const data = useBusinessCollection<Row>({ key: "youshu-company-archives", seed, apiCollection: "companyArchives" });
+  const archiveStats = {
+    settled: data.rows.length,
+    migrated: data.rows.filter((row) => row.archiveStatus === "已迁出").length,
+    vanished: data.rows.filter((row) => row.archiveStatus === "已消失").length,
+    avgYears: data.rows.length ? (data.rows.reduce((sum, row) => sum + Math.max(0, new Date().getFullYear() - Number(String(row.settleDate ?? "").slice(0, 4))), 0) / data.rows.length).toFixed(1) : "0.0",
+    retention: data.rows.length ? `${((data.rows.filter((row) => row.archiveStatus === "正常经营").length / data.rows.length) * 100).toFixed(1)}%` : "0%",
+  };
   const requestedPark = (location.state as { park?: string } | null)?.park;
   const matchingPark = requestedPark
     ? String(seed.find((row) => String(row.park).includes(requestedPark))?.park ?? requestedPark)

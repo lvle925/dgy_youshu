@@ -1,5 +1,5 @@
 import { useReportExport } from "@/app/ReportQueue";
-import { ActionButton } from "@/app/AccessContext";
+import { ActionButton, usePrincipal } from "@/app/AccessContext";
 import { useState, type FormEvent } from "react";
 import { useLocation } from "react-router-dom";
 import { CalendarDays, Download, Plus } from "lucide-react";
@@ -22,6 +22,7 @@ export function VisitManagePage() {
   const location = useLocation();
   const orders = useBusinessCollection<Row>({ key: "youshu-visit-orders", seed: visitOrders, apiCollection: "visitOrders" });
   const records = useBusinessCollection<Row>({ key: "youshu-visit-records", seed: visitRecords, apiCollection: "visitRecords" });
+  const principal = usePrincipal();
   const [tab, setTab] = useState("orders");
   const [keyword, setKeyword] = useState("");
   const [status, setStatus] = useState("");
@@ -31,7 +32,11 @@ export function VisitManagePage() {
   const [detail, setDetail] = useState<Row | null>(null);
   const [recordDetail, setRecordDetail] = useState<Row | null>(null);
   const requestedCompany = (location.state as { company?: string } | null)?.company;
-  const [form, setForm] = useState({ title: "", company: requestedCompany ?? "", source: requestedCompany ? "企业档案" : "手动创建", owner: String(platformUsers[0]), planDate: "", priority: "中", note: "" });
+  const requestedServiceRequestId = (location.state as { serviceRequestId?: string | number } | null)?.serviceRequestId;
+  const requestedPark = (location.state as { park?: string; parkId?: string; departmentId?: string } | null)?.park ?? "";
+  const requestedParkId = (location.state as { parkId?: string } | null)?.parkId ?? "";
+  const requestedDepartmentId = (location.state as { departmentId?: string } | null)?.departmentId ?? "";
+  const [form, setForm] = useState({ title: "", company: requestedCompany ?? "", source: requestedServiceRequestId ? "企业诉求" : requestedCompany ? "企业档案" : "手动创建", owner: principal?.displayName || String(platformUsers[0]), planDate: "", priority: "中", note: "", serviceRequestId: requestedServiceRequestId ?? "", park: requestedPark, parkId: requestedParkId, departmentId: requestedDepartmentId, ownerId: principal?.memberId || principal?.user || "", createdBy: principal?.user || "" });
   const [complete, setComplete] = useState({ result: "", duration: "45 分钟" });
   const rows = tab === "orders" ? orders.rows : records.rows;
   const filtered = rows.filter((row) => (!keyword || `${row.title} ${row.company ?? ""}`.includes(keyword)) && (!owner || row.owner === owner) && (!status || row.status === status));

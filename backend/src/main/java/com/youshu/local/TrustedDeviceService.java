@@ -28,20 +28,26 @@ public class TrustedDeviceService {
 
     private final JdbcTemplate jdbc;
     private final SmsVerificationService sms;
+    private final WorkspaceAccess access;
     private final SecureRandom random = new SecureRandom();
 
     @Value("${app.auth.device-verification-enabled:false}")
     private boolean verificationEnabled;
 
     @Autowired
-    public TrustedDeviceService(JdbcTemplate jdbc, SmsVerificationService sms) {
-        this(jdbc, sms, false);
+    public TrustedDeviceService(JdbcTemplate jdbc, SmsVerificationService sms, WorkspaceAccess access) {
+        this(jdbc, sms, false, access);
     }
 
     TrustedDeviceService(JdbcTemplate jdbc, SmsVerificationService sms, boolean verificationEnabled) {
+        this(jdbc, sms, verificationEnabled, null);
+    }
+
+    private TrustedDeviceService(JdbcTemplate jdbc, SmsVerificationService sms, boolean verificationEnabled, WorkspaceAccess access) {
         this.jdbc = jdbc;
         this.sms = sms;
         this.verificationEnabled = verificationEnabled;
+        this.access = access;
     }
 
     private record Pending(String challengeId, String username, String phone) {}
@@ -127,7 +133,9 @@ public class TrustedDeviceService {
         HttpSession session = request.getSession(false);
         if (session == null) request.getSession(true);
         else request.changeSessionId();
-        request.getSession(true).setAttribute("user", username);
+        HttpSession authenticatedSession = request.getSession(true);
+        authenticatedSession.setAttribute("user", username);
+        if (access != null) access.registerSession(authenticatedSession, username);
     }
 
     private String cookieValue(HttpServletRequest request, String name) {

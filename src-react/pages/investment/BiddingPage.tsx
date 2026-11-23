@@ -1,18 +1,53 @@
-import { useState } from "react";
-import { Layers3 } from "lucide-react";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { DataTable } from "@/../src/components/shared/DataTable";
+import { DataTable, type DataColumn } from "@/../src/components/shared/DataTable";
 import { MetricCard } from "@/../src/components/shared/MetricCard";
-import { biddingRows, biddingRecommend, biddingCompanies } from "../../../src/data/mock.js";
+import { useBusinessCollection } from "@/lib/useBusinessCollection";
 import { NativeSelect, PageHeading, PageSection, SearchField, StatusValue } from "@/pages/PagePrimitives";
+import { biddingRows } from "../../../src/data/mock.js";
+import { Layers3 } from "lucide-react";
+import { useMemo, useState } from "react";
 
 type Row = Record<string, any> & { id: string | number };
 
 export function BiddingPage() {
+  const data = useBusinessCollection<Row>({ key: "youshu-bidding-records", seed: biddingRows, apiCollection: "biddingRecords" });
   const [keyword, setKeyword] = useState("");
   const [type, setType] = useState("");
-  const rows = (biddingRows as Row[]).filter((row) => (!keyword || `${row.title} ${row.buyer}`.includes(keyword)) && (!type || row.type === type));
-  const companyRows = (biddingCompanies as unknown as Row[]).map((row, index) => ({ ...row, id: `bid-company-${index}` }));
-  return <div className="business-page"><PageHeading title="招投标查询" description="跟踪园区建设、产业服务和重点企业采购机会" /><div className="business-metric-grid"><MetricCard title="近期公告" value={biddingRows.length} description="近 30 天发布" icon={<Layers3 />} /><MetricCard title="报名中" value={biddingRows.filter((row) => row.status === "报名中").length} description="仍可参与" /><MetricCard title="重点推荐" value={biddingRecommend.length} description="与园区业务匹配" /><MetricCard title="活跃中标方" value={biddingCompanies.length} description="本地供应链企业" /></div><PageSection title="招投标公告" description={`共 ${rows.length} 条`}><div className="business-toolbar"><SearchField value={keyword} onChange={setKeyword} placeholder="搜索项目名称或采购方" /><NativeSelect label="公告类型" value={type} onChange={setType} options={["招标公告", "中标公告"]} /></div><DataTable columns={[{ key: "title", header: "项目名称", sortable: true }, { key: "type", header: "公告类型", cell: (row) => <StatusValue value={row.type} /> }, { key: "buyer", header: "采购单位" }, { key: "budget", header: "预算金额", sortable: true }, { key: "region", header: "项目地区" }, { key: "date", header: "发布日期", sortable: true }, { key: "deadline", header: "投标截止" }, { key: "status", header: "状态", cell: (row) => <StatusValue value={row.status} /> }]} data={rows} detailTitle="招投标项目" /></PageSection><div className="business-chart-grid"><PageSection title="匹配推荐"><div className="recommend-list">{biddingRecommend.map((row) => <div key={row.id}><span><b>{row.match}</b> 分</span><div><strong>{row.title}</strong><small>{row.buyer} · {row.budget}</small></div><Button size="sm" variant="outline" onClick={() => toast.success("已关注该招标机会")}>关注</Button></div>)}</div></PageSection><PageSection title="活跃中标企业"><DataTable columns={[{ key: "name", header: "企业名称" }, { key: "industry", header: "所属行业" }, { key: "count", header: "中标次数", sortable: true }]} data={companyRows} /></PageSection></div></div>;
+  const rows = data.rows.filter((row) => (!keyword || `${row.title} ${row.buyer}`.includes(keyword)) && (!type || row.type === type));
+  const topNotices = useMemo(() => rows.filter((row) => row.type === "招标公告" && row.status === "报名中").slice(0, 4), [rows]);
+  const buyerRows = useMemo(() => {
+    const buyers = new Map<string, number>();
+    data.rows.forEach((row) => buyers.set(String(row.buyer ?? "未登记"), (buyers.get(String(row.buyer ?? "未登记")) ?? 0) + 1));
+    return [...buyers.entries()].map(([name, count]) => ({ id: name, name, count, industry: "招投标采购单位" }));
+  }, [data.rows]);
+  const columns: DataColumn<Row>[] = [
+    { key: "title", header: "项目名称", sortable: true },
+    { key: "type", header: "公告类型", cell: (row) => <StatusValue value={row.type} /> },
+    { key: "buyer", header: "采购单位" },
+    { key: "budget", header: "预算金额", sortable: true },
+    { key: "region", header: "项目地区" },
+    { key: "date", header: "发布日期", sortable: true },
+    { key: "deadline", header: "投标截止" },
+    { key: "status", header: "状态", cell: (row) => <StatusValue value={row.status} /> },
+  ];
+  return <div className="business-page">
+    <PageHeading title="招投标查询" description="查询园区建设、产业服务和重点企业采购公告" source={data.source} />
+    <div className="business-metric-grid">
+      <MetricCard title="公告记录" value={data.rows.length} description="当前持久化台账" icon={<Layers3 />} />
+      <MetricCard title="报名中" value={data.rows.filter((row) => row.status === "报名中").length} description="仍处于报名期" />
+      <MetricCard title="即将截止" value={data.rows.filter((row) => row.status === "即将截止").length} description="需关注投标节点" />
+      <MetricCard title="采购单位" value={buyerRows.length} description="按公告数据去重" />
+    </div>
+    <PageSection title="招投标公告" description={`筛选结果 ${rows.length} 条`}>
+      <div className="business-toolbar"><SearchField value={keyword} onChange={setKeyword} placeholder="搜索项目名称或采购单位" /><NativeSelect label="公告类型" value={type} onChange={setType} options={["招标公告", "中标公告"]} /></div>
+      <DataTable columns={columns} data={rows} detailTitle="招投标项目" />
+    </PageSection>
+    <div className="business-chart-grid">
+      <PageSection title="当前可报名公告" description="从数据库中筛选仍开放报名的项目">
+        <div className="recommend-list">{topNotices.length ? topNotices.map((row) => <div key={row.id}><StatusValue value={row.status} /><div><strong>{row.title}</strong><small>{row.buyer} · {row.budget} · 截止 {row.deadline || "待补充"}</small></div></div>) : <p className="text-muted-foreground">当前筛选范围暂无开放报名公告</p>}</div>
+      </PageSection>
+      <PageSection title="采购单位分布" description="根据已登记公告记录汇总">
+        <DataTable columns={[{ key: "name", header: "采购单位", sortable: true }, { key: "industry", header: "数据类型" }, { key: "count", header: "公告数量", sortable: true }]} data={buyerRows} />
+      </PageSection>
+    </div>
+  </div>;
 }

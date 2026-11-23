@@ -5,24 +5,34 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Progress } from "@/components/ui/progress";
 import { csvLine, saveBlob, type CsvColumn } from "@/lib/exportCsv";
-import { useAllowedAction } from "./AccessContext";
+import { permissionPath, useAllowedAction, usePrincipal } from "./AccessContext";
+import { api } from "../../src/api.js";
+import { useLocation } from "react-router-dom";
 
 type Report = { id: number; name: string; progress: number; file?: Blob; error?: boolean };
-type Enqueue = <T>(name: string, columns: CsvColumn<T>[], rows: T[]) => void;
+type Enqueue = <T>(name: string, columns: CsvColumn<T>[], rows: T[], watermark?: string) => void;
 const ReportContext = createContext<{ jobs: Report[]; enqueue: Enqueue }>({ jobs: [], enqueue: () => undefined });
 
 export function useReportExport() {
   const { enqueue } = useContext(ReportContext);
   const allowed = useAllowedAction("导出");
+  const location = useLocation();
+  const principal = usePrincipal();
   return <T,>(name: string, columns: CsvColumn<T>[], rows: T[]) => {
-    if (allowed) enqueue(name, columns, rows);
+    if (!allowed) return;
+    void api.auditExport({ route: permissionPath(location.pathname), name, count: rows.length })
+      .then(() => {
+        const watermark = principal?.watermarkEnabled === false ? "" : `${principal?.displayName || principal?.user || "内部用户"} · ${principal?.departmentName || "政府内部用户"} · ${new Date().toLocaleString("zh-CN", { hour12: false })}`;
+        enqueue(name, columns, rows, watermark);
+      })
+      .catch((cause) => toast.error(cause instanceof Error ? cause.message : "导出审计登记失败"));
   };
 }
 
 export function ReportProvider({ children }: { children: ReactNode }) {
   const [jobs, setJobs] = useState<Report[]>([]);
   const nextId = useRef(0);
-  const enqueue: Enqueue = (name, columns, rows) => {
+  const enqueue: Enqueue = (name, columns, rows, watermark) => {
     const id = ++nextId.current;
     const job = { id, name, progress: 0 };
     setJobs(current => [job, ...current.filter((item, index) => item.progress < 100 && !item.error || index < 19)]);
@@ -30,7 +40,10 @@ export function ReportProvider({ children }: { children: ReactNode }) {
     const update = (patch: Partial<Report>) => setJobs(current => current.map(item => item.id === id ? { ...item, ...patch } : item));
     void (async () => {
       try {
-        const lines = [csvLine(columns.map(column => column.header))];
+        const lines = [
+          ...(watermark ? [csvLine(["防泄密水印", watermark])] : []),
+          csvLine(columns.map(column => column.header)),
+        ];
         const chunkSize = Math.max(1, Math.ceil(rows.length / 10));
         for (let start = 0; start < rows.length; start += chunkSize) {
           await new Promise(resolve => window.setTimeout(resolve, 35));

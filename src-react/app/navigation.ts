@@ -18,9 +18,7 @@ import {
   Search,
   Settings2,
   ShieldCheck,
-  Store,
   Users,
-  WalletCards,
   type LucideIcon,
 } from "lucide-react";
 
@@ -201,6 +199,7 @@ export const navigationGroups: NavigationGroup[] = [
         icon: Users,
         items: [
           { title: "人员管理", path: "/member/index", icon: Users },
+          { title: "组织架构", path: "/member/departments", icon: Network },
           { title: "角色管理", path: "/member/role", icon: ShieldCheck },
         ],
       },
@@ -217,14 +216,14 @@ export const navigationGroups: NavigationGroup[] = [
         ],
       },
       {
-        title: "业务设置",
+        title: "系统管理",
         icon: Settings2,
         items: [
-          { title: "门店装修", path: "/setting/index", icon: Store },
+          { title: "系统与门户配置", path: "/setting/index", icon: Settings2 },
           {
-            title: "接口计费",
-            path: "/interfaceBilling/index",
-            icon: WalletCards,
+            title: "数据服务与接口监控",
+            path: "/system/interface-monitoring",
+            icon: Activity,
           },
         ],
       },

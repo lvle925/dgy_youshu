@@ -14,7 +14,7 @@ import { FormDialog, FormField, NativeSelect, PageHeading, PageSection, SearchFi
 type Row = Record<string, any> & { id: string | number };
 
 export function IndustrySupplyPage() {
-  const data = useBusinessCollection<Row>({ key: "youshu-supply-chain", seed: supplyChainNodes });
+  const data = useBusinessCollection<Row>({ key: "youshu-supply-chain", seed: supplyChainNodes, apiCollection: "supplyRelations" });
   const [keyword, setKeyword] = useState("");
   const [chain, setChain] = useState("");
   const [role, setRole] = useState("");

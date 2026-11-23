@@ -3,6 +3,7 @@ import { useReportExport } from "@/app/ReportQueue";
 import { ActionButton, allowsRoute, usePrincipal } from "@/app/AccessContext";
 import { isShanghaiArea, regionMatches } from "@/lib/cityData";
 import { SpatialMap } from "@/components/SpatialMap";
+import { OperationBriefDialog } from "@/components/shared/OperationBriefDialog";
 import { useNavigate } from "react-router-dom";
 import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
@@ -28,7 +29,7 @@ const favoriteOptions = [
   { title: '商机大厅', path: '/business/businessHall/index', icon: 'globe' },
   { title: '全景洞察', path: '/myCampus/panoramicLnsight/index', icon: 'dashboard' },
   { title: '企业档案', path: '/myCampus/corporateArchives/index', icon: 'folder' },
-  { title: '接口计费', path: '/interfaceBilling/index', icon: 'billing' },
+  { title: '数据服务与接口监控', path: '/system/interface-monitoring', icon: 'activity' },
   { title: '招投标查询', path: '/bidding/index', icon: 'bidding' },
 ] as const;
 
@@ -96,6 +97,7 @@ export default function HomeDashboard() {
     <div className="dashboard-page">
       <div className="dashboard-title-row">
         <div><h1>首页</h1><p>{city} · 政策服务、招商动态与企业运营情况</p></div>
+        <OperationBriefDialog city={city} />
       </div>
 
 
