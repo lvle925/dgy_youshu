@@ -10,6 +10,7 @@ import { PageHeading, PageSection, NativeSelect, SearchField, SectionTabs } from
 import { containsPoint, SpatialMap, type Boundary, type ParkPoint } from "@/components/SpatialMap";
 import { useCurrentCity } from "@/app/CityContext";
 import { isShanghaiArea, regionMatches } from "@/lib/cityData";
+import { parkPointsFromGeoJson, toParkFeatureCollection } from "@/lib/spatialData";
 
 export function BusinessMapPage() {
   const { city } = useCurrentCity();
@@ -24,10 +25,11 @@ function CityMap({ city }: { city: string }) {
   const [boundary, setBoundary] = useState<Boundary | null>(null);
   const [selected, setSelected] = useState<ParkPoint | null>(null);
   const markers = isShanghaiArea(city) ? mapMarkers.filter(marker => city === "上海市" || regionMatches(marker.district, city)) : [];
-  const matchingMarkers = markers.filter(park => (!district || district === park.district) && (!industry || industry === park.industry));
+  const matchingFeatures = toParkFeatureCollection(markers.filter(park => (!district || district === park.district) && (!industry || industry === park.industry)));
+  const matchingMarkers = parkPointsFromGeoJson(matchingFeatures);
   const visibleMarkers = matchingMarkers.filter(park => park.name.includes(keyword.trim()));
-  const inRange = matchingMarkers.filter(park => containsPoint(boundary, park));
-  const visibleParks = visibleMarkers.filter(park => containsPoint(boundary, park));
+  const inRange = matchingMarkers.filter(park => containsPoint(boundary, park.position));
+  const visibleParks = visibleMarkers.filter(park => containsPoint(boundary, park.position));
   const pointsByPark = new Map(inRange.map(park => [park.name, park]));
   const visibleCompanies = companies.flatMap(company => {
     const park = pointsByPark.get(company.park) ?? inRange.find(point => company.park.includes(point.name));

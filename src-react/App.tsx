@@ -27,7 +27,7 @@ function getTitle(path: string) {
   return '业务模块';
 }
 
-type AuthStatus = { initialized: boolean; authenticated: boolean; demoLoginEnabled?: boolean; demoPhone?: string; principal?: Principal; reason?: string };
+type AuthStatus = { initialized: boolean; authenticated: boolean; demoLoginEnabled?: boolean; demoSession?: boolean; demoPhone?: string; principal?: Principal; reason?: string };
 
 function useAuthStatus() {
   const [status, setStatus] = useState<AuthStatus | null>(null);
@@ -378,7 +378,7 @@ function ProtectedShell() {
     return <Navigate replace to={firstRoute.path} />;
   }
   if (principal.mustChangePassword) return <ForcePasswordChange onChanged={() => void refresh()} />;
-  return <AccessContext.Provider value={principal}><ReportProvider><Workspace userName={principal.user}>{knownRoute && !allowsRoute(principal, location.pathname) ? <Alert className="os-glass-card"><AlertTitle>没有页面访问权限</AlertTitle><AlertDescription>请选择左侧已有权限的业务菜单，或联系管理员调整角色。</AlertDescription></Alert> : <Outlet />}</Workspace></ReportProvider></AccessContext.Provider>;
+  return <AccessContext.Provider value={{ ...principal, demoSession: status.demoLoginEnabled && status.demoSession }}><ReportProvider><Workspace userName={principal.user}>{knownRoute && !allowsRoute(principal, location.pathname) ? <Alert className="os-glass-card"><AlertTitle>没有页面访问权限</AlertTitle><AlertDescription>请选择左侧已有权限的业务菜单，或联系管理员调整角色。</AlertDescription></Alert> : <Outlet />}</Workspace></ReportProvider></AccessContext.Provider>;
 }
 
 function ForcePasswordChange({ onChanged }: { onChanged: () => void }) {

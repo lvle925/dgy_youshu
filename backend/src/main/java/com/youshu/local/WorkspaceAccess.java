@@ -74,6 +74,10 @@ public class WorkspaceAccess {
             return permissions.contains("action:" + route + ":" + actionId)
                 || permissions.contains("button:" + group + ":" + action);
         }
+
+        public boolean isAuditReader() {
+            return "安全审计员".equals(role) || "demo".equals(subject);
+        }
     }
 
     Principal current(HttpSession session) {
@@ -143,7 +147,7 @@ public class WorkspaceAccess {
         String scope = String.valueOf(member.getOrDefault("dataScope", "ASSIGNED_PARKS"));
         if (!Set.of("ALL_PARKS", "ASSIGNED_PARKS", "SELF_ONLY").contains(scope)) scope = "ASSIGNED_PARKS";
         return new Principal(username, "member:" + member.get("id"), String.valueOf(role.get("name")), false,
-            permissions(role), String.valueOf(member.getOrDefault("departmentId", "")), scope, parkIds,
+            effectivePermissions(role), String.valueOf(member.getOrDefault("departmentId", "")), scope, parkIds,
             String.valueOf(member.get("id")), Boolean.TRUE.equals(member.get("mustChangePassword")),
             String.valueOf(member.getOrDefault("name", username)),
             String.valueOf(member.getOrDefault("dept", member.getOrDefault("departmentName", ""))), watermarkEnabled(), sessionTimeoutMinutes());
@@ -166,6 +170,18 @@ public class WorkspaceAccess {
             if (labels.contains("数据导出")) ids.add("button:" + group + ":导出");
             if (group.equals("平台管理") && labels.contains("成员管理")) for (String action : List.of("新增", "编辑", "删除")) ids.add("button:" + group + ":" + action);
         });
+        return ids;
+    }
+
+    private Set<String> effectivePermissions(Map<String, Object> role) {
+        Set<String> ids = new HashSet<>(permissions(role));
+        if (!"安全审计员".equals(role.get("name"))) {
+            ids.remove("route:/member/log");
+            ids.remove("route:/member/logStatistics");
+            ids.remove("action:/member/log:export");
+        }
+        if (!"安全保密员".equals(role.get("name")))
+            ids.removeIf(permission -> permission.endsWith(":查看敏感信息") || permission.endsWith(":view_sensitive"));
         return ids;
     }
 

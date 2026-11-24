@@ -171,18 +171,25 @@ public class RecordsController {
     private void ensureGovernmentRoles() {
         Set<String> routes = WorkspaceAccess.routeGroups().keySet();
         List<Map<String, Object>> templates = new ArrayList<>();
-        templates.add(roleTemplate("builtin-system-admin", "系统管理员", "管账号与菜单，不代替安全保密审批或日志审计", routes,
+        Set<String> systemRoutes = routes.stream()
+            .filter(route -> !route.equals("/member/log") && !route.equals("/member/logStatistics"))
+            .collect(java.util.stream.Collectors.toSet());
+        templates.add(roleTemplate("builtin-system-admin", "系统管理员", "管账号与菜单，不代替安全保密审批或日志审计", systemRoutes,
             Set.of("/member/index", "/member/departments", "/member/role", "/setting/index"), Set.of("create", "edit", "delete", "export")));
-        templates.add(roleTemplate("builtin-security-officer", "安全保密员", "维护数据范围、敏感信息策略与授权审批", routes,
-            Set.of("/member/index", "/setting/index", "/business/projectCluesUpdate/index"), Set.of("edit", "view_sensitive")));
-        templates.add(roleTemplate("builtin-audit-officer", "安全审计员", "只读查看全量审计日志和统计", Set.of("/member/log", "/member/logStatistics"), Set.<String>of(), Set.<String>of()));
+        templates.add(roleTemplate("builtin-security-officer", "安全保密员", "维护数据范围、敏感信息策略与授权审批",
+            Set.of("/member/index", "/business/projectCluesUpdate/index"),
+            Set.of("/member/index", "/business/projectCluesUpdate/index"), Set.of("edit", "view_sensitive")));
+        templates.add(roleTemplate("builtin-audit-officer", "安全审计员", "只读查看全量审计日志和统计，允许导出审计台账", Set.of("/member/log", "/member/logStatistics"), Set.of("/member/log"), Set.of("export")));
         templates.add(roleTemplate("builtin-park-specialist", "园区招商专员", "负责园区范围内的招商项目与企业服务", routes.stream()
             .filter(route -> !route.startsWith("/member/") && !route.equals("/setting/index") && !route.equals("/system/interface-monitoring")).collect(java.util.stream.Collectors.toSet()),
             Set.of("/business/businessInvestigate/index", "/business/businessHall/index", "/business/projectClues/index", "/business/projectCluesUpdate/index", "/myCampus/guarantee/index", "/myCampus/visitManage/index"), Set.of("create", "edit", "export")));
         templates.add(roleTemplate("builtin-leader-readonly", "只读领导视角", "查看全域招商和安商稳商运行情况", routes, Set.of(), Set.of()));
         for (Map<String, Object> role : templates) {
-            if (jdbc.queryForObject("SELECT COUNT(*) FROM records WHERE collection='roles' AND id=?", Integer.class, role.get("id")) == 0)
+            if (jdbc.queryForObject("SELECT COUNT(*) FROM records WHERE collection='roles' AND id=?", Integer.class, role.get("id")) == 0) {
                 save("roles", String.valueOf(role.get("id")), role);
+            } else if (Boolean.TRUE.equals(role.get("immutable"))) {
+                save("roles", String.valueOf(role.get("id")), role);
+            }
         }
     }
 
@@ -327,6 +334,18 @@ public class RecordsController {
 
     private void checkIdentityScope(WorkspaceAccess.Principal principal, String collection, Map<String, Object> row) {
         if (collection.equals("members")) validateMemberFields(row);
+        if (collection.equals("roles") && hasAuditPermission(row)
+            && !"builtin-audit-officer".equals(String.valueOf(row.get("id"))))
+            throw WorkspaceAccess.denied("审计查看与导出权限仅能授予不可变的安全审计员角色");
+        if (collection.equals("roles") && hasSensitivePermission(row)
+            && !"builtin-security-officer".equals(String.valueOf(row.get("id"))))
+            throw WorkspaceAccess.denied("敏感明文查阅权限由安全保密员角色统一管理");
+        boolean systemAdministrator = principal.administrator() || principal.role().equals("系统管理员");
+        if (systemAdministrator && collection.equals("members")
+            && (String.valueOf(row.get("id")).equals(principal.memberId())
+                || String.valueOf(row.getOrDefault("username", "")).equals(principal.user()))
+            && memberRoleHasSensitivePermission(row))
+            throw WorkspaceAccess.denied("系统管理员不能为本人授予敏感明文查看权限");
         if (principal.administrator() || principal.role().equals("系统管理员")) return;
         if (collection.equals("members") && principal.role().equals("安全保密员")) return;
         if (collection.equals("roles") && !principal.permissions().containsAll(access.permissions(row)))
@@ -339,6 +358,32 @@ public class RecordsController {
             if (role.isEmpty() || "停用".equals(role.get().get("status")) || !principal.permissions().containsAll(access.permissions(role.get())))
                 throw WorkspaceAccess.denied("只能维护自身权限范围内的成员");
         }
+    }
+
+    private boolean hasSensitivePermission(Map<String, Object> row) {
+        return row.get("permissions") instanceof List<?> permissions
+            && permissions.stream().filter(String.class::isInstance).map(String.class::cast)
+                .anyMatch(permission -> permission.endsWith(":view_sensitive"));
+    }
+
+    private boolean hasAuditPermission(Map<String, Object> row) {
+        if (!(row.get("permissions") instanceof List<?> permissions)) return false;
+        return permissions.stream().filter(String.class::isInstance).map(String.class::cast)
+            .anyMatch(permission -> permission.equals("route:/member/log")
+                || permission.equals("route:/member/logStatistics")
+                || permission.equals("action:/member/log:export"));
+    }
+
+    private boolean memberRoleHasSensitivePermission(Map<String, Object> row) {
+        String roleId = String.valueOf(row.getOrDefault("roleId", ""));
+        String roleName = String.valueOf(row.getOrDefault("role", ""));
+        return jdbc.query("SELECT payload FROM records WHERE collection='roles'", (rs, n) -> parse(rs.getString(1)))
+            .stream()
+            .filter(role -> (!roleId.isBlank() && roleId.equals(String.valueOf(role.get("id"))))
+                || (roleId.isBlank() && roleName.equals(String.valueOf(role.get("name")))))
+            .findFirst()
+            .map(this::hasSensitivePermission)
+            .orElse(false);
     }
 
     private void validateMemberFields(Map<String, Object> row) {
@@ -433,6 +478,9 @@ public class RecordsController {
             row.putIfAbsent("createdBy", principal.user());
         }
         if (collection.equals("departments")) validateDepartment(row, id);
+        if (collection.equals("members") && principal.memberId().isBlank()
+            && String.valueOf(row.getOrDefault("username", "")).equals(principal.user()) && memberRoleHasSensitivePermission(row))
+            throw WorkspaceAccess.denied("系统管理员不能为本人授予敏感明文查看权限");
         checkIdentityScope(principal, collection, row);
         if (!principal.administrator() && !Set.of("members", "roles", "tenantSettings", "aiScripts", "departments").contains(collection)) requireScope(principal, row);
         if (collection.equals("members")) saveMemberAccount(id, row);
@@ -469,6 +517,9 @@ public class RecordsController {
             throw WorkspaceAccess.denied("安全保密员仅可维护数据范围与敏感信息策略，账号和角色由系统管理员维护");
         row.putAll(patch);
         row.put("id", id);
+        if (collection.equals("members") && principal.memberId().isBlank()
+            && String.valueOf(row.getOrDefault("username", "")).equals(principal.user()) && memberRoleHasSensitivePermission(row))
+            throw WorkspaceAccess.denied("系统管理员不能为本人授予敏感明文查看权限");
         ensureParkMetadata(collection, id, row);
         checkIdentityScope(principal, collection, row);
         if (collection.equals("departments")) validateDepartment(row, id);

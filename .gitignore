@@ -1,5 +1,7 @@
 node_modules/
 dist/
+/deploy/docker-package/frontend/site/
+/deploy/docker-package/frontend/site-release/
 .recon/
 *.local
 .env

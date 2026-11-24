@@ -35,7 +35,7 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/youshu?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
       SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-youshu}
       SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:-youshu_local}
-      APP_AUTH_DEMO_LOGIN_ENABLED: "true"
+      APP_AUTH_DEMO_LOGIN_ENABLED: ${APP_AUTH_DEMO_LOGIN_ENABLED:-true}
       APP_AUTH_DEMO_PHONE: "127127"
       APP_AUTH_DEMO_SMS_CODE: "127127"
       APP_AUTH_DEVICE_VERIFICATION_ENABLED: "true"

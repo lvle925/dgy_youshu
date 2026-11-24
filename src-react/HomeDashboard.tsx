@@ -19,6 +19,7 @@ import { NumberTicker } from '@/components/ui/number-ticker';
 import { Progress } from '@/components/ui/progress';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { PlatformIcon, type PlatformIconName } from '@/components/PlatformIcon';
+import { parkPointsFromGeoJson, toParkFeatureCollection } from '@/lib/spatialData';
 
 const favoriteOptions = [
   { title: '政策管理', path: '/policy/index', icon: 'policy' },
@@ -79,6 +80,7 @@ export default function HomeDashboard() {
   const allowMap = allowsRoute(principal, "/businessMap/index");
   const allowPolicyDetail = allowsRoute(principal, "/policy/index");
   const points = isShanghaiArea(city) ? mapMarkers.filter(marker => city === "上海市" || regionMatches(marker.district, city)) : [];
+  const parkPoints = parkPointsFromGeoJson(toParkFeatureCollection(points));
   const highIntent = localProjects.filter(row => row.score >= 85).length;
   const riskRows = isShanghaiArea(city) ? migrationEnterprises.filter(row => city === "上海市" || ("district" in row && row.district === city)) : [];
   const risks = riskRows.filter(row => row.risk === "高风险").length;
@@ -121,7 +123,7 @@ export default function HomeDashboard() {
         </Card>
         <Card className="chart-card os-glass-card dashboard-map-card">
           <CardHeader className="section-heading"><div><CardTitle><MapPinned className="section-heading-icon" />电子围栏与空间载体</CardTitle><CardDescription>{city} · 产业载体示意</CardDescription></div>{allowMap && <Button variant="ghost" size="sm" render={<Link to="/businessMap/index" />}>全屏地图 <ChevronRight data-icon="inline-end" /></Button>}</CardHeader>
-          <CardContent className="dashboard-map-content">{points.length ? <SpatialMap compact parks={points} onSelect={() => { if (allowMap) navigate("/businessMap/index"); }} /> : <div className="business-empty-hint">当前地区暂无园区点位</div>}</CardContent>
+          <CardContent className="dashboard-map-content">{parkPoints.length ? <SpatialMap compact parks={parkPoints} onSelect={() => { if (allowMap) navigate("/businessMap/index"); }} /> : <div className="business-empty-hint">当前地区暂无园区点位</div>}</CardContent>
         </Card>
       </section>
 

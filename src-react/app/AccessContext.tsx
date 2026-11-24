@@ -17,6 +17,7 @@ export type Principal = {
   mustChangePassword?: boolean;
   watermarkEnabled?: boolean;
   sessionTimeoutMinutes?: number;
+  demoSession?: boolean;
 };
 export type Action = "新增" | "编辑" | "删除" | "导出" | "查看敏感信息";
 export const AccessContext = createContext<Principal | null>(null);

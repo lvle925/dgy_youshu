@@ -22,6 +22,7 @@ export const api = {
   auditStatistics: () => request('/audit/statistics'),
   interfaceMetrics: () => request('/system/interface-metrics'),
   auditExport: (data) => request('/audit/export', { method: 'POST', body: JSON.stringify(data) }),
+  resetDemoData: () => request('/demo/reset', { method: 'POST' }),
   memberUnlock: (id) => request('/members/' + encodeURIComponent(id) + '/unlock', { method: 'POST' }),
   memberForceLogout: (id) => request('/members/' + encodeURIComponent(id) + '/force-logout', { method: 'POST' }),
   memberResetPassword: (id, password) => request('/members/' + encodeURIComponent(id) + '/reset-password', { method: 'POST', body: JSON.stringify({ password }) }),

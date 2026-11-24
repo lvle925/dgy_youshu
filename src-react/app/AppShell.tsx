@@ -35,6 +35,7 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -77,12 +78,14 @@ import {
   ChevronRight,
   LogOut,
   PanelLeft,
+  RotateCcw,
   Search,
   X,
 } from "lucide-react";
 import { CityContext, useCurrentCity } from "./CityContext";
 import { allowsRoute, usePrincipal } from "./AccessContext";
 import { ReportQueueTrigger } from "./ReportQueue";
+import { api } from "../../src/api.js";
 
 const TABS_KEY = "DEMO_TABS";
 const TAB_LIMIT = 12;
@@ -519,7 +522,7 @@ function WorkspaceFrame({
               {hasUnread && <i className="notification-dot" />}
             </Button>
             <Separator orientation="vertical" className="header-separator" />
-            <UserMenu userName={userName} onLogout={onLogout} />
+            <UserMenu userName={userName} onLogout={onLogout} showDemoReset={principal?.demoSession === true} />
           </div>
         </header>
         {children}
@@ -651,39 +654,80 @@ function CityPicker({
 function UserMenu({
   userName,
   onLogout,
+  showDemoReset,
 }: {
   userName: string;
   onLogout: () => void;
+  showDemoReset: boolean;
 }) {
+  const [resetOpen, setResetOpen] = useState(false);
+  const [resetting, setResetting] = useState(false);
+
+  async function resetDemoData() {
+    setResetting(true);
+    try {
+      await api.resetDemoData();
+      toast.success("政务演示数据已恢复");
+      window.location.reload();
+    } catch (cause) {
+      toast.error(cause instanceof Error ? cause.message : "演示数据恢复失败");
+    } finally {
+      setResetting(false);
+    }
+  }
+
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        render={
-          <Button
-            variant="ghost"
-            className="user-trigger"
-            aria-label="打开账号菜单"
-          >
-            <Avatar>
-              <AvatarFallback>{userName.slice(0, 1)}</AvatarFallback>
-            </Avatar>
-            <span className="user-trigger-name">{userName}</span>
-            <ChevronDown />
-          </Button>
-        }
-      />
-      <DropdownMenuContent align="end" className="user-menu">
-        <DropdownMenuLabel>
-          <span className="user-menu-label">当前账号</span>
-          <strong>{userName}</strong>
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem variant="destructive" onClick={onLogout}>
-          <LogOut />
-          退出登录
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          render={
+            <Button
+              variant="ghost"
+              className="user-trigger"
+              aria-label="打开账号菜单"
+            >
+              <Avatar>
+                <AvatarFallback>{userName.slice(0, 1)}</AvatarFallback>
+              </Avatar>
+              <span className="user-trigger-name">{userName}</span>
+              <ChevronDown />
+            </Button>
+          }
+        />
+        <DropdownMenuContent align="end" className="user-menu">
+          <DropdownMenuGroup>
+            <DropdownMenuLabel>
+              <span className="user-menu-label">当前账号</span>
+              <strong>{userName}</strong>
+            </DropdownMenuLabel>
+          </DropdownMenuGroup>
+          {showDemoReset && <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => setResetOpen(true)}>
+              <RotateCcw />
+              恢复初始政务演示数据
+            </DropdownMenuItem>
+          </>}
+          <DropdownMenuSeparator />
+          <DropdownMenuItem variant="destructive" onClick={onLogout}>
+            <LogOut />
+            退出登录
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <Dialog open={resetOpen} onOpenChange={(open) => !resetting && setResetOpen(open)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>恢复初始政务演示数据</DialogTitle>
+            <DialogDescription>这会覆盖招商、项目、园区运营、企业服务和 AI 外呼演示数据，并记录审计日志。成员账号、角色、部门、系统策略与审计日志会保留。</DialogDescription>
+          </DialogHeader>
+          <div className="dialog-actions">
+            <Button variant="outline" disabled={resetting} onClick={() => setResetOpen(false)}>取消</Button>
+            <Button variant="destructive" disabled={resetting} onClick={() => void resetDemoData()}>{resetting ? "正在恢复…" : "确认恢复演示数据"}</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 

@@ -55,16 +55,25 @@ public class AuthController {
         HttpSession session = req.getSession(false);
         status.put("initialized", count() > 0 || jdbc.queryForObject("SELECT COUNT(*) FROM member_account", Integer.class) > 0);
         status.put("authenticated", false);
-        if (session != null && session.getAttribute("user") != null) {
+        boolean demoSession = false;
+        if (session != null) {
             try {
-                status.put("principal", access.current(session));
-                status.put("authenticated", true);
+                demoSession = Boolean.TRUE.equals(session.getAttribute("demo"));
+                if (session.getAttribute("user") != null) {
+                    status.put("principal", access.current(session));
+                    status.put("authenticated", true);
+                }
             } catch (ResponseStatusException ex) {
-                session.invalidate();
+                try { session.invalidate(); } catch (IllegalStateException ignored) { }
                 status.put("reason", ex.getReason());
+                demoSession = false;
+            } catch (IllegalStateException expired) {
+                status.put("reason", "登录会话已失效，请重新登录");
+                demoSession = false;
             }
         }
         status.put("demoLoginEnabled", demoLoginEnabled);
+        status.put("demoSession", demoSession);
         status.put("demoPhone", demoLoginEnabled ? sms.demoPhone() : "");
         return status;
     }

@@ -34,7 +34,7 @@ public class AuditController {
                                           @RequestParam(required = false) String module,
                                           @RequestParam(required = false) String actor) {
         var principal = access.current(session);
-        if (!principal.allows(LOG_ROUTE, "平台管理", null)) throw WorkspaceAccess.denied("没有查看操作审计权限");
+        requireAuditReader(principal);
         int boundedLimit = Math.max(1, Math.min(limit, 5000));
         return jdbc.query("SELECT id,occurred_at,actor,department_id,module,action,object_type,object_id," +
                 "before_summary,after_summary,result_status,ip,user_agent,duration_ms FROM op_log " +
@@ -63,7 +63,7 @@ public class AuditController {
     @GetMapping("/statistics")
     public Map<String, Object> statistics(HttpSession session) {
         var principal = access.current(session);
-        if (!principal.allows(STATISTICS_ROUTE, "平台管理", null)) throw WorkspaceAccess.denied("没有查看审计统计权限");
+        requireAuditReader(principal);
         LocalDate today = LocalDate.now(ZoneId.of("Asia/Shanghai"));
         long total = jdbc.queryForObject("SELECT COUNT(*) FROM op_log", Long.class);
         long todayCount = jdbc.queryForObject("SELECT COUNT(*) FROM op_log WHERE occurred_at>=? AND occurred_at<?",
@@ -87,6 +87,7 @@ public class AuditController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void export(@RequestBody Map<String, Object> requestBody, HttpSession session, HttpServletRequest request) {
         var principal = access.current(session);
+        requireAuditReader(principal);
         String route = String.valueOf(requestBody.getOrDefault("route", ""));
         String group = WorkspaceAccess.groupFor(route);
         if (group.isBlank() || !principal.allows(route, group, "导出"))
@@ -95,5 +96,9 @@ public class AuditController {
             String.valueOf(requestBody.getOrDefault("name", "")), null,
             Map.of("name", requestBody.getOrDefault("name", ""), "count", requestBody.getOrDefault("count", 0)),
             "成功", request, 0);
+    }
+
+    private void requireAuditReader(WorkspaceAccess.Principal principal) {
+        if (!principal.isAuditReader()) throw WorkspaceAccess.denied("操作审计仅限安全审计员只读核查");
     }
 }

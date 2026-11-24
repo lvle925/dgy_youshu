@@ -69,6 +69,40 @@ class WorkspaceFlowsTest {
     }
 
     @Test
+    void threePersonnelRolesCannotCrossAuditAndSensitiveBoundaries() throws Exception {
+        MockHttpSession demo = demo();
+        mvc.perform(post("/api/records/roles").session(demo).contentType(MediaType.APPLICATION_JSON)
+                .content(json.writeValueAsBytes(Map.of("name", "伪造审计角色", "permissions", List.of("route:/member/log")))))
+            .andExpect(status().isForbidden());
+        mvc.perform(post("/api/records/roles").session(demo).contentType(MediaType.APPLICATION_JSON)
+                .content(json.writeValueAsBytes(Map.of("name", "伪造敏感角色", "permissions", List.of(
+                    "route:/business/projectCluesUpdate/index", "action:/business/projectCluesUpdate/index:view_sensitive")))))
+            .andExpect(status().isForbidden());
+
+        String memberId = id(create(demo, "members", Map.of("name", "系统管理员验收", "username", "sysadmin-" + UUID.randomUUID(),
+            "initialPassword", "SysAdminPass123", "roleId", "builtin-system-admin", "status", "启用")));
+        String username = jdbc.queryForObject("SELECT username FROM member_account WHERE member_id=?", String.class, memberId);
+        MockHttpSession systemAdmin = login(username, "SysAdminPass123");
+        mvc.perform(get("/api/audit/logs").session(systemAdmin)).andExpect(status().isForbidden());
+        mvc.perform(get("/api/audit/statistics").session(systemAdmin)).andExpect(status().isForbidden());
+        mvc.perform(post("/api/records/members").session(systemAdmin).contentType(MediaType.APPLICATION_JSON)
+                .content(json.writeValueAsBytes(Map.of("name", "自我提权验收", "username", username,
+                    "roleId", "builtin-security-officer", "status", "启用", "dataScope", "ALL_PARKS"))))
+            .andExpect(status().isForbidden());
+
+        String auditorId = id(create(demo, "members", Map.of("name", "安全审计员验收", "username", "auditor-" + UUID.randomUUID(),
+            "initialPassword", "AuditorPass123", "roleId", "builtin-audit-officer", "status", "启用")));
+        String auditorName = jdbc.queryForObject("SELECT username FROM member_account WHERE member_id=?", String.class, auditorId);
+        MockHttpSession auditor = login(auditorName, "AuditorPass123");
+        mvc.perform(get("/api/audit/logs").session(auditor)).andExpect(status().isOk());
+        mvc.perform(post("/api/audit/export").session(auditor).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"route\":\"/member/log\",\"name\":\"audit.csv\"}"))
+            .andExpect(status().isNoContent());
+        mvc.perform(delete("/api/records/roles/builtin-audit-officer").session(auditor))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
     void assignedParkScopeFiltersRowsAndBlocksCrossParkUpdates() throws Exception {
         MockHttpSession owner = demo();
         String role = id(create(owner, "roles", Map.of("name", "张江园区只读", "permissions", List.of("route:/parksBuildings/index", "action:/parksBuildings/index:edit"), "status", "启用")));
@@ -206,6 +240,18 @@ class WorkspaceFlowsTest {
     }
 
     @Test
+    void demoDataResetRestoresSeedsAndPreservesSecurityAdministration() throws Exception {
+        MockHttpSession demo = demo();
+        create(demo, "clues", Map.of("company", "演示重置验收记录", "intent", "演示", "region", "上海市"));
+        mvc.perform(post("/api/demo/reset").session(demo))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.restoredRecords").isNumber());
+        assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM records WHERE collection='clues' AND JSON_UNQUOTE(JSON_EXTRACT(payload,'$.company'))='演示重置验收记录'", Integer.class));
+        assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM records WHERE collection='roles' AND id='builtin-audit-officer'", Integer.class));
+        assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM records WHERE collection='tenantSettings' AND id='workspace'", Integer.class));
+        assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM op_log WHERE action='恢复初始政务演示数据'", Integer.class));
+    }
+
+    @Test
     void verifiesTrustedDeviceUsingMySql() {
         var sms = new SmsVerificationService(Clock.systemUTC(), true, "127127", "127127");
         var trustedDevices = new TrustedDeviceService(jdbc, sms, true);
@@ -226,6 +272,13 @@ class WorkspaceFlowsTest {
     private MockHttpSession demo() throws Exception {
         var result = mvc.perform(post("/api/auth/demo-login").contentType(MediaType.APPLICATION_JSON)
             .content("{\"phone\":\"127127\"}")).andExpect(status().isOk()).andReturn();
+        return (MockHttpSession) result.getRequest().getSession(false);
+    }
+
+    private MockHttpSession login(String username, String password) throws Exception {
+        var result = mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
+                .content(json.writeValueAsBytes(Map.of("username", username, "password", password))))
+            .andExpect(status().isOk()).andReturn();
         return (MockHttpSession) result.getRequest().getSession(false);
     }
 

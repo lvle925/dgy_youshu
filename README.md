@@ -1,20 +1,155 @@
 # 有数计划 · 政务招商与安商稳商工作台
 
-供地方政府委办局、产业园区管委会内部使用的招商稳商工作台，涵盖政策、园区、企业、项目线索、诉求办理、组织权限和操作审计。React 19 工作台承载全部业务路由，Spring Boot 后端提供认证、权限守卫、行级数据过滤、审计和 MySQL 8.4 持久化。
+**面向地方政府委办局与产业园区管委会的纯 ToG 数字化招商稳商工作台。** 将产业招商、项目流转、企业服务和内部治理放进同一套可审计、可授权、可持续扩展的工作流程。
 
-> 本项目当前运行于本地政务演示环境，企业、园区、政策和审计初始化数据为模拟记录。短信网关、真实电话外呼和外部业务数据源仍需由部署单位提供服务凭据。
+| 业务域 | 解决的工作问题 |
+| --- | --- |
+| 智慧招商 | 政策、产业链、园区载体、企业与商机分散，难以形成统一研判视图 |
+| 商机洞察 | 企业信号缺少统一匹配、归属保护和从线索到落地的推进记录 |
+| 安商稳商 | 企业迁移风险、诉求受理、走访办理与超期督办缺少闭环 |
+| 平台治理 | 部门、角色、数据范围、敏感信息授权和操作审计各自割裂 |
 
-新会话交接请先阅读 [PROJECT_SESSION_SUMMARY.md](PROJECT_SESSION_SUMMARY.md)。
+![有数计划政务工作台首页](docs/screenshots/features/home.png)
 
-## 技术栈
+> 当前仓库提供可运行的本地政务演示环境。业务数据为合成样例，真实短信、外呼、工商和政务数据源需由部署单位配置服务接口与凭据。
 
-- 前端：React 19、React Router、Vite 5、Tailwind CSS 4、shadcn/ui（Base UI）、Recharts、Cloudflare Turnstile。
-- 后端：Java 21、Spring Boot 3.4.5、Spring JDBC、MySQL 8.4、springdoc-openapi。
-- 地图：SVG 示意底图与本地园区点位，支持范围圈选和关联企业筛选。
+## 产品设计与亮点
 
-## 本地启动
+- **霁蓝、黛青、鎏金 Bento 视觉体系**：面向政务内部工作的空间式信息编排、统一状态与权限交互。
+- **纯 SVG 离线地图**：电子围栏、拖动、矩形框选和多边形圈选不依赖外部地图瓦片，园区点位与围栏遵循 GeoJSON Feature/Polygon 和 `[lng, lat]` 坐标契约。
+- **授权直出与敏感信息留痕**：项目和企业信息按岗位授权展示，联系人手机号默认掩码。具备授权的用户查看明文号码时立即写入 MySQL 审计日志。
+- **全量 MySQL 审计与行级隔离**：业务修改、登录安全事件、导出和敏感信息查阅进入 `op_log`。园区管理员按授权园区访问，专员可限制为仅本人负责。
+- **等保三员分立**：系统管理员维护账号和菜单，安全保密员维护数据范围和敏感信息授权，安全审计员只读核查及导出审计记录。后端对日志和明文权限执行强制隔离。
+- **可恢复的政务演示**：启用演示登录后，右上角账号菜单提供二次确认的数据恢复操作，并记录审计。账号、部门、角色、系统策略与已有审计日志会保留。
 
-准备 Node.js 20.19+、Docker Desktop 和网络连接。首次构建需要下载依赖，并拉取 MySQL 8.4 镜像。Compose 会在 MySQL 健康检查通过后启动 API。
+### 5 分钟演示动线
+
+1. **首页 Bento 态势与城市切换**：查看招商、政策、企业服务与园区空间概览，切换服务地区。
+2. **商机大厅 11 条规则精准匹配**：查看命中信号，打开企业详情，并把匹配对象纳入项目线索。
+3. **项目线索推进与敏感号码审计**：演示公海认领、撞单提示、阶段时间轴，再由授权角色查看明文号码并核对审计记录。
+4. **迁移预警双因素归因与走访督办**：对照推力和拉力信号记录企业反馈，将高风险企业转为走访督办工单，完成后回写诉求办理。
+5. **三员权限与操作日志**：演示不同角色的权限边界，使用安全审计员只读查看并导出操作日志。
+
+## 功能截图
+
+全部工作台页面截图按 1440 × 900 视口采集，六张模块总览为 1440 × 598。完整的原尺寸截图索引包含首页、各业务页面、详情抽屉、地图圈选、登录、安全查阅、诉求派单、运行简报和演示恢复相关页面。
+
+![智慧招商页面总览](docs/screenshots/features/investment-overview.png)
+
+![商机洞察页面总览](docs/screenshots/features/opportunity-overview.png)
+
+![安商稳商页面总览](docs/screenshots/features/stability-overview.png)
+
+![平台管理页面总览](docs/screenshots/features/admin-overview.png)
+
+![详情页面与核心交互总览](docs/screenshots/features/details-overview.png)
+
+![登录与业务流程交互总览](docs/screenshots/features/workflow-overview.png)
+
+<details>
+<summary>查看所有原尺寸页面截图</summary>
+
+#### 首页
+
+| 页面 | 截图 |
+| --- | --- |
+| 首页与 Bento 工作台 | [查看截图](docs/screenshots/features/home.png) |
+
+#### 智慧招商
+
+| 页面 | 截图 |
+| --- | --- |
+| 政策管理与项目匹配 | [查看截图](docs/screenshots/features/policy.png) |
+| 产业图谱 | [查看截图](docs/screenshots/features/industry-chart.png) |
+| 供应链 | [查看截图](docs/screenshots/features/supply-chain.png) |
+| 园区楼宇 | [查看截图](docs/screenshots/features/parks-buildings.png) |
+| 商机地图与 GeoJSON 围栏圈选 | [查看截图](docs/screenshots/features/business-map.png) |
+| 企业查询 | [查看截图](docs/screenshots/features/company-search.png) |
+| 招投标查询 | [查看截图](docs/screenshots/features/bidding.png) |
+| 商机大厅 | [查看截图](docs/screenshots/features/business-hall.png) |
+
+#### 商机洞察
+
+| 页面 | 截图 |
+| --- | --- |
+| 商机摸排 | [查看截图](docs/screenshots/features/business-investigate.png) |
+| 企业扩张 | [查看截图](docs/screenshots/features/enterprise-expansion.png) |
+| 项目线索 | [查看截图](docs/screenshots/features/project-clues.png) |
+| AI 外呼任务 | [查看截图](docs/screenshots/features/ai-outbound-tasks.png) |
+| AI 通话记录 | [查看截图](docs/screenshots/features/ai-outbound-records.png) |
+| AI 外呼数据看板 | [查看截图](docs/screenshots/features/ai-outbound-dashboard.png) |
+
+#### 安商稳商
+
+| 页面 | 截图 |
+| --- | --- |
+| 全景洞察 | [查看截图](docs/screenshots/features/panoramic-insight.png) |
+| 园区管理 | [查看截图](docs/screenshots/features/campus-admin.png) |
+| 企业档案与多维筛选 | [查看截图](docs/screenshots/features/corporate-archives.png) |
+| 迁移预警 | [查看截图](docs/screenshots/features/migration-warning.png) |
+| 企服保障 | [查看截图](docs/screenshots/features/guarantee.png) |
+| 走访管理 | [查看截图](docs/screenshots/features/visit-manage.png) |
+
+#### 平台治理
+
+| 页面 | 截图 |
+| --- | --- |
+| 人员管理 | [查看截图](docs/screenshots/features/members.png) |
+| 部门与组织架构 | [查看截图](docs/screenshots/features/departments.png) |
+| 角色管理与权限配置 | [查看截图](docs/screenshots/features/roles.png) |
+| 三员权限边界与角色配置 | [查看截图](docs/screenshots/features/role-permissions.png) |
+| 操作日志 | [查看截图](docs/screenshots/features/logs.png) |
+| 操作日志统计 | [查看截图](docs/screenshots/features/log-statistics.png) |
+| 系统与门户配置 | [查看截图](docs/screenshots/features/system-settings.png) |
+| 数据服务与接口监控 | [查看截图](docs/screenshots/features/interface-monitoring.png) |
+
+#### 详情与流程状态
+
+| 状态 | 截图 |
+| --- | --- |
+| 政策详情 | [查看截图](docs/screenshots/features/policy-detail.png) |
+| 企业详情 | [查看截图](docs/screenshots/features/company-detail.png) |
+| 园区详情 | [查看截图](docs/screenshots/features/park-detail.png) |
+| 项目线索详情 | [查看截图](docs/screenshots/features/clue-detail.png) |
+| 政策详情右侧抽屉 | [查看截图](docs/screenshots/features/policy-detail-drawer.png) |
+| 项目线索明文查阅审计 | [查看截图](docs/screenshots/features/project-sensitive-phone.png) |
+| 企业诉求派单与督办 | [查看截图](docs/screenshots/features/service-requests.png) |
+| 运行简报预览 | [查看截图](docs/screenshots/features/run-brief.png) |
+| 账号菜单与演示恢复确认 | [查看截图](docs/screenshots/features/demo-reset-confirmation.png) |
+
+#### 登录与交互
+
+| 状态 | 截图 |
+| --- | --- |
+| 短信演示登录与 `127127` 入口 | [查看截图](docs/screenshots/login.png) |
+| 账号密码与人机验证 | [查看截图](docs/screenshots/login-password.png) |
+| 通知中心右侧抽屉 | [查看截图](docs/screenshots/notifications.png) |
+| 商机地图多边形圈选 | [查看截图](docs/screenshots/map.png) |
+| AI 外呼话术配置引导 | [查看截图](docs/screenshots/features/ai-outbound-setup.png) |
+
+</details>
+
+## 架构与运行边界
+
+| 能力 | 当前交付 | 生产接入方式 |
+| --- | --- | --- |
+| 前端工作台 | React 19、TypeScript、Tailwind CSS 4、shadcn/ui、Recharts | 按政府内网域名部署静态资源，API 使用同源代理或内网网关 |
+| 业务 API | Java 21、Spring Boot 3.4.5、Spring JDBC | 部署至政务云或单位内网应用区 |
+| 持久化 | MySQL 8.4，包含初始化 SQL 和合成演示数据 | 配置正式实例、备份、权限账号、TLS 与保留策略 |
+| 登录验证码 | 本地演示免验证码入口；密码登录 Cloudflare Turnstile 测试密钥或绑定 Session 的图片验证码 | 接入单位认可的人机校验服务及正式短信网关，并关闭演示登录 |
+| 电话外呼 | AI 话术、任务、记录和看板演示数据持久化 | 对接经审批的语音服务、线路、录音存储和转写服务 |
+| 企业与政务数据 | 本地合成企业、园区、政策及风险样例 | 对接获准的工商、信用、招投标、政策、用工和园区系统数据接口 |
+| 地图 | 离线 SVG 示意底图与标准 GeoJSON 数据 | GIS 渲染层接入天地图、高德或腾讯内网瓦片，不改变业务坐标契约 |
+
+当前项目**不能替代部署单位的等保测评或生产安全配置**。上线前需按单位要求完成身份源、网络分区、密码与密钥、短信及 GIS 服务、数据来源授权、日志保留和灾备配置。
+
+### 生产演进建议
+
+当前 `records(collection, id, payload)` 通用集合有利于快速交付和中小规模园区按业务集合持久化。若接入省市级百万企业全库，或出现 30+ 维度高频组合筛选，可将 `enterprise`、`policy`、`project_lead` 等高频对象迁为独立关系表，增加面向查询条件的组合索引，并按检索需求引入全文检索。地图渲染可替换为天地图、高德或腾讯内网瓦片，继续沿用 `[lng, lat]` 与 GeoJSON 围栏。
+
+## 5 分钟内启动演示
+
+准备 Node.js 20.19+、Docker Desktop 和网络连接。首次运行会拉取 MySQL 8.4 镜像并构建 Spring Boot API。
 
 ```bash
 npm install
@@ -22,203 +157,108 @@ docker compose -p youshu-local up -d --build
 npm run dev
 ```
 
-访问 <http://127.0.0.1:5199>。前端将 `/api` 代理到 `127.0.0.1:8080`。MySQL 在本机绑定 `127.0.0.1:3307`，默认开发连接为数据库 `youshu`、用户 `youshu`、密码 `youshu_local`。本地端口和凭据可通过根目录 `.env` 中的 `MYSQL_HOST_PORT`、`MYSQL_USER`、`MYSQL_PASSWORD` 和 `MYSQL_ROOT_PASSWORD` 覆盖。表结构和完整政务演示数据分别保存在 [schema.sql](backend/sql/mysql/schema.sql) 与 [seed.sql](backend/sql/mysql/seed.sql)。MySQL 首次创建数据卷时会自动执行这两份 SQL，应用启动会补齐政务内置角色与安全字段。
+打开 <http://127.0.0.1:5199>。前端 Vite 通过 `/api` 连接 `127.0.0.1:8080`，MySQL 绑定 `127.0.0.1:3307`。Compose 会在数据库健康检查通过后启动 API。
 
-默认连接配置可直接运行。需要调整端口或密码时，将 `.env.example` 复制为 `.env` 并编辑对应值。
-
-### 认证配置
-
-Compose 的本机演示环境默认开启演示登录。登录页手机号预填 `127127`，点击「127127 免验证码演示登录」可以直接进入工作台。也可以点击「发送验证码」，使用服务端返回的演示短信码 `127127` 完成短信登录。演示短信码只在 `APP_AUTH_DEMO_LOGIN_ENABLED=true` 时有效，应用配置默认关闭该开关。
-
-账号密码登录使用 Cloudflare Turnstile。`compose.yaml` 内置 Cloudflare 官方测试 site key 和 secret key，便于本机验收。成员密码至少 12 位，并按系统配置要求包含字母和数字。连续输错 5 次后锁定 15 分钟，登录会话默认 30 分钟无操作后失效。部署到真实环境时，用环境变量配置可信验证码与短信服务，并把 `APP_AUTH_DEMO_LOGIN_ENABLED` 设为 `false`。
+本地演示的环境变量如下。
 
 ```dotenv
-APP_AUTH_DEMO_LOGIN_ENABLED=false
+APP_AUTH_DEMO_LOGIN_ENABLED=true
 APP_AUTH_DEMO_PHONE=127127
 APP_AUTH_DEMO_SMS_CODE=127127
 APP_AUTH_DEVICE_VERIFICATION_ENABLED=true
-APP_AUTH_TURNSTILE_SITE_KEY=你的 Turnstile Site Key
-APP_AUTH_TURNSTILE_SECRET_KEY=你的 Turnstile Secret Key
+APP_AUTH_TURNSTILE_SITE_KEY=1x00000000000000000000AA
+APP_AUTH_TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA
+MYSQL_HOST_PORT=3307
+MYSQL_USER=youshu
+MYSQL_PASSWORD=youshu_local
+MYSQL_ROOT_PASSWORD=youshu_root_local
 ```
 
-当前仓库没有真实短信服务商凭证，因此其他手机号会得到「尚未配置真实短信服务」的明确响应。短信接口契约已经保留在 `/api/auth/sms/send` 和 `/api/auth/sms/login`，接入供应商时只需替换服务端发送实现。账号密码首次登录或未信任设备时，服务端可以发起短信设备验证，并在勾选信任设备后保存 90 天可信设备 token。
+登录页预填 `127127`，点免验证码入口即可进入。也可发送本地演示短信并输入 `127127`。账号密码登录使用 Compose 内置的 Cloudflare 测试站点密钥。测试密钥只用于本机验收，部署时替换为正式服务配置，并设置 `APP_AUTH_DEMO_LOGIN_ENABLED=false`。
 
-### 停止与数据
+### 五类内置政务角色测试说明
 
-前端终端按 `Ctrl+C`，然后执行：
+默认演示入口以受限配置的本地演示管理员身份进入，方便浏览全模块。人员记录提供园区专员和只读领导视角的组织样例。要验证真实角色差异，请在人员管理中新建具有登录账号的成员并从角色列表分配以下角色。设置个人测试密码后，首次密码登录须强制修改。
+
+| 角色 | 建议测试方式 | 权限边界 |
+| --- | --- | --- |
+| 系统管理员 | 新建测试成员并绑定“系统管理员” | 管账号、菜单和单位系统配置，不能读取、导出或删改审计日志，不能给本人授予敏感号码明文权限 |
+| 安全保密员 | 新建测试成员并绑定“安全保密员” | 维护数据范围和敏感信息授权，不能读取或导出审计日志 |
+| 安全审计员 | 新建测试成员并绑定“安全审计员” | 只读查看操作日志和统计，并可导出审计台账 |
+| 园区招商专员 | 使用人员管理中的园区招商专员角色，设置指定园区范围 | 查看授权园区业务，按权限推进线索和走访，不得越园区读取 |
+| 只读领导视角 | 使用只读领导视角角色 | 查看获授权的全域业务和汇总，不具备业务新增、编辑、删除权限 |
+
+演示成员记录不附带通用明文密码。这样可直接验证三员角色权限，同时避免 README 或初始化数据发放固定账号口令。系统管理员与安全审计员两个账号不应由同一人员共用。
+
+### 演示数据恢复
+
+仅在服务端 `APP_AUTH_DEMO_LOGIN_ENABLED=true` 且当前会话通过 `127127` 演示登录时，右上角账号菜单显示“恢复初始政务演示数据”。确认后恢复 `seed.json` 中的业务集合并写入 `op_log`。保留成员、角色、部门、系统策略和已有审计记录。演示期间发生的线索、跟进、园区业务和 AI 外呼数据会被覆盖。
+
+### 关闭与数据卷
+
+退出 Vite 开发进程后执行：
 
 ```bash
 docker compose -p youshu-local down
 ```
 
-命令会保留 Docker 卷 `youshu-local_youshu_mysql_data` 中的 MySQL 数据。不要加 `-v`，否则会删除数据库卷。首次启动会从 SQL 导入模拟业务记录，后端会为新业务集合补齐初始数据。后续启动不会覆盖已编辑记录。
-
-## 系统操作说明
-
-截图使用隔离的本地演示数据库，所有应用视图固定为 **1440 × 900**。模块总览把同一模块的页面排在一起，展开下方索引可打开每个页面的原尺寸截图。页面索引覆盖全部工作台导航、业务详情、登录、安全查阅、通知、地图圈选、诉求派单和运行简报状态。
-
-### 全部功能总览
-
-![智慧招商全部页面](docs/screenshots/features/investment-overview.png)
-
-![商机洞察全部页面](docs/screenshots/features/opportunity-overview.png)
-
-![安商稳商全部页面](docs/screenshots/features/stability-overview.png)
-
-![平台管理全部页面](docs/screenshots/features/admin-overview.png)
-
-![详情页与核心交互状态](docs/screenshots/features/details-overview.png)
-
-![登录、通知、地图和业务流程交互](docs/screenshots/features/workflow-overview.png)
-
-<details>
-<summary>打开全部页面的 1440 × 900 原尺寸截图索引</summary>
-
-#### 首页
-
-| 页面 | 截图 |
-| --- | --- |
-| 首页与 Bento 工作台 | [查看原图](docs/screenshots/features/home.png) |
-
-#### 智慧招商
-
-| 页面 | 截图 |
-| --- | --- |
-| 政策管理与项目匹配 | [查看原图](docs/screenshots/features/policy.png) |
-| 产业图谱 | [查看原图](docs/screenshots/features/industry-chart.png) |
-| 供应链 | [查看原图](docs/screenshots/features/supply-chain.png) |
-| 园区楼宇 | [查看原图](docs/screenshots/features/parks-buildings.png) |
-| 商机地图与范围圈选 | [查看原图](docs/screenshots/features/business-map.png) |
-| 企业查询 | [查看原图](docs/screenshots/features/company-search.png) |
-| 招投标查询 | [查看原图](docs/screenshots/features/bidding.png) |
-| 商机大厅 | [查看原图](docs/screenshots/features/business-hall.png) |
-
-#### 商机洞察
-
-| 页面 | 截图 |
-| --- | --- |
-| 商机摸排 | [查看原图](docs/screenshots/features/business-investigate.png) |
-| 企业扩张 | [查看原图](docs/screenshots/features/enterprise-expansion.png) |
-| 项目线索池 | [查看原图](docs/screenshots/features/project-clues.png) |
-| AI 外呼任务 | [查看原图](docs/screenshots/features/ai-outbound-tasks.png) |
-| AI 通话记录 | [查看原图](docs/screenshots/features/ai-outbound-records.png) |
-| AI 外呼数据看板 | [查看原图](docs/screenshots/features/ai-outbound-dashboard.png) |
-
-#### 安商稳商
-
-| 页面 | 截图 |
-| --- | --- |
-| 全景洞察 | [查看原图](docs/screenshots/features/panoramic-insight.png) |
-| 园区管理 | [查看原图](docs/screenshots/features/campus-admin.png) |
-| 企业档案与多维筛选 | [查看原图](docs/screenshots/features/corporate-archives.png) |
-| 迁移预警 | [查看原图](docs/screenshots/features/migration-warning.png) |
-| 企服保障 | [查看原图](docs/screenshots/features/guarantee.png) |
-| 走访管理 | [查看原图](docs/screenshots/features/visit-manage.png) |
-
-#### 平台管理
-
-| 页面 | 截图 |
-| --- | --- |
-| 人员管理 | [查看原图](docs/screenshots/features/members.png) |
-| 部门与组织架构 | [查看原图](docs/screenshots/features/departments.png) |
-| 角色管理与权限配置 | [查看原图](docs/screenshots/features/roles.png) |
-| 操作日志 | [查看原图](docs/screenshots/features/logs.png) |
-| 操作日志统计 | [查看原图](docs/screenshots/features/log-statistics.png) |
-| 系统与门户配置 | [查看原图](docs/screenshots/features/system-settings.png) |
-| 数据服务与接口监控 | [查看原图](docs/screenshots/features/interface-monitoring.png) |
-
-#### 详情页面
-
-| 页面 | 截图 |
-| --- | --- |
-| 政策详情 | [查看原图](docs/screenshots/features/policy-detail.png) |
-| 企业详情 | [查看原图](docs/screenshots/features/company-detail.png) |
-| 园区详情 | [查看原图](docs/screenshots/features/park-detail.png) |
-| 项目线索详情 | [查看原图](docs/screenshots/features/clue-detail.png) |
-
-#### 登录及业务交互
-
-| 状态 | 截图 |
-| --- | --- |
-| 短信演示登录与 127127 免验证码入口 | [查看原图](docs/screenshots/login.png) |
-| 账号密码与图片验证码登录 | [查看原图](docs/screenshots/login-password.png) |
-| 通知中心右侧抽屉 | [查看原图](docs/screenshots/notifications.png) |
-| 政策详情右侧抽屉 | [查看原图](docs/screenshots/features/policy-detail-drawer.png) |
-| 商机地图多边形圈选 | [查看原图](docs/screenshots/map.png) |
-| AI 外呼话术配置引导 | [查看原图](docs/screenshots/features/ai-outbound-setup.png) |
-| 项目线索完整信息与敏感号码查阅 | [查看原图](docs/screenshots/features/project-sensitive-phone.png) |
-| 企业诉求派单与督办 | [查看原图](docs/screenshots/features/service-requests.png) |
-| 运行简报预览 | [查看原图](docs/screenshots/features/run-brief.png) |
-
-</details>
-
-### 登录与演示环境
-
-本机演示环境打开即显示短信登录。手机号默认是 `127127`，可使用免验证码按钮进入，也可发送并输入演示码 `127127`。新 MySQL 数据库首次启动时还没有本地管理员，首次使用账号密码页会引导创建账号。账号至少 3 个字符，密码至少 12 位并按当前策略校验，密码登录须完成人机验证。关闭 Turnstile 配置时，后端会回退到绑定 Session 的图片验证码，验证码 5 分钟有效且提交后失效。新增成员首次登录和管理员重置密码后均须修改初始密码。
-
-全套界面截图使用 **1440 × 900** 固定视口，从本机 MySQL 政务演示环境采集。企业和联系方式均为合成样例数据。AI 外呼截图覆盖本地演示话术配置、任务、通话记录和看板。
-
-### 业务操作
-
-- **政策管理**：按地区、级别、行业或关键词筛选。点击一行可在右侧查看申报条件、扶持力度和截止日期，并生成海报。一键政策匹配根据企业名称、行业和区域计算匹配分数。
-- **园区楼宇**：按区域、载体类型或关键词筛选，切换卡片和列表，点击园区查看详情。新增载体保存到 MySQL，刷新后可继续查看。
-- **园区管理与走访**：维护园区及楼宇运营信息，创建走访工单，完成时填写结果。工单、状态和完成记录都会保存。
-- **项目线索**：企业与项目内容依政务授权直接展示，手机号列表默认掩码。具备 `view_sensitive` 权限的成员可查阅完整号码，该访问写入 `op_log`。项目可公海认领、查重、退回公海，并按“线索摸排 → 研判评审 → 载体选址匹配 → 拟签约 → 落地纳统”推进。
-- **组织和三员分立**：部门树维护委办局、招商处室和园区工作组。菜单路由与具体操作权限分开校验，支持 `ALL_PARKS`、`ASSIGNED_PARKS`、`SELF_ONLY` 数据范围。系统管理员维护账号和菜单，安全保密员维护数据范围与敏感信息策略，安全审计员只读查阅日志。内置三员角色不可删除或修改。
-- **账号安全**：人员管理支持部门/角色/数据范围筛选、初始密码和管理员重置、首次登录改密、账号有效期、人工解锁、强制下线与 CSV 批量导入导出。连续错误 5 次锁定 15 分钟，会话空闲时长可配置。
-- **操作审计**：认证成败、设备验证、业务增删改、敏感号码查阅、批量导出和 API 请求写入 MySQL `op_log`。日志统计、近 7 日趋势、高频操作和部门调用明细均从该表聚合，应用接口仅提供审计记录查询。
-- **企业诉求与走访**：受理企业诉求后派单到部门和执行人，创建关联走访工单，完成走访时保存反馈并自动办结关联诉求。页面按办理期限即时显示超期督办，首页运行简报汇总诉求办理和迁移风险。
-- **运行简报**：首页和全景洞察可按当前城市生成政策、招商推进、企业诉求和迁移预警摘要。预览后可导出带登录人水印的 HTML 汇报文档。
-- **系统配置与接口监控**：系统与门户配置保存政府单位名称、徽标、免责声明、数据更新周期、水印开关、密码策略和会话超时。数据服务与接口监控展示 MySQL 审计请求的调用量、成功率、耗时、日/月阈值及部门明细。
-- **演示和外部服务**：城市选择会联动工作台和全景运行简报。页面导出任务会先登记审计事件，再加入顶栏生成队列并下载带水印 CSV。AI 外呼话术、任务和记录保存在 MySQL。园区招商专员查看联系方式会显示脱敏号码，授权人员可查阅合成明文号码，审计表只保存查阅事件和字段名。
-
-## API 文档与数据范围
-
-启动后可查阅 [OpenAPI JSON](http://127.0.0.1:8080/v3/api-docs)。先在同一浏览器登录系统再调用业务 API。账号密码登录提交 Turnstile token，图片验证码回退模式提交 `captchaId` 和图片字符。演示短信登录先调用 `/api/auth/sms/send` 获取 challenge，再把 `challengeId` 和短信码提交给 `/api/auth/sms/login`。
-
-后端提供 `/api/auth/*`、`/api/records/{collection}`、`/api/projects/{id}/sensitive-contact`、`/api/projects/{id}/claim`、`/api/projects/{id}/release`、`/api/projects/{id}/stage`、`/api/members/*`、`/api/audit/*`、`/api/system/interface-metrics`、`/api/reports/operation-brief` 和 `/api/visits/{id}/complete`。业务记录以 `collection + id` 为主键保存在 `records.payload`，JSON 负载使用 MySQL `TEXT` 存储。审计事件使用专用 `op_log` 表。企业扩张旧路由继续兼容，`/business/enterpriseExpansion/index` 可作为友好入口。
-
-| 模块 | MySQL 8 表和集合 |
-| --- | --- |
-| 业务集合 | `records` 中的 `policies`、`clues`、`campusList`、`parksBuildings`、`visitOrders`、`visitRecords`、`serviceRequests`、`investigationTasks`、`opportunityModels`、`matchCompanies`、`companyArchives`、`migrationWarnings`、`migrationRules`、`biddingRecords`、`industryNodes`、`supplyRelations`、`members`、`departments`、`roles`、`tenantSettings`、`aiScripts`、`aiTasks` 和 `aiRecords` |
-| 初始化状态 | `seed_state`，避免应用启动时重复播种演示记录 |
-| 本地系统管理员账号 | `local_account` |
-| 成员登录与首次改密状态 | `member_account` |
-| 登录会话与强制下线 | `auth_session` |
-| 可信设备与 90 天设备令牌 | `trusted_device` |
-| 登录失败锁定 | `login_attempt` |
-| 操作审计记录 | `op_log` |
-
-需要手动建立表或重新导入演示记录时，可执行仓库中的 SQL 脚本。演示数据脚本使用 `INSERT IGNORE`，重复执行不会覆盖已编辑的业务记录。
+该命令会保留 `youshu-local_youshu_mysql_data` MySQL 数据卷。首次创建 MySQL 卷时自动执行 [schema.sql](backend/sql/mysql/schema.sql) 与 [seed.sql](backend/sql/mysql/seed.sql)。手动导入时可以运行：
 
 ```bash
 mysql --host 127.0.0.1 --port 3307 --user youshu --password --database=youshu < backend/sql/mysql/schema.sql
 mysql --host 127.0.0.1 --port 3307 --user youshu --password --database=youshu < backend/sql/mysql/seed.sql
 ```
 
-## 本次更新（相对 v1.0.0 / 54c660e）
+## 权限、审计与 API
 
-- 新增 Java 后端、MySQL 8 表结构和演示数据 SQL、会话认证、图片验证码、业务记录接口、Swagger 和 Docker 配置。
-- 新增 React 工作台与 shadcn 组件体系，完成业务路由从 iframe 兼容层到 React 页面迁移。
-- 更新配色、品牌、导航层级、图标、页签、搜索、通知快捷跳转和登录界面，增加界面素材。
-- 接入高德底图与演示点位，优化点位更新和页面监听，调整弹窗遮罩、内容宽度及滚动。
-- 更新政策、园区、人员、角色、走访和线索等页面的本地 API 操作，增加 CSV 导出和服务工单联动。
-- 增加 Cloudflare Turnstile、`127127` 本机演示登录、短信 challenge、设备可信 90 天记录、首次登录改密、连续错误锁定、会话超时和强制下线。
-- 完成 Bento 首页、浮动导航轨道、玻璃质感顶栏、城市级联选择器、报告导出队列入口和趋势/空间组合卡片。
-- 完成政务 RBAC 与园区数据范围过滤，新增三员分立模板、部门组织树、敏感号码授权查阅和 MySQL 操作审计。
-- 项目线索按政务授权直出企业信息，手机号默认掩码并提供查阅审计、公海认领、撞单提示和标准项目推进阶段。
-- 将迁移预警、企业档案、企服保障、招投标、产业图谱和供应链数据接入 MySQL 记录集合。
-- 接通企业诉求受理、部门派单、走访工单、办结反馈、超期督办和领导运行简报。
-- 更新政务权限、敏感号码查阅、系统配置、运行简报和诉求督办的 1440 × 900 截图。
-- 更新所有受影响导航页面、详情页与核心交互状态的原尺寸截图索引。
+权限按页面路由和具体操作进行后端校验。数据范围包含 `ALL_PARKS`、`ASSIGNED_PARKS` 和 `SELF_ONLY`。敏感联系方式列表默认掩码，明文读取经过专用授权并留审计记录。内置三员角色不可修改或删除。运行时角色权限会清除越权的审计与敏感查看节点。
+
+操作日志与系统监控由 MySQL `op_log` 聚合。日志明细、统计与导出仅安全审计员可调用。关键 API 包括：
+
+- `/api/auth/*`：登录、验证码、会话状态、登出与密码变更。
+- `/api/records/{collection}`：按授权路由访问持久化业务集合。
+- `/api/projects/{id}/sensitive-contact`、`claim`、`release`、`stage`：敏感号码与项目推进闭环。
+- `/api/audit/logs`、`/api/audit/statistics`、`/api/audit/export`：安全审计员日志查询、统计和导出。
+- `/api/demo/reset`：仅本地演示会话可恢复业务演示数据。
+- `/api/system/interface-metrics`：系统调用量、成功率和耗时监控。
+- `/api/reports/operation-brief`、`/api/visits/{id}/complete`：运行简报及走访办结。
+
+启动后可在 <http://127.0.0.1:8080/v3/api-docs> 查看 OpenAPI JSON。业务集合以 `records(collection, id, payload)` 存储，审计记录位于专用 `op_log` 表。其余登录会话、可信设备和锁定数据表如下。
+
+| 表 | 用途 |
+| --- | --- |
+| `records` | 政策、企业线索、园区、组织、角色及业务记录 |
+| `seed_state` | 记录初始化集合，防止服务启动时重复覆盖演示数据 |
+| `local_account`、`member_account` | 本机管理员和内部成员认证凭据 |
+| `auth_session` | 服务端会话状态及强制下线 |
+| `trusted_device` | 90 天受信设备令牌摘要 |
+| `login_attempt` | 连续失败次数与 15 分钟锁定 |
+| `op_log` | 认证、业务操作、敏感信息读取、导出与 API 请求审计 |
 
 ## 验证
+
+### 完整 Docker 交付包
+
+仓库提供可直接下载的 [完整 Docker 交付包](deploy/youshu-docker-package.zip)，以及可审阅的 [Docker 交付目录](deploy/docker-package/)。压缩包包含 Spring Boot 可执行 JAR、React 静态前端、Nginx 配置、MySQL 8.4 表结构与初始化数据、环境变量模板和 Docker Compose 文件。下载并解压至 `docker-package` 目录后：
+
+```bash
+cd docker-package
+cp .env.example .env
+# 修改 MYSQL_PASSWORD 与 MYSQL_ROOT_PASSWORD
+docker compose up -d
+```
+
+入口默认为 <http://127.0.0.1:5199>。MySQL 通过命名卷持久化，API 仅在 Compose 内部网络开放，由 Nginx 转发 `/api`。演示验证码配置用于本地演示，部署前应关闭免验证码演示登录并替换验证码服务密钥。交付说明见 [Docker 包 README](deploy/docker-package/README.md)。
 
 ```bash
 npx tsc --noEmit
 npm run build
 docker compose -p youshu-test --profile test run --rm backend-test
 docker compose -p youshu-test --profile test down
+docker compose -p youshu-package-verify -f deploy/docker-package/compose.yaml up -d --build
+docker compose -p youshu-package-verify -f deploy/docker-package/compose.yaml down -v
 ```
 
-测试服务会使用独立的 MySQL 8.4 临时数据库，运行后通过 `down` 移除测试容器，不读写本机演示数据库卷。构建可能提示部分资源包较大。
+测试使用独立 MySQL 8.4 临时容器，不读写本机演示数据库卷。打包验收使用独立端口和数据库卷，验收后删除该临时卷。截图文件位于 `docs/screenshots/`，README 所有本地图片与文件链接均应存在。
+
+更多会话交接信息见 [PROJECT_SESSION_SUMMARY.md](PROJECT_SESSION_SUMMARY.md)。

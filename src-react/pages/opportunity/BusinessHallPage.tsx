@@ -16,7 +16,7 @@ type MatchCompany = { id: string; name: string; industry: string; city: string; 
 type Model = { id: string; city: string; name: string; rules: string[]; minimum: number; updated: string };
 const companySeed: MatchCompany[] = [];
 const modelSeed: Model[] = [];
-const rules = ["项目线索", "业务布局", "对外投资", "成本敏感", "指标敏感", "注册地址变更", "租期敏感", "股东变更", "融资成功", "链主供应商", "链主客户", "项目考察", "领导考察"];
+const rules = ["项目线索", "业务布局", "对外投资", "成本敏感", "指标敏感", "注册地址变更", "租期敏感", "股东变更", "融资成功", "链主供应商", "项目考察"];
 
 function capital(row: MatchCompany) {
   return Number.parseFloat(row.capital.replace(/,/g, "")) * (row.capital.includes("亿元") ? 10_000 : 1) || 0;
