@@ -1,5 +1,5 @@
-import { useState, type PointerEvent } from "react";
-import { Hand, MapPin, Pentagon, RotateCcw, Square } from "lucide-react";
+import { useEffect, useState, type PointerEvent } from "react";
+import { Hand, MapPin, Pentagon, RotateCcw, Square, ZoomIn, ZoomOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export type ScreenPoint = { x: number; y: number };
@@ -105,23 +105,36 @@ function BaseMap() {
   </>;
 }
 
-export function SpatialMap({ parks, selected, onSelect, boundary = null, onBoundary, compact = false }: {
+export function SpatialMap({ parks, selected, onSelect, boundary = null, onBoundary, compact = false, focusPosition = null, focusKey, onBoundaryComplete }: {
   parks: ParkPoint[];
   selected?: string;
   onSelect: (park: ParkPoint) => void;
   boundary?: Boundary | null;
   onBoundary?: (boundary: Boundary | null) => void;
   compact?: boolean;
+  focusPosition?: GeoPosition | null;
+  focusKey?: string | number;
+  onBoundaryComplete?: () => void;
 }) {
   const [tool, setTool] = useState<Tool>("pan");
   const [offset, setOffset] = useState(zero);
   const [anchor, setAnchor] = useState<ScreenPoint | null>(null);
   const [drawing, setDrawing] = useState(false);
   const [preview, setPreview] = useState<ScreenPoint | null>(null);
+  const [zoom, setZoom] = useState(1);
+
+  useEffect(() => {
+    if (!focusPosition || compact) return;
+    const point = project(focusPosition);
+    setZoom(1.55);
+    setOffset({ x: (50 - point.x) * 1.55, y: (50 - point.y) * 1.55 });
+  }, [focusKey, compact]);
 
   function screenCoordinates(event: PointerEvent<SVGSVGElement>, translate = offset) {
     const box = event.currentTarget.getBoundingClientRect();
-    return { x: (event.clientX - box.left) * 100 / box.width - translate.x, y: (event.clientY - box.top) * 100 / box.height - translate.y };
+    const raw = { x: (event.clientX - box.left) * 100 / box.width, y: (event.clientY - box.top) * 100 / box.height };
+    if (tool === "pan" && translate.x === 0 && translate.y === 0) return raw;
+    return { x: 50 + (raw.x - translate.x - 50) / zoom, y: 50 + (raw.y - translate.y - 50) / zoom };
   }
 
   function start(event: PointerEvent<SVGSVGElement>) {
@@ -162,13 +175,24 @@ export function SpatialMap({ parks, selected, onSelect, boundary = null, onBound
 
   function finish() {
     if (toScreenBoundary(boundary).length < 3) onBoundary?.(null);
+    else onBoundaryComplete?.();
     setDrawing(false);
     setPreview(null);
   }
 
+  function endSelection() {
+    setAnchor(null);
+    if (tool !== "rectangle" || !boundary || boundary.properties.selectionTool !== "rectangle") return;
+    const points = toScreenBoundary(boundary);
+    const width = Math.max(...points.map((point) => point.x)) - Math.min(...points.map((point) => point.x));
+    const height = Math.max(...points.map((point) => point.y)) - Math.min(...points.map((point) => point.y));
+    if (width >= 1 && height >= 1) onBoundaryComplete?.();
+  }
+
   const selectedBoundary = toScreenBoundary(boundary);
   const rectangle = boundary?.properties.selectionTool === "rectangle" ? selectedBoundary : [];
-  const [a, b] = rectangle;
+  const rectangleX = rectangle.map((point) => point.x);
+  const rectangleY = rectangle.map((point) => point.y);
   const polygon = boundary?.properties.selectionTool === "polygon" ? selectedBoundary : [];
   const hint = tool === "polygon"
     ? drawing
@@ -184,16 +208,16 @@ export function SpatialMap({ parks, selected, onSelect, boundary = null, onBound
 
   return <div className={compact ? "spatial-map spatial-map--compact" : "spatial-map os-glass-card"} data-tool={tool}>
     <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="spatial-map-canvas" aria-label="园区路网与电子围栏示意"
-      onPointerDown={start} onPointerMove={move} onPointerUp={() => setAnchor(null)}
+      onPointerDown={start} onPointerMove={move} onPointerUp={endSelection}
       onPointerCancel={() => setAnchor(null)} onDoubleClick={tool === "polygon" ? finish : undefined}>
-      <g transform={"translate(" + offset.x + " " + offset.y + ")"}>
+      <g transform={"translate(" + offset.x + " " + offset.y + ") translate(50 50) scale(" + zoom + ") translate(-50 -50)"}>
         <BaseMap />
         {parks.map(park => {
           const point = project(park.position);
           return <polygon key={park.id} className="spatial-fence" data-in-range={containsPoint(boundary, park.position)}
             points={boundaryPath([{ x: point.x - 4.4, y: point.y - 4 }, { x: point.x + 3.2, y: point.y - 4.8 }, { x: point.x + 4.6, y: point.y + 1 }, { x: point.x + 2.2, y: point.y + 4 }, { x: point.x - 3.8, y: point.y + 3.4 }])} />;
         })}
-        {a && b && <rect className="spatial-selection" x={Math.min(a.x, b.x)} y={Math.min(a.y, b.y)} width={Math.abs(a.x - b.x)} height={Math.abs(a.y - b.y)} />}
+        {rectangle.length >= 4 && <rect className="spatial-selection" x={Math.min(...rectangleX)} y={Math.min(...rectangleY)} width={Math.max(...rectangleX) - Math.min(...rectangleX)} height={Math.max(...rectangleY) - Math.min(...rectangleY)} />}
         {polygon.length >= 3 && <polygon className="spatial-selection" points={boundaryPath(polygon)} />}
         {drawing && polygon.length > 0 && <polyline className="spatial-outline" points={boundaryPath(preview ? [...polygon, preview] : polygon)} />}
       </g>
@@ -202,7 +226,7 @@ export function SpatialMap({ parks, selected, onSelect, boundary = null, onBound
       const point = project(park.position);
       return <button type="button" className="spatial-point" data-active={selected === park.id} data-in-range={containsPoint(boundary, park.position)}
       aria-label={park.name + " · 在驻企业 " + park.enterprises + " 家"} key={park.id}
-      style={{ left: (point.x + offset.x) + "%", top: (point.y + offset.y) + "%" }} onClick={() => onSelect(park)}>
+      style={{ left: (50 + (point.x - 50) * zoom + offset.x) + "%", top: (50 + (point.y - 50) * zoom + offset.y) + "%" }} onClick={() => onSelect(park)}>
       <MapPin /><span role="tooltip">{park.name}<small>在驻企业 {park.enterprises} 家</small></span>
     </button>;
     })}
@@ -210,7 +234,11 @@ export function SpatialMap({ parks, selected, onSelect, boundary = null, onBound
       <div className="spatial-tools os-glass-card" aria-label="地图工具">
         {([{ value: "pan", icon: Hand, label: "拖动" }, { value: "polygon", icon: Pentagon, label: "多边形圈选" }, { value: "rectangle", icon: Square, label: "矩形框选" }] as const).map(({ value, icon: Icon, label }) =>
           <Button key={value} type="button" size="sm" variant={tool === value ? "default" : "ghost"} aria-pressed={tool === value} onClick={() => choose(value)}><Icon data-icon="inline-start" />{label}</Button>)}
-        <Button type="button" size="sm" variant="ghost" onClick={() => { choose("pan"); onBoundary?.(null); setOffset(zero); }}><RotateCcw data-icon="inline-start" />重置</Button>
+        <Button type="button" size="sm" variant="ghost" onClick={() => { choose("pan"); onBoundary?.(null); setOffset(zero); setZoom(1); }}><RotateCcw data-icon="inline-start" />重置</Button>
+        <span className="spatial-zoom-controls" aria-label="缩放地图">
+          <Button type="button" size="icon-sm" variant="ghost" aria-label="放大" onClick={() => setZoom(value => Math.min(2.5, Number((value + 0.2).toFixed(1))))}><ZoomIn /></Button>
+          <Button type="button" size="icon-sm" variant="ghost" aria-label="缩小" onClick={() => setZoom(value => Math.max(0.8, Number((value - 0.2).toFixed(1))))}><ZoomOut /></Button>
+        </span>
       </div>
       <div className="spatial-hint os-glass-card">
         <span>{hint}</span>

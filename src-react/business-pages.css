@@ -318,12 +318,13 @@
 .campus-card-main { display: grid; gap: 11px; padding: 16px 16px 12px; border: 0; background: transparent; text-align: left; cursor: pointer; }
 .campus-card-actions { display: flex; justify-content: flex-end; gap: 5px; padding: 0 12px 11px; }
 
-.business-map-layout { display: grid; grid-template-columns: minmax(300px, 0.72fr) minmax(0, 1.8fr); gap: 15px; align-items: stretch; min-height: 590px; }
-.business-map-layout > .business-section { height: 100%; }
+.business-map-layout { display: grid; grid-template-columns: minmax(300px, 0.72fr) minmax(0, 1.8fr); gap: 15px; align-items: stretch; height: min(650px, calc(100vh - 190px)); min-height: 520px; }
+.business-map-layout > .business-section { height: 100%; min-height: 0; overflow: hidden; }
 .business-map-filters { display: grid; gap: 9px; margin-bottom: 12px; }
+.business-map-search-line { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 7px; align-items: center; }
 .business-map-filters .business-native-select { justify-content: space-between; }
 .business-map-filters .business-native-select select { flex: 1; }
-.map-result-list { display: grid; max-height: 450px; overflow-y: auto; }
+.map-result-list { display: grid; min-height: 0; max-height: none; height: calc(100% - 220px); overflow-y: auto; }
 .map-result-list > button { display: grid; grid-template-columns: 29px minmax(0,1fr) 16px; align-items: center; gap: 9px; padding: 12px 2px; border: 0; border-bottom: 1px solid #edf0f4; background: #fff; text-align: left; cursor: pointer; }
 .map-result-list > button.is-selected { background: #f5f8fc; }
 .map-marker-dot { display: grid; width: 28px; height: 28px; place-items: center; border-radius: 8px; background: #eef3fc; color: #1652b8; }
@@ -332,6 +333,26 @@
 .map-result-list strong { color: #304157; font-size: 11px; }
 .map-result-list small { margin-top: 4px; color: #8793a2; font-size: 10px; }
 .map-result-list > button > svg { width: 14px; color: #9aa6b5; }
+.spatial-zoom-controls { display: inline-flex; align-items: center; gap: 2px; border-left: 1px solid rgba(15,39,68,.08); padding-left: 4px; }
+.spatial-zoom-controls button { min-width: 28px; }
+.map-company-sheet { width: min(700px, 95vw) !important; max-width: 700px !important; }
+.map-company-panel-body { display: flex; flex-direction: column; gap: 16px; padding: 0 24px 24px; min-width: 0; }
+.map-company-kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }
+.map-company-kpis > div { display: flex; flex-direction: column; gap: 3px; padding: 13px 14px; border: 1px solid rgba(22,82,184,.12); border-radius: 12px; background: linear-gradient(135deg, #f5f8ff, #fff); }
+.map-company-kpis strong { color: #1652B8; font-size: 23px; font-variant-numeric: tabular-nums; }
+.map-company-kpis span, .map-company-summary span, .map-company-summary small { color: #64748b; font-size: 12px; }
+.map-company-switchers { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid rgba(15,39,68,.08); }
+.map-company-mode { display: flex; gap: 6px; flex-shrink: 0; }
+.map-company-summary { display: flex; align-items: baseline; gap: 8px; }
+.map-company-summary strong { color: #0f2744; font-size: 28px; font-variant-numeric: tabular-nums; }
+.map-company-summary small { margin-left: auto; }
+.map-company-table-wrap { min-width: 0; overflow: auto; max-height: 410px; border: 1px solid rgba(15,39,68,.06); border-radius: 12px; }
+.map-company-table-wrap table { min-width: 610px; }
+.map-company-table-wrap th { background: #f8fafc; color: #64748b; font-size: 12px; }
+.map-company-table-wrap td { font-size: 12px; color: #304157; }
+.map-company-table-wrap td strong, .map-company-table-wrap td small { display: block; }
+.map-company-table-wrap td small { margin-top: 3px; color: #94a3b8; font-size: 11px; }
+.map-company-sheet-actions { display: flex; justify-content: flex-end; }
 .business-map-canvas { position: relative; min-height: 590px; overflow: hidden; border: 1px solid #e1e8ed; border-radius: 12px; background: radial-gradient(ellipse at 55% 44%,#f8faf4 0%,#edf2e9 63%,#e9f0eb 100%); }
 .map-grid-lines { position: absolute; inset: -30%; background-image: linear-gradient(25deg,transparent 46%,rgba(255,255,255,.8) 47%,rgba(255,255,255,.8) 48%,transparent 49%),linear-gradient(145deg,transparent 43%,rgba(255,255,255,.7) 44%,rgba(255,255,255,.7) 45%,transparent 46%),linear-gradient(90deg,rgba(140,166,142,.08) 1px,transparent 1px),linear-gradient(rgba(140,166,142,.08) 1px,transparent 1px); background-size: 250px 180px,320px 220px,38px 38px,38px 38px; transform: rotate(-9deg); }
 .map-river { position: absolute; top: 9%; right: 7%; width: 23%; height: 92%; border-radius: 48%; background: #c9e1e8; opacity: .72; transform: rotate(17deg); }
@@ -467,7 +488,7 @@
   .business-native-select select { min-width: 0; max-width: 180px; }
   .business-view-switch { margin-left: 0; }
   .industry-node-grid,.park-card-grid,.campus-card-grid,.match-card-grid { grid-template-columns: minmax(0,1fr); }
-  .business-map-layout { grid-template-columns: minmax(0,1fr); min-height: 0; }
+  .business-map-layout { grid-template-columns: minmax(0,1fr); height: auto; min-height: 0; }
   .business-map-canvas { min-height: 420px; }
   .map-result-list { max-height: 260px; }
   .business-form-grid,.ai-script-grid { grid-template-columns: minmax(0,1fr); }
