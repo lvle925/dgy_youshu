@@ -10,6 +10,9 @@ export const recordFieldLabels: Record<string, string> = {
   assignedAt: "派单时间", description: "诉求说明", district: "所在区域", region: "企业区域",
   industry: "所属行业", stage: "推进阶段", score: "意愿度", intent: "项目意向", contact: "联系人",
   phone: "联系电话", supervision: "督办状态", visitResult: "走访结果", visitDate: "走访日期",
+  city: "所在城市", targetCity: "目标城市", desc: "描述", level: "层级", hot: "热度",
+  stars: "关注数", amount: "金额", deadline: "截止日期", materials: "申报材料",
+  requirements: "申报条件", org: "发布机构", type: "类型",
 };
 
 const internalFields = new Set(["id", "ownerId", "createdBy", "departmentId", "parkId", "serviceRequestId"]);
