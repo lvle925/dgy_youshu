@@ -145,6 +145,8 @@ export function NativeSelect({
   label,
   allowEmpty = true,
   bare = false,
+  disabled = false,
+  placeholder,
 }: {
   value: string;
   onChange: (value: string) => void;
@@ -152,6 +154,8 @@ export function NativeSelect({
   label: string;
   allowEmpty?: boolean;
   bare?: boolean;
+  disabled?: boolean;
+  placeholder?: string;
 }) {
   const items = options.map((option) => typeof option === "string" ? { value: option, label: option } : option);
   return (
@@ -160,14 +164,15 @@ export function NativeSelect({
       <Select
         value={value || (allowEmpty ? ALL_OPTION : items[0]?.value ?? "")}
         onValueChange={(next) => onChange(next === ALL_OPTION ? "" : String(next ?? ""))}
+        disabled={disabled}
       >
         <SelectTrigger size="sm" aria-label={label}>
-          <SelectValue>
+          <SelectValue placeholder={placeholder ?? (allowEmpty ? "全部" : undefined)}>
             {(selected) =>
               selected && selected !== ALL_OPTION
                 ? items.find((item) => item.value === selected)?.label ?? String(selected)
                 : allowEmpty
-                  ? "全部"
+                  ? placeholder ?? "全部"
                   : String(value || items[0]?.label || "")
             }
           </SelectValue>

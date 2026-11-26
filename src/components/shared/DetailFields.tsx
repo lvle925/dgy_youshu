@@ -32,7 +32,7 @@ export function DetailFields({
     <dl className="business-detail-list">
       {entries.map(([key, value]) => (
         <div key={key}>
-          <dt>{recordFieldLabels[key] ?? labels?.[key] ?? key}</dt>
+          <dt>{labels?.[key] ?? recordFieldLabels[key] ?? key}</dt>
           <dd>{formatValue(value)}</dd>
         </div>
       ))}

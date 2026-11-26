@@ -16,7 +16,10 @@
 ## 产品设计与亮点
 
 - **霁蓝、黛青、鎏金 Bento 视觉体系**：面向政务内部工作的空间式信息编排、统一状态与权限交互。
-- **纯 SVG 离线地图**：电子围栏、拖动、矩形框选和多边形圈选不依赖外部地图瓦片，园区点位与围栏遵循 GeoJSON Feature/Polygon 和 `[lng, lat]` 坐标契约。
+- **纯 SVG 离线地图**：电子围栏、拖动、矩形框选和多边形圈选不依赖外部地图瓦片，园区点位与围栏遵循 GeoJSON Feature/Polygon 和 `[lng, lat]` 坐标契约。地图按等比呈现并支持滚轮缩放与平移约束，园区点位通过 `ResizeObserver` 实测的 letterbox 换算与电子围栏保持居中对齐。
+- **层级化导航与多页签**：面包屑按「工作台 > 分组 > 子分组 > 当前页」四级展开，页签支持自动滚入视野与「关闭右侧」，便于在 30+ 业务页面间连续作业。
+- **统一表单与表格交互**：所有业务下拉统一使用同一套选择器组件，表格提供吸顶表头、骨架屏与空态重置，列表在数据加载、失败与无结果三种状态下分别呈现。
+- **中文字段与确认交互**：业务详情抽屉统一按中文标签渲染，不直接暴露 `parkId`、`departmentId` 等内部技术字段；破坏性操作统一使用自定义确认弹窗并写入审计记录。
 - **授权直出与敏感信息留痕**：项目和企业信息按岗位授权展示，联系人手机号默认掩码。具备授权的用户查看明文号码时立即写入 MySQL 审计日志。
 - **全量 MySQL 审计与行级隔离**：业务修改、登录安全事件、导出和敏感信息查阅进入 `op_log`。园区管理员按授权园区访问，专员可限制为仅本人负责。
 - **等保三员分立**：系统管理员维护账号和菜单，安全保密员维护数据范围和敏感信息授权，安全审计员只读核查及导出审计记录。后端对日志和明文权限执行强制隔离。
@@ -32,7 +35,7 @@
 
 ## 功能截图
 
-全部工作台页面截图按 1440 × 900 视口采集，六张模块总览为 1440 × 598。完整的原尺寸截图索引包含首页、各业务页面、详情抽屉、地图圈选、登录、安全查阅、诉求派单、运行简报和演示恢复相关页面。
+全部工作台页面截图按 1440 × 900 视口采集，六张模块总览为 1440 × 598。截图取自**当前交付包**（`deploy/youshu-docker-package.zip` 解压后 compose 启动的实例），与仓库源码一致。完整的原尺寸截图索引包含首页、各业务页面、详情抽屉、地图圈选、登录、安全查阅、诉求派单、运行简报和演示恢复相关页面。
 
 ![智慧招商页面总览](docs/screenshots/features/investment-overview.png)
 
@@ -95,6 +98,7 @@
 | 页面 | 截图 |
 | --- | --- |
 | 人员管理 | [查看截图](docs/screenshots/features/members.png) |
+| 成员新增编辑与授权表单 | [查看截图](docs/screenshots/features/members-form.png) |
 | 部门与组织架构 | [查看截图](docs/screenshots/features/departments.png) |
 | 角色管理与权限配置 | [查看截图](docs/screenshots/features/roles.png) |
 | 三员权限边界与角色配置 | [查看截图](docs/screenshots/features/role-permissions.png) |
@@ -114,6 +118,7 @@
 | 政策详情右侧抽屉 | [查看截图](docs/screenshots/features/policy-detail-drawer.png) |
 | 项目线索明文查阅审计 | [查看截图](docs/screenshots/features/project-sensitive-phone.png) |
 | 企业诉求派单与督办 | [查看截图](docs/screenshots/features/service-requests.png) |
+| 企业诉求详情抽屉 | [查看截图](docs/screenshots/features/guarantee-detail.png) |
 | 运行简报预览 | [查看截图](docs/screenshots/features/run-brief.png) |
 | 账号菜单与演示恢复确认 | [查看截图](docs/screenshots/features/demo-reset-confirmation.png) |
 
@@ -126,6 +131,7 @@
 | 通知中心右侧抽屉 | [查看截图](docs/screenshots/notifications.png) |
 | 商机地图多边形圈选 | [查看截图](docs/screenshots/map.png) |
 | AI 外呼话术配置引导 | [查看截图](docs/screenshots/features/ai-outbound-setup.png) |
+| 账号菜单与退出入口 | [查看截图](docs/screenshots/features/account-menu.png) |
 
 </details>
 
@@ -248,7 +254,18 @@ cp .env.example .env
 docker compose up -d
 ```
 
-入口默认为 <http://127.0.0.1:5199>。MySQL 通过命名卷持久化，API 仅在 Compose 内部网络开放，由 Nginx 转发 `/api`。演示验证码配置用于本地演示，部署前应关闭免验证码演示登录并替换验证码服务密钥。交付说明见 [Docker 包 README](deploy/docker-package/README.md)。
+入口默认为 <http://127.0.0.1:5199>，MySQL 绑定 <http://127.0.0.1:3307>，可通过 `.env` 中的 `WEB_HOST_PORT` 与 `MYSQL_HOST_PORT` 调整。MySQL 通过命名卷持久化，API 仅在 Compose 内部网络开放，由 Nginx 转发 `/api`。演示验证码配置用于本地演示，部署前应关闭免验证码演示登录并替换验证码服务密钥。交付说明见 [Docker 包 README](deploy/docker-package/README.md)。
+
+交付包中的前端静态资源与仓库 `dist/` 保持一致。**修改前端源码后必须重新同步交付目录并重新打包**，否则压缩包会滞后于源码：
+
+```bash
+npx vite build                       # 生成最新 dist
+rm -rf deploy/docker-package/frontend/site-final/assets
+cp -r dist/assets deploy/docker-package/frontend/site-final/
+cp dist/index.html deploy/docker-package/frontend/site-final/
+```
+
+验收命令如下：
 
 ```bash
 npx tsc --noEmit
@@ -259,6 +276,6 @@ docker compose -p youshu-package-verify -f deploy/docker-package/compose.yaml up
 docker compose -p youshu-package-verify -f deploy/docker-package/compose.yaml down -v
 ```
 
-测试使用独立 MySQL 8.4 临时容器，不读写本机演示数据库卷。打包验收使用独立端口和数据库卷，验收后删除该临时卷。截图文件位于 `docs/screenshots/`，README 所有本地图片与文件链接均应存在。
+测试使用独立 MySQL 8.4 临时容器，不读写本机演示数据库卷。打包验收使用独立端口和数据库卷，验收后删除该临时卷；**验收须在压缩包解压目录中执行**，以确保压缩包本身可用，而非仅验证仓库内的交付目录。截图文件位于 `docs/screenshots/`，README 所有本地图片与文件链接均应存在。
 
 更多会话交接信息见 [PROJECT_SESSION_SUMMARY.md](PROJECT_SESSION_SUMMARY.md)。

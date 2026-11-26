@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { DataTable, type DataColumn } from "@/../src/components/shared/DataTable";
+import { DetailFields } from "@/../src/components/shared/DetailFields";
 import { MetricCard } from "@/../src/components/shared/MetricCard";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { platformUsers, visitOrders, visitRecords } from "../../../src/data/mock.js";
@@ -17,19 +18,7 @@ import { FormDialog, FormField, NativeSelect, PageHeading, PageSection, SearchFi
 
 type Row = Record<string, any> & { id: string | number };
 
-const fieldLabels: Record<string, string> = {
-  title: "工单主题", company: "关联企业", source: "触发来源", owner: "执行人", planDate: "计划走访日期",
-  priority: "优先级", note: "备注", status: "状态", created: "创建时间", creator: "创建人",
-  date: "走访日期", result: "走访结果", duration: "走访时长", park: "所属园区",
-};
-const internalFields = new Set(["id", "ownerId", "createdBy", "departmentId", "parkId", "serviceRequestId"]);
-
-function DetailFields({ row }: { row: Row }) {
-  const entries = Object.entries(row).filter(([key]) => !internalFields.has(key));
-  return <dl className="business-detail-list">{entries.map(([key, value]) => (
-    <div key={key}><dt>{fieldLabels[key] ?? key}</dt><dd>{Array.isArray(value) ? value.join("、") : String(value ?? "—")}</dd></div>
-  ))}</dl>;
-}
+const visitFieldLabels: Record<string, string> = { title: "工单主题", owner: "执行人", source: "触发来源" };
 
 export function VisitManagePage() {
   const enqueue = useReportExport();
@@ -67,6 +56,6 @@ export function VisitManagePage() {
   return <div className="business-page"><PageHeading title="走访管理" description="将迁移预警、政策到期和企业服务需求转为走访工单与过程记录" source={orders.source} actions={tab === "orders" ? <ActionButton action="新增" onClick={() => setCreateOpen(true)}><Plus data-icon="inline-start" />新增工单</ActionButton> : <ActionButton action="导出" variant="outline" onClick={() => enqueue("走访记录.csv", [{ header: "标题", value: row => row.title }, { header: "企业", value: row => row.company }, { header: "负责人", value: row => row.owner }, { header: "走访日期", value: row => row.date }, { header: "结果", value: row => row.result }], filtered)}><Download data-icon="inline-start" />导出记录</ActionButton>} /><div className="business-metric-grid"><MetricCard title="待走访工单" value={orders.rows.filter((row) => row.status === "待走访").length} description="等待执行" icon={<CalendarDays />} /><MetricCard title="走访中" value={orders.rows.filter((row) => row.status === "走访中").length} description="正在服务企业" /><MetricCard title="本月完成" value={records.rows.length} description="已归档走访记录" /><MetricCard title="高优先级" value={orders.rows.filter((row) => row.priority === "高" && row.status !== "已完成").length} description="建议优先安排" /></div><PageSection title="走访工作台" description={`共 ${filtered.length} 条记录`}><SectionTabs items={[{ key: "orders", label: "走访工单", count: orders.rows.length }, { key: "records", label: "走访记录", count: records.rows.length }]} value={tab} onChange={(value) => setTab(value)} /><div className="business-toolbar"><SearchField value={current.keyword} onChange={(value) => patchFilters({ keyword: value })} placeholder={tab === "orders" ? "搜索工单或企业" : "搜索走访主题或企业"} /><NativeSelect label="负责人" value={current.owner} onChange={(value) => patchFilters({ owner: value })} options={[...new Set(rows.map((row) => row.owner))]} />{tab === "orders" && <NativeSelect label="工单状态" value={(current as { status?: string }).status ?? ""} onChange={(value) => patchFilters({ status: value })} options={["待走访", "走访中", "已完成", "已取消"]} />}</div><DataTable columns={tab === "orders" ? orderColumns : recordColumns} data={filtered} openRowDetails={false} onRowClick={tab === "orders" ? setDetail : setRecordDetail} detailTitle={tab === "orders" ? "走访工单" : "走访记录"} /></PageSection>
     <FormDialog open={createOpen} onOpenChange={setCreateOpen} title="新增走访工单" onSubmit={createOrder}><FormField label="工单主题" required><Input value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} required /></FormField><FormField label="关联企业"><Input value={form.company} onChange={(event) => setForm({ ...form, company: event.target.value })} /></FormField><FormField label="触发来源"><NativeSelect bare label="触发来源" allowEmpty={false} value={form.source} onChange={(value) => setForm({ ...form, source: value })} options={["手动创建", "迁移预警", "政策到期", "企服保障", "企业档案"]} /></FormField><FormField label="执行人"><NativeSelect bare label="执行人" allowEmpty={false} value={form.owner} onChange={(value) => setForm({ ...form, owner: value })} options={platformUsers} /></FormField><FormField label="计划走访日期" required><Input type="date" value={form.planDate} onChange={(event) => setForm({ ...form, planDate: event.target.value })} required /></FormField><FormField label="优先级"><NativeSelect bare label="优先级" allowEmpty={false} value={form.priority} onChange={(value) => setForm({ ...form, priority: value })} options={["高", "中", "低"]} /></FormField><FormField label="备注"><Textarea value={form.note} onChange={(event) => setForm({ ...form, note: event.target.value })} /></FormField></FormDialog>
     <FormDialog open={Boolean(completeOrder)} onOpenChange={(open) => !open && setCompleteOrder(null)} title="完成走访" description={completeOrder?.title} onSubmit={completeVisit}><FormField label="走访结果" required><Textarea value={complete.result} onChange={(event) => setComplete({ ...complete, result: event.target.value })} required placeholder="记录企业需求、风险反馈和后续事项" /></FormField><FormField label="走访时长"><Input value={complete.duration} onChange={(event) => setComplete({ ...complete, duration: event.target.value })} /></FormField></FormDialog>
-    <Sheet open={Boolean(detail)} onOpenChange={(open) => !open && setDetail(null)}><SheetContent side="right" className="business-detail-sheet"><SheetHeader><SheetTitle>{detail?.title}</SheetTitle><SheetDescription>走访工单 · {detail?.status}</SheetDescription></SheetHeader>{detail && <><DetailFields row={detail} />{detail.status !== "已完成" && <ActionButton action="编辑" onClick={() => { setCompleteOrder(detail); setDetail(null); }}>完成走访</ActionButton>}</>}</SheetContent></Sheet>
-    <Sheet open={Boolean(recordDetail)} onOpenChange={(open) => !open && setRecordDetail(null)}><SheetContent side="right" className="business-detail-sheet"><SheetHeader><SheetTitle>{recordDetail?.title}</SheetTitle><SheetDescription>走访记录 · {recordDetail?.date}</SheetDescription></SheetHeader>{recordDetail && <DetailFields row={recordDetail} />}</SheetContent></Sheet></div>;
+    <Sheet open={Boolean(detail)} onOpenChange={(open) => !open && setDetail(null)}><SheetContent side="right" className="business-detail-sheet"><SheetHeader><SheetTitle>{detail?.title}</SheetTitle><SheetDescription>走访工单 · {detail?.status}</SheetDescription></SheetHeader>{detail && <><DetailFields row={detail} labels={visitFieldLabels} />{detail.status !== "已完成" && <ActionButton action="编辑" onClick={() => { setCompleteOrder(detail); setDetail(null); }}>完成走访</ActionButton>}</>}</SheetContent></Sheet>
+    <Sheet open={Boolean(recordDetail)} onOpenChange={(open) => !open && setRecordDetail(null)}><SheetContent side="right" className="business-detail-sheet"><SheetHeader><SheetTitle>{recordDetail?.title}</SheetTitle><SheetDescription>走访记录 · {recordDetail?.date}</SheetDescription></SheetHeader>{recordDetail && <DetailFields row={recordDetail} labels={visitFieldLabels} />}</SheetContent></Sheet></div>;
 }

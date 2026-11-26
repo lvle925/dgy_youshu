@@ -1,0 +1,1 @@
+import{u as i}from"./useBusinessCollection-BdaZyl6A.js";import{u}from"./main-CYPql0ry.js";const n=[];function d(){const{city:o}=u(),{rows:r,error:s,loading:e}=i({key:"youshu-ai-records",seed:n,apiCollection:"aiRecords"});return{rows:r.filter(t=>o===t.city),error:s,loading:e}}export{d as u};
