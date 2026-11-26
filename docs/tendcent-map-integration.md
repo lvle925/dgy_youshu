@@ -1,8 +1,11 @@
 # 腾讯位置服务接入契约（实测确认）
 
 密钥：
-- Key（前端 JS API + 后端 WebService）：`6WLBZ-7AMWQ-XED5P-4TMZK-2NLJ7-WYFOM`
-- SecretKey（仅后端签名用，**禁止进入前端代码**）：`y9g2DszRXc4B3TwGLoXZF8BNSAJvRna0`
+- Key（前端 JS API + 后端 WebService）：见 `.env` 的 `TENCENT_MAP_KEY`
+- SecretKey（仅后端签名用，**禁止进入前端代码**）：见 `.env` 的 `TENCENT_MAP_SECRET_KEY`
+
+> 本文档刻意不记录真实密钥值。密钥只允许存在于本机 `.env` 与部署环境的密钥管理中；
+> `.env` 已被 `.gitignore` 忽略，不会进入版本库。
 
 环境变量名：`TENCENT_MAP_KEY` / `TENCENT_MAP_SECRET_KEY`
 

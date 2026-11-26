@@ -8,7 +8,11 @@ import { useEffect, useRef, useState } from "react";
  */
 
 const SCRIPT_ID = "tencent-map-gljs";
-const DEFAULT_KEY = "6WLBZ-7AMWQ-XED5P-4TMZK-2NLJ7-WYFOM";
+/**
+ * 腾讯地图 JS API 的 Key 会随浏览器请求公开，属于半公开凭据，
+ * 仍支持通过 VITE_TENCENT_MAP_KEY 覆盖，以便部署时替换为各自的 Key。
+ */
+const DEFAULT_KEY = import.meta.env.VITE_TENCENT_MAP_KEY || "6WLBZ-7AMWQ-XED5P-4TMZK-2NLJ7-WYFOM";
 
 type LatLngTuple = [lng: number, lat: number];
 
