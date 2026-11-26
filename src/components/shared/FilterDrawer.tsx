@@ -62,6 +62,7 @@ export function FilterDrawer({
           <SheetDescription>可组合多个维度筛选数据</SheetDescription>
         </SheetHeader>
         <div className="filter-drawer-selected">
+          <span className="filter-drawer-count">已选 {selected.length} 项</span>
           {selected.length ? (
             selected.map((item) => (
               <button

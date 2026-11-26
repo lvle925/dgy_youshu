@@ -5,6 +5,8 @@ import { OperationBriefDialog } from "@/components/shared/OperationBriefDialog";
 import { MetricCard } from "@/../src/components/shared/MetricCard";
 import { campusList, companies, clues, migrationEnterprises } from "../../../src/data/mock.js";
 import { useCurrentCity } from "@/app/CityContext";
+import { allowsRoute, usePrincipal } from "@/app/AccessContext";
+import { useNavigate } from "react-router-dom";
 import { useBusinessCollection } from "@/lib/useBusinessCollection";
 import { NativeSelect, PageHeading, PageSection, StatusValue } from "@/pages/PagePrimitives";
 
@@ -20,6 +22,8 @@ function belongsToCity(row: Row, city: string) {
 
 export function PanoramicInsightPage() {
   const { city } = useCurrentCity();
+  const principal = usePrincipal();
+  const navigate = useNavigate();
   const [district, setDistrict] = useState("");
   const campusData = useBusinessCollection<Row>({ key: "youshu-campus-list", seed: campusList, apiCollection: "campusList" });
   const archiveData = useBusinessCollection<Row>({ key: "youshu-company-archives", seed: (companies as Row[]).map((row, index) => ({ ...row, archiveStatus: index === 9 ? "已迁出" : index === 19 ? "已消失" : "正常经营" })), apiCollection: "companyArchives" });
@@ -57,20 +61,31 @@ export function PanoramicInsightPage() {
       const industry = String(row.industry || "其他");
       counts.set(industry, (counts.get(industry) ?? 0) + 1);
     });
-    return [...counts.entries()].map(([name, value]) => ({ name, value })).sort((left, right) => right.value - left.value).slice(0, 5);
+    const sorted = [...counts.entries()].map(([name, value]) => ({ name, value })).sort((left, right) => right.value - left.value);
+    const head = sorted.slice(0, 4);
+    const tail = sorted.slice(4);
+    return tail.length ? [...head, { name: "其他", value: tail.reduce((sum, item) => sum + item.value, 0) }] : head;
   }, [archiveRows]);
+  const drillTargets: Record<string, string> = {
+    "企业档案": "/myCampus/corporateArchives/index",
+    "园区载体": "/myCampus/campusAdmin/index",
+    "在跟招商项目": "/business/projectCluesUpdate/index",
+    "迁移预警企业": "/myCampus/migrationWarning/index",
+    "在办企业诉求": "/myCampus/guarantee/index",
+    "诉求办结率": "/myCampus/guarantee/index",
+  };
   const columns: DataColumn<Row>[] = [
     { key: "name", header: "园区名称" },
     { key: "buildings", header: "楼宇数", sortable: true },
     { key: "enterprises", header: "入驻企业", sortable: true },
     { key: "area", header: "载体面积" },
-    { key: "occupancy", header: "入驻率", sortable: true, cell: (row) => `${row.occupancy}%` },
+    { key: "occupancy", header: "入驻率", sortable: true, cell: (row) => row.occupancy === undefined || row.occupancy === null || row.occupancy === "" ? "—" : `${row.occupancy}%` },
     { key: "status", header: "运营状态", cell: (row) => <StatusValue value={row.status} /> },
   ];
 
   return <div className="business-page">
-    <PageHeading title="全景洞察" description={`${city} · 招商项目、企业服务与迁移预警运行情况`} source={campusData.source} actions={<><OperationBriefDialog /><NativeSelect label="所在区域" value={district} onChange={setDistrict} options={districts} /></>} />
-    <div className="business-metric-grid six">{stats.map((item) => <MetricCard key={item.label} title={item.label} value={item.value} description={item.description} variant={item.variant ?? "surface"} />)}</div>
+    <PageHeading title="全景洞察" description={`${city} · 招商项目、企业服务与迁移预警运行情况`} source={campusData.source} actions={<OperationBriefDialog />} />
+    <div className="business-metric-grid six">{stats.map((item) => { const target = drillTargets[item.label]; const allowed = target ? allowsRoute(principal, target) : false; return <MetricCard key={item.label} title={item.label} value={item.value} description={item.description} variant={item.variant ?? "surface"} onClick={allowed ? () => navigate(target) : undefined} />; })}</div>
     <div className="business-chart-grid">
       <PageSection title="招商项目推进阶段" description="来自当前城市的项目线索台账">
         {clueRows.length ? <div className="business-chart"><ResponsiveContainer width="100%" height="100%"><BarChart data={stageDistribution} margin={{ left: 0, right: 12, top: 8, bottom: 8 }}><CartesianGrid vertical={false} stroke="#e7ebf0" strokeDasharray="3 5" /><XAxis dataKey="name" tickLine={false} axisLine={false} tick={{ fill: "#64748b", fontSize: 11 }} /><YAxis allowDecimals={false} tickLine={false} axisLine={false} tick={{ fill: "#64748b", fontSize: 11 }} /><Tooltip /><Bar dataKey="count" name="项目数" fill={chartPalette[0]} radius={[5, 5, 0, 0]} /></BarChart></ResponsiveContainer></div> : <p className="business-empty-hint">当前城市暂无项目线索</p>}
@@ -80,7 +95,7 @@ export function PanoramicInsightPage() {
       </PageSection>
     </div>
     <PageSection title="园区运行监测" description={`${city} · 企业诉求 ${requestRows.length} 项，其中已办结 ${requestClosed} 项`}>
-      <div className="business-toolbar"><NativeSelect label="区域" value={district} onChange={setDistrict} options={districts} /></div>
+      <div className="business-toolbar"><NativeSelect label="按区域筛选园区运行表" value={district} onChange={setDistrict} options={districts} /></div>
       <DataTable columns={columns} data={parksView} detailTitle="园区运行概况" />
     </PageSection>
   </div>;

@@ -1,6 +1,6 @@
 import { useReportExport } from "@/app/ReportQueue";
 import { ActionButton } from "@/app/AccessContext";
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { useLocation } from "react-router-dom";
 import { Download, Filter, Upload } from "lucide-react";
 import { toast } from "sonner";
@@ -40,6 +40,9 @@ export function CorporateArchivesPage() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selected, setSelected] = useState<Row | null>(null);
   const [importOpen, setImportOpen] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importProgress, setImportProgress] = useState({ done: 0, total: 0, failed: 0 });
+  const csvInputRef = useRef<HTMLInputElement>(null);
   const groups = [
     { key: "district", label: "注册区域", options: districts },
     { key: "park", label: "所属园区", options: [...new Set(data.rows.map((row) => row.park))] },
@@ -55,10 +58,12 @@ export function CorporateArchivesPage() {
   const archiveConditions = drawerValue;
   const filtered = data.rows.filter((row) => (!keyword || `${row.name} ${row.code}`.includes(keyword)) && groups.every((group) => !archiveConditions[group.key]?.length || archiveConditions[group.key].some((item) => {
     const raw = String(row[group.key] ?? "");
-    if (group.key === "patents") return item === "0" ? Number(raw) === 0 : item === "1-5" ? Number(raw) >= 1 && Number(raw) <= 5 : item === "6-20" ? Number(raw) >= 6 && Number(raw) <= 20 : Number(raw) > 20;
-    if (group.key === "socialSecurity") { const count = Number(raw); return item === "1-10" ? count <= 10 : item === "11-50" ? count > 10 && count <= 50 : item === "51-200" ? count > 50 && count <= 200 : count > 200; }
+    if (group.key === "patents") { const count = Number(raw); if (!Number.isFinite(count)) return false; return item === "0" ? count === 0 : item === "1-5" ? count >= 1 && count <= 5 : item === "6-20" ? count >= 6 && count <= 20 : count > 20; }
+    if (group.key === "socialSecurity") { const count = Number(raw); if (!Number.isFinite(count)) return false; return item === "1-10" ? count <= 10 : item === "11-50" ? count > 10 && count <= 50 : item === "51-200" ? count > 50 && count <= 200 : count > 200; }
     if (group.key === "registerDate") {
-      const years = new Date().getFullYear() - Number(raw.slice(0, 4));
+      const year = Number(raw.slice(0, 4));
+      if (!Number.isFinite(year) || year <= 0) return false;
+      const years = new Date().getFullYear() - year;
       return item === "1 年内" ? years <= 1 : item === "1-3 年" ? years > 1 && years <= 3 : item === "3-5 年" ? years > 3 && years <= 5 : years > 5;
     }
     return raw.includes(item);
@@ -66,8 +71,7 @@ export function CorporateArchivesPage() {
   const columns: DataColumn<Row>[] = [{ key: "name", header: "企业名称", sortable: true }, { key: "park", header: "所属园区" }, { key: "industry", header: "行业" }, { key: "scale", header: "规模" }, { key: "socialSecurity", header: "社保人数", sortable: true }, { key: "settleDate", header: "入驻日期", sortable: true }, { key: "tags", header: "企业标签", cell: (row) => (row.tags ?? []).join("、") }, { key: "archiveStatus", header: "经营状态", cell: (row) => <StatusValue value={row.archiveStatus} /> }];
   async function importCsv(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const input = document.querySelector<HTMLInputElement>("#archive-csv");
-    const file = input?.files?.[0];
+    const file = csvInputRef.current?.files?.[0];
     if (!file) return toast.warning("请选择 CSV 文件");
     const lines = (await file.text()).split(/\r?\n/).filter(Boolean);
     const headers = (lines.shift() ?? "").split(",").map((value) => value.trim());
@@ -76,11 +80,22 @@ export function CorporateArchivesPage() {
       return Object.fromEntries(headers.map((header, index) => [header, values[index] ?? ""]));
     }).filter((row) => row.name || row.company);
     if (!records.length) return toast.warning("CSV 中没有可导入的企业记录");
+    setImporting(true);
+    setImportProgress({ done: 0, total: records.length, failed: 0 });
+    let done = 0;
+    let failed = 0;
     for (const row of records) {
-      await data.createRecord({ ...row, name: row.name || row.company, archiveStatus: row.archiveStatus || "正常经营", tags: row.tags ? String(row.tags).split("|") : [] } as Omit<Row, "id">);
+      try {
+        await data.createRecord({ ...row, name: row.name || row.company, archiveStatus: row.archiveStatus || "正常经营", tags: row.tags ? String(row.tags).split("|") : [] } as Omit<Row, "id">);
+      } catch {
+        failed += 1;
+      }
+      done += 1;
+      setImportProgress({ done, total: records.length, failed });
     }
-    setImportOpen(false);
-    toast.success(`已导入 ${records.length} 家企业到本地档案`);
+    setImporting(false);
+    toast.success(`已导入 ${done - failed} 家企业到本地档案${failed ? `，${failed} 条失败` : ""}`);
+    if (!failed) setImportOpen(false);
   }
   async function requestServiceFollowUp(row: Row) {
     const planDate = new Date();
@@ -106,7 +121,7 @@ export function CorporateArchivesPage() {
   return <div className="business-page"><PageHeading title="企业档案" description="从工商、招聘、经营和知识产权等维度查看园区企业画像" source={data.source} actions={<><ActionButton action="新增" variant="outline" onClick={() => setImportOpen(true)}><Upload data-icon="inline-start" />批量导入</ActionButton><ActionButton action="导出" variant="outline" onClick={() => enqueue("企业档案.csv", [{ header: "企业名称", value: row => row.name }, { header: "行业", value: row => row.industry }, { header: "区域", value: row => row.district }, { header: "园区", value: row => row.park }], filtered)}><Download data-icon="inline-start" />导出</ActionButton></>} /><StatBar scope="全库口径" items={[{ label: "入驻企业总数", value: archiveStats.settled.toLocaleString(), suffix: "家" }, { label: "累计迁出", value: archiveStats.migrated, suffix: "家", tone: "gold" }, { label: "企业消失", value: archiveStats.vanished, suffix: "家" }, { label: "平均入驻年限", value: archiveStats.avgYears, suffix: "年" }, { label: "企业留存率", value: archiveStats.retention, tone: "success" }]} /><PageSection title="企业档案" description={`当前筛选 ${filtered.length} 家企业`}><div className="business-toolbar"><SearchField value={keyword} onChange={setKeyword} placeholder="企业名称或统一社会信用代码" /><Button variant="outline" onClick={() => setDrawerOpen(true)}><Filter data-icon="inline-start" />更多筛选（30+ 维度）</Button></div><DataTable columns={columns} data={filtered} openRowDetails={false} onRowClick={setSelected} detailTitle="企业档案" renderDetails={(row) => <ArchiveDetail row={row} onFollowUp={() => void requestServiceFollowUp(row)} />} /></PageSection>
     <FilterDrawer open={drawerOpen} onOpenChange={setDrawerOpen} title="企业高级筛选" groups={groups} value={drawerValue} onChange={setDrawerValue} onQuery={() => setDrawerOpen(false)} onReset={() => setDrawerValue({})} />
     <Sheet open={Boolean(selected)} onOpenChange={(open) => !open && setSelected(null)}><SheetContent side="right" className="business-detail-sheet"><SheetHeader><SheetTitle>{selected?.name}</SheetTitle><SheetDescription>企业全景档案 · {selected?.industry}</SheetDescription></SheetHeader>{selected && <ArchiveDetail row={selected} onFollowUp={() => void requestServiceFollowUp(selected)} />}</SheetContent></Sheet>
-    <Dialog open={importOpen} onOpenChange={setImportOpen}><DialogContent className="max-w-lg"><DialogHeader><DialogTitle>批量导入企业档案</DialogTitle><DialogDescription>CSV 首行使用字段名。支持 name、district、industry、scale、socialSecurity、park、tags 等字段。</DialogDescription></DialogHeader><form onSubmit={importCsv} className="archive-import-form"><input id="archive-csv" type="file" accept=".csv,text/csv" required /><p>标签字段可用竖线分隔，例如 高新技术企业|专精特新。</p><div><Button type="button" variant="outline" onClick={() => setImportOpen(false)}>取消</Button><Button type="submit">导入 CSV</Button></div></form></DialogContent></Dialog></div>;
+    <Dialog open={importOpen} onOpenChange={setImportOpen}><DialogContent className="max-w-lg"><DialogHeader><DialogTitle>批量导入企业档案</DialogTitle><DialogDescription>CSV 首行使用字段名。支持 name、district、industry、scale、socialSecurity、park、tags 等字段。</DialogDescription></DialogHeader><form onSubmit={importCsv} className="archive-import-form"><input ref={csvInputRef} id="archive-csv" type="file" accept=".csv,text/csv" required /><p>标签字段可用竖线分隔，例如 高新技术企业|专精特新。</p>{importing && <div className="archive-import-progress"><div className="archive-import-bar"><i style={{ width: `${importProgress.total ? (importProgress.done / importProgress.total) * 100 : 0}%` }} /></div><span>正在导入 {importProgress.done} / {importProgress.total}{importProgress.failed ? ` · ${importProgress.failed} 条失败` : ""}</span></div>}<div><Button type="button" variant="outline" onClick={() => setImportOpen(false)}>取消</Button><Button type="submit" disabled={importing}>{importing ? "导入中…" : "导入 CSV"}</Button></div></form></DialogContent></Dialog></div>;
 }
 
 function ArchiveDetail({ row, onFollowUp }: { row: Row; onFollowUp: () => void }) {

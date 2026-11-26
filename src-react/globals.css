@@ -549,6 +549,7 @@ body { background: var(--os-ambient-bg); color: var(--foreground); }
 .filter-drawer-header { padding:24px 26px 17px; border-bottom:1px solid var(--surface-border); }
 .filter-drawer-selected { position:sticky; top:0; z-index:1; display:flex; flex-wrap:wrap; gap:7px; min-height:48px; max-height:112px; overflow:auto; padding:11px 26px; border-bottom:1px solid var(--surface-border); background:#fff; }
 .filter-drawer-selected>span { align-self:center; color:#9aa5b4; font-size:12px; }
+.filter-drawer-selected .filter-drawer-count { width:100%; color:#5d6c80; font-weight:600; }
 .filter-drawer-selected button { display:inline-flex; align-items:center; gap:5px; height:25px; padding:0 8px; border:1px solid rgba(22,82,184,.12); border-radius:5px; background:#EEF3FC; color:#1652B8; font-size:11px; cursor:pointer; }
 .filter-drawer-selected button svg { width:12px; height:12px; }
 .filter-drawer-body { display:flex; flex:1; flex-direction:column; gap:13px; min-height:0; overflow:auto; padding:18px 26px; }
@@ -605,6 +606,9 @@ body { background: var(--os-ambient-bg); color: var(--foreground); }
 .stat-bar-value--gold { color:#A66E14!important; }
 .stat-bar-value--success { color:#147A4C!important; }
 .shared-metric-card { position:relative; overflow:hidden; gap:0; border:1px solid var(--surface-border); border-radius:10px; background:#fff; box-shadow:var(--surface-shadow); }
+.shared-metric-card.is-clickable { cursor:pointer; transition:transform .16s ease, box-shadow .16s ease; }
+.shared-metric-card.is-clickable:hover { transform:translateY(-2px); box-shadow:0 12px 26px -16px rgba(15,39,68,.3); }
+.shared-metric-card.is-clickable:focus-visible { outline:2px solid var(--primary); outline-offset:2px; }
 .shared-metric-card--surface::before { position:absolute; top:0; right:0; left:0; height:3px; background:#1652B8; content:""; }
 .shared-metric-card [data-slot="card-header"] { gap:8px; padding:18px 19px 5px; }
 .shared-metric-card [data-slot="card-description"] { display:flex; align-items:center; gap:8px; color:#6f7e92; font-size:12px; }

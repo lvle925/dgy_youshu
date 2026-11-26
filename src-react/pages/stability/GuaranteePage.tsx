@@ -1,6 +1,7 @@
 import { ActionButton } from "@/app/AccessContext";
 import { useBusinessCollection } from "@/lib/useBusinessCollection";
 import { DataTable, type DataColumn } from "@/../src/components/shared/DataTable";
+import { DetailFields } from "@/../src/components/shared/DetailFields";
 import { MetricCard } from "@/../src/components/shared/MetricCard";
 import { StatusTag } from "@/../src/components/shared/StatusTag";
 import { Button } from "@/components/ui/button";
@@ -45,7 +46,7 @@ export function GuaranteePage() {
     { key: "supervision", header: "督办状态", cell: (row) => isOverdue(row) ? <StatusTag value="超期督办" tone="danger" /> : row.status === "已办结" ? <StatusTag value="已办结" tone="success" /> : <StatusTag value={row.priority === "督办" ? "重点督办" : "按期办理"} tone={row.priority === "督办" ? "warning" : "neutral"} /> },
     { key: "status", header: "办理状态", cell: (row) => <StatusTag value={row.status} tone={row.status === "已办结" ? "success" : isOverdue(row) ? "danger" : row.status === "办理中" ? "warning" : "neutral"} /> },
     { key: "action", header: "操作", cell: (row) => <div className="table-action-buttons">
-      {row.status === "待派单" && <ActionButton action="编辑" size="sm" variant="outline" onClick={() => { setAssigning(row); setAssign({ departmentId: row.departmentId || "", owner: row.owner || "", dueAt: row.dueAt || "" }); }}>派单</ActionButton>}
+      {row.status === "待派单" && <ActionButton action="编辑" size="sm" onClick={() => { setAssigning(row); setAssign({ departmentId: row.departmentId || "", owner: row.owner || "", dueAt: row.dueAt || "" }); }}>派单</ActionButton>}
       {row.status === "办理中" && <ActionButton action="编辑" size="sm" variant="outline" onClick={() => navigate("/myCampus/visitManage/index", { state: { company: row.name || row.company, serviceRequestId: row.id, park: row.park, parkId: row.parkId, departmentId: row.departmentId } })}>创建走访</ActionButton>}
     </div> },
   ];
@@ -95,14 +96,14 @@ export function GuaranteePage() {
       <div className="business-toolbar"><SearchField value={keyword} onChange={setKeyword} placeholder="企业、诉求或事项类别" /><NativeSelect label="办理状态" value={status} onChange={setStatus} options={statusOptions} /><NativeSelect label="所属园区" value={park} onChange={setPark} options={parks} /></div>
       <DataTable columns={columns} data={filtered} openRowDetails={false} onRowClick={setSelected} detailTitle="企业诉求详情" />
     </PageSection>
-    <Sheet open={Boolean(selected)} onOpenChange={(open) => !open && setSelected(null)}><SheetContent side="right" className="business-detail-sheet"><SheetHeader><SheetTitle>{selected?.title}</SheetTitle><SheetDescription>{selected?.name} · {isOverdue(selected ?? {}) ? "超期督办" : selected?.status}</SheetDescription></SheetHeader>{selected && <><dl className="business-detail-list">{Object.entries(selected).filter(([key]) => key !== "id" && key !== "description").map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{String(value ?? "—")}</dd></div>)}</dl><p className="business-detail-prose">{selected.description}</p>{selected.status === "办理中" && <Button onClick={() => navigate("/myCampus/visitManage/index", { state: { company: selected.name || selected.company, serviceRequestId: selected.id, park: selected.park, parkId: selected.parkId, departmentId: selected.departmentId } })}>派生走访工单</Button>}</>}</SheetContent></Sheet>
+    <Sheet open={Boolean(selected)} onOpenChange={(open) => !open && setSelected(null)}><SheetContent side="right" className="business-detail-sheet"><SheetHeader><SheetTitle>{selected?.title}</SheetTitle><SheetDescription>{selected?.name} · {isOverdue(selected ?? {}) ? "超期督办" : selected?.status}</SheetDescription></SheetHeader>{selected && <><DetailFields row={selected} exclude={["description"]} /><p className="business-detail-prose">{selected.description}</p>{selected.status === "办理中" && <Button onClick={() => navigate("/myCampus/visitManage/index", { state: { company: selected.name || selected.company, serviceRequestId: selected.id, park: selected.park, parkId: selected.parkId, departmentId: selected.departmentId } })}>派生走访工单</Button>}</>}</SheetContent></Sheet>
     <FormDialog open={createOpen} onOpenChange={setCreateOpen} title="受理企业诉求" description="提交后进入部门派单队列，完整过程将写入审计记录" onSubmit={createRequest}>
       <FormField label="企业名称" required><Input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} required /></FormField>
       <FormField label="诉求事项" required><Input value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} required /></FormField>
-      <FormField label="事项类别"><select className="business-input" value={form.category} onChange={(event) => setForm({ ...form, category: event.target.value })}>{["政策服务", "人才服务", "载体保障", "用工服务", "融资服务", "其他诉求"].map((item) => <option key={item}>{item}</option>)}</select></FormField>
-      <FormField label="所属园区"><Input value={form.park} onChange={(event) => setForm({ ...form, park: event.target.value, parkId: event.target.value })} /></FormField>
+      <FormField label="事项类别"><NativeSelect bare label="事项类别" allowEmpty={false} value={form.category} onChange={(value) => setForm({ ...form, category: value })} options={["政策服务", "人才服务", "载体保障", "用工服务", "融资服务", "其他诉求"]} /></FormField>
+      <FormField label="所属园区"><NativeSelect bare label="所属园区" allowEmpty={false} value={form.park || parks[0] || ""} onChange={(value) => setForm({ ...form, park: value, parkId: value })} options={parks.length ? parks : ["未指定园区"]} /></FormField>
       <FormField label="办理期限" required><Input type="date" value={form.dueAt} onChange={(event) => setForm({ ...form, dueAt: event.target.value })} required /></FormField>
-      <FormField label="优先级"><select className="business-input" value={form.priority} onChange={(event) => setForm({ ...form, priority: event.target.value })}><option>普通</option><option>督办</option></select></FormField>
+      <FormField label="优先级"><NativeSelect bare label="优先级" allowEmpty={false} value={form.priority} onChange={(value) => setForm({ ...form, priority: value })} options={["普通", "督办"]} /></FormField>
       <FormField label="诉求说明"><Input value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} /></FormField>
     </FormDialog>
     <FormDialog open={Boolean(assigning)} onOpenChange={(open) => !open && setAssigning(null)} title="派单至承办部门" description={assigning?.title} onSubmit={assignRequest}>

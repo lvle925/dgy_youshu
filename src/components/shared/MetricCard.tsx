@@ -18,6 +18,7 @@ export function MetricCard({
   icon,
   variant = "surface",
   footer,
+  onClick,
 }: {
   title: string;
   value: ReactNode;
@@ -27,10 +28,15 @@ export function MetricCard({
   icon?: ReactNode;
   variant?: "gradient" | "surface";
   footer?: ReactNode;
+  onClick?: () => void;
 }) {
   return (
     <Card
-      className={cn("shared-metric-card", `shared-metric-card--${variant}`)}
+      className={cn("shared-metric-card", `shared-metric-card--${variant}`, onClick && "is-clickable")}
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onClick={onClick}
+      onKeyDown={onClick ? (event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onClick(); } } : undefined}
     >
       <CardHeader>
         <CardDescription>
