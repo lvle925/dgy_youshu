@@ -9,11 +9,11 @@
 | 主工作目录 | `C:\Users\Administrator\Desktop\网站逆向` |
 | GitHub 仓库 | https://github.com/lvle925/dgy_youshu |
 | 当前分支 | `main` |
-| 最近业务提交 | `a89b6a8` 平台治理模块 UI 精修，2026-11-26 |
-| 本轮提交序列 | `7716542` 底座与地图 → `6b2de71` 登录/首页/404 → `cfedae0` 智慧招商 → `57a8737` 商机洞察 → `0f48585` 安商稳商 → `a89b6a8` 平台治理 |
-| 推送状态 | 上述 6 个提交仍在本地，**尚未推送 origin/main**（`0fd8085` 为远端最新） |
+| 最近业务提交 | `a89b6a8` 平台治理模块 UI 精修，2026-11-26；其后 `ae403ad` 重建交付包 |
+| 本轮提交序列 | `7716542` 底座与地图 → `6b2de71` 登录/首页/404 → `cfedae0` 智慧招商 → `57a8737` 商机洞察 → `0f48585` 安商稳商 → `a89b6a8` 平台治理 → `e130efe`+`2f513c5` 文档 → `ae403ad` 交付包重建 |
+| 推送状态 | 上述提交**均已推送**，`main` 与 `origin/main` 同步于 `ae403ad` |
 | 本轮交接文档 | 已同步本轮改动与剩余缺口，见第 9、10 节 |
-| 当前待接手重点 | 推送前 6 个提交；重建完整 Docker ZIP；按 1440×900 重拍地图截图；同事代码比较合并 |
+| 当前待接手重点 | 按 1440×900 重拍地图截图；同事代码比较合并；README 同步；第 10 节功能缺口 |
 
 本轮用户要求按《`dgy_youshu` 全量逐页前端 UI / 交互审查》文档执行 Batch 0~5 共 39 个页面/组件的前端精修，并明确交付边界为「源码 + 每批 build 验收」：不重建 Docker 交付包与 ZIP、不重拍截图、不改 README。每个批次单独提交，提交信息以 `Batch N:` 开头便于回溯。
 
@@ -227,8 +227,8 @@ GeoJSON 选区采用闭合 Polygon 环，坐标使用 `[lng, lat]`。园区点�
 
 本节记录本轮源码和文件核查结果，具体修复工作留待下一轮业务任务。
 
-1. **本轮 6 个提交尚未推送。** `7716542`、`6b2de71`、`cfedae0`、`57a8737`、`0f48585`、`a89b6a8` 均在本地 `main`，`origin/main` 仍停在 `0fd8085`。推送前需确认是否整体推送。
-2. **完整 Docker ZIP 与交付目录版本有差异。** [deploy/youshu-docker-package.zip](C:/Users/Administrator/Desktop/网站逆向/deploy/youshu-docker-package.zip) 存在，大小为 31,252,617 字节。ZIP 的首页仍引用 `main-CSXirpz-.js` 与 `main-jxmq1Lm-.css`，当前交付目录引用 `main-B3vP1mlT.js` 与 `main-B1PlHtvc.css`。本轮 6 个批次只改了源码，按约定未重建交付目录与 ZIP，需要交付时必须重新生成并从解压目录验证。
+1. ~~**本轮 6 个提交尚未推送。**~~ **已解决**：`7716542`、`6b2de71`、`cfedae0`、`57a8737`、`0f48585`、`a89b6a8` 及后续文档提交均已推送，`main` 与 `origin/main` 同步于 `ae403ad`。
+2. ~~**完整 Docker ZIP 与交付目录版本有差异。**~~ **已解决**：`ae403ad` 已重建交付目录与 ZIP。[deploy/youshu-docker-package.zip](C:/Users/Administrator/Desktop/网站逆向/deploy/youshu-docker-package.zip) 现为 31,282,471 字节、115 个文件，首页引用 `main-DAl2jQt3.js` / `main-7rVNy_fF.css`，与 `deploy/docker-package/frontend/site-final/` 及最新 `dist` 三方一致；ZIP 采用正斜杠路径、根级平铺、不含 `.env`。已在解压目录 compose 验证通过（MySQL 8.4 healthy、演示登录成功、companyArchives 30 / policies 20 / parksBuildings 10 / serviceRequests 4 条数据、地图 `xMidYMid meet` 且 8 个点位与围栏对齐、确认弹窗为自定义 `ConfirmDialog`）。**后续每次改前端都需重做这一步。**
 3. **地图截图尺寸有偏差。** 两张最新地图图像实际均为 `1904×922`。上轮回复声称固定 `1440×900` 与实际文件有出入。首页的 `features/home.png` 和 `dashboard.png` 实测均为 `1440×900`。地图图像需要按实际像素验证后重拍；本轮同样未重拍。
 4. **地址定位采用本地字符串检索。** 搜索现有园区名、区域、行业、企业名、地址和园区字段，取首个匹配结果。任意地址地理编码、在线地址建议需要继续接入。命中无坐标企业时按园区、区域或首个园区回落。
 5. **地图数据以 8 个上海园区示例为主。** `SpatialMap` 投影边界固定在上海附近，其他城市当前返回空园区集。本轮已在切到非上海城市时给出提示浮层与「切回上海市」按钮，但底图仍为 SVG 路网和水系示意，围栏外观按园区点附近偏移生成，真实园区多边形需继续接入。
@@ -331,4 +331,6 @@ docker compose -f deploy/docker-package/compose.yaml --env-file deploy/docker-pa
 
 新会话可先阅读本文、README 和最近地图源码。若继续完善交付，优先核查第 10 节列出的实际缺口，并复用现有设计系统、路由与后端集合接口推进。
 
-本轮（Batch 0~5）只改了前端源码，**没有**重建 `deploy/docker-package/`、`deploy/youshu-docker-package.zip`、README 与 `docs/screenshots/`。因此当前交付包里的前端仍是 `0fd8085` 时期的静态资源，与源码不一致；要出可交付包，必须先同步 dist 到 `frontend/site-final/`，再重新打 ZIP，并在解压目录里启动验证。
+本轮（Batch 0~5）只改了前端源码；随后 `ae403ad` **已重建** `deploy/docker-package/frontend/site-final/` 与 `deploy/youshu-docker-package.zip`，并从解压目录完成 compose 验证（详见第 10 节第 2 条）。README 与 `docs/screenshots/` 仍未处理。
+
+后续若再修改前端，需重做以下四步，否则交付包会再次落后于源码：把最新 `dist` 同步进 `frontend/site-final/` → 重新打 ZIP（正斜杠路径、根级平铺、不含 `.env`）→ 在**解压目录**里 compose 起来 → 浏览器实测关键页面。构建时注意本机沙箱对单次删除超过 50 个文件会拦截，使用 `npx vite build --emptyOutDir false` 并先手动清理 `dist/assets`。
