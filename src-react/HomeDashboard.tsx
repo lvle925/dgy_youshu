@@ -28,6 +28,8 @@ const favoriteOptions = [
   { title: '商机地图', path: '/businessMap/index', icon: 'map' },
   { title: '企业查询', path: '/subsidy/index', icon: 'search' },
   { title: '商机大厅', path: '/business/businessHall/index', icon: 'globe' },
+  { title: '项目线索', path: '/business/projectClues/index', icon: 'folder' },
+  { title: '走访管理', path: '/myCampus/visitManage/index', icon: 'calendar' },
   { title: '全景洞察', path: '/myCampus/panoramicLnsight/index', icon: 'dashboard' },
   { title: '企业档案', path: '/myCampus/corporateArchives/index', icon: 'folder' },
   { title: '数据服务与接口监控', path: '/system/interface-monitoring', icon: 'activity' },
@@ -57,12 +59,18 @@ function safeReadFavorites() {
 }
 
 
-function MetricCard({ title, value, detail, children, ticker = false, tone = 'secondary', icon }: { title: string; value: string | number; detail?: ReactNode; children?: ReactNode; ticker?: boolean; tone?: 'primary' | 'secondary' | 'tertiary'; icon: PlatformIconName }) {
+function MetricCard({ title, value, detail, children, ticker = false, tone = 'secondary', icon, onClick }: { title: string; value: string | number; detail?: ReactNode; children?: ReactNode; ticker?: boolean; tone?: 'primary' | 'secondary' | 'tertiary'; icon: PlatformIconName; onClick?: () => void }) {
   const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   const numeric = typeof value === 'number' ? value : null;
   return (
-    <Card className={`metric-card metric-card--${tone} ${tone === 'primary' ? 'os-hero-card' : 'os-glass-card'}`}>
-      <CardHeader className="metric-card-header"><CardDescription><PlatformIcon name={icon} className="metric-heading-icon" />{title}</CardDescription></CardHeader>
+    <Card
+      className={`metric-card metric-card--${tone} ${tone === 'primary' ? 'os-hero-card' : 'os-glass-card'} ${onClick ? 'is-clickable' : ''}`}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onClick={onClick}
+      onKeyDown={onClick ? (event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onClick(); } } : undefined}
+    >
+      <CardHeader className="metric-card-header"><CardDescription><PlatformIcon name={icon} className="metric-heading-icon" />{title}</CardDescription>{onClick && <ChevronRight className="metric-card-link-icon" />}</CardHeader>
       <CardContent>
         <div className="metric-value">{ticker && numeric !== null && !prefersReducedMotion ? <NumberTicker value={numeric} startValue={Math.floor(numeric * 0.99)} className="metric-ticker" /> : value}</div>
         {children}
@@ -79,6 +87,8 @@ export default function HomeDashboard() {
   const navigate = useNavigate();
   const allowMap = allowsRoute(principal, "/businessMap/index");
   const allowPolicyDetail = allowsRoute(principal, "/policy/index");
+  const allowClueList = allowsRoute(principal, "/business/projectCluesUpdate/index");
+  const allowMigration = allowsRoute(principal, "/myCampus/migrationWarning/index");
   const points = isShanghaiArea(city) ? mapMarkers.filter(marker => city === "上海市" || regionMatches(marker.district, city)) : [];
   const parkPoints = parkPointsFromGeoJson(toParkFeatureCollection(points));
   const highIntent = localProjects.filter(row => row.score >= 85).length;
@@ -86,10 +96,11 @@ export default function HomeDashboard() {
   const risks = riskRows.filter(row => row.risk === "高风险").length;
   const [favorites, setFavorites] = useState(safeReadFavorites);
   const [favoriteOpen, setFavoriteOpen] = useState(false);
+  const visibleFavorites = favorites.filter((item) => allowsRoute(principal, item.path));
 
   function toggleFavorite(item: (typeof favoriteOptions)[number]) {
     const exists = favorites.some((saved) => saved.path === item.path);
-    if (!exists && favorites.length >= 10) { toast.warning('最多可添加 10 个常用功能'); return; }
+    if (!exists && visibleFavorites.length >= 10) { toast.warning('最多可添加 10 个常用功能'); return; }
     const next = exists ? favorites.filter((saved) => saved.path !== item.path) : [...favorites, item];
     setFavorites(next);
     localStorage.setItem(favoritesKey, JSON.stringify(next.map(({ title, path }) => ({ title, path }))));
@@ -105,13 +116,13 @@ export default function HomeDashboard() {
 
 
       <section className="dashboard-bento-kpi" aria-label="首页数据概览">
-        <MetricCard title="政策总数据" icon="policy" value={localPolicies.length} tone="primary" detail={<span>区级政策 <strong>{localPolicies.filter(row => row.level === "区级").length}</strong><span className="metric-divider" />各类扶持 <strong>{localPolicies.reduce((sum, row) => sum + (Number(row.companies) || 0), 0).toLocaleString()}</strong> 家次</span>}>
+        <MetricCard title="政策总数据" icon="policy" value={localPolicies.length} tone="primary" onClick={allowPolicyDetail ? () => navigate("/policy/index") : undefined} detail={<span>区级政策 <strong>{localPolicies.filter(row => row.level === "区级").length}</strong><span className="metric-divider" />各类扶持 <strong>{localPolicies.reduce((sum, row) => sum + (Number(row.companies) || 0), 0).toLocaleString()}</strong> 家次</span>}>
           <span className="dashboard-kpi-note"><span className="status-led" />{city}</span>
         </MetricCard>
-        <MetricCard title="高意愿项目线索池" icon="folder" value={highIntent} detail={<span>地区线索共 <strong>{localProjects.length}</strong> 条</span>}>
+        <MetricCard title="高意愿项目线索池" icon="folder" value={highIntent} onClick={allowClueList ? () => navigate("/business/projectCluesUpdate/index") : undefined} detail={<span>地区线索共 <strong>{localProjects.length}</strong> 条</span>}>
           <span className="dashboard-kpi-note is-success"><span className="status-led" />意愿度 85 分及以上</span>
         </MetricCard>
-        <MetricCard title="安商迁移高风险预警" icon="shield" value={risks} detail={<span>监测企业 <strong>{riskRows.length}</strong> 家</span>}>
+        <MetricCard title="安商迁移高风险预警" icon="shield" value={risks} onClick={allowMigration ? () => navigate("/myCampus/migrationWarning/index") : undefined} detail={<span>监测企业 <strong>{riskRows.length}</strong> 家</span>}>
           <span className="dashboard-kpi-note is-warning"><AlertTriangle size={12} />高风险企业</span>
         </MetricCard>
       </section>
@@ -119,7 +130,7 @@ export default function HomeDashboard() {
       <section className="dashboard-bento-grid" aria-label="首页趋势与空间洞察">
         <Card className="chart-card os-glass-card dashboard-trend-card">
           <CardHeader className="section-heading"><div><CardTitle><PlatformIcon name="activity" className="section-heading-icon" />招商转化趋势</CardTitle><CardDescription>政策发布、已有获批记录及签约项目按月汇总</CardDescription></div><ActionButton action="导出" variant="ghost" size="sm" onClick={() => enqueue(city + "招商趋势.csv", [{ header: "月份", value: row => row.name }, { header: "政策发布", value: row => row.policies }, { header: "已有获批记录的政策", value: row => row.approved }, { header: "已签约线索", value: row => row.projects }], monthlyOperations)}><Download data-icon="inline-start" />导出</ActionButton></CardHeader>
-          <CardContent className="chart-content"><ResponsiveContainer width="100%" height="100%"><ComposedChart data={monthlyOperations} margin={{ left: 2, right: 10, top: 12, bottom: 0 }}><CartesianGrid stroke="rgba(100,116,139,.14)" strokeDasharray="3 5" vertical={false} /><XAxis dataKey="name" tickLine={false} axisLine={false} tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }} /><YAxis yAxisId="left" tickLine={false} axisLine={false} tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }} width={30} /><YAxis yAxisId="right" orientation="right" tickLine={false} axisLine={false} tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }} width={28} /><ChartTooltip contentStyle={{ borderRadius: 10, borderColor: 'rgba(22,82,184,.10)', boxShadow: '0 8px 24px rgba(15,39,68,.10)' }} formatter={(value, name) => [Number(value).toLocaleString(), name === 'policies' ? '政策发布' : name === 'approved' ? '获批政策' : '已签约线索']} /><Bar yAxisId="left" dataKey="policies" name="policies" fill="#93C5FD" radius={[4, 4, 0, 0]} barSize={18} isAnimationActive={false} /><Bar yAxisId="left" dataKey="approved" name="approved" fill="#1652B8" radius={[4, 4, 0, 0]} barSize={18} isAnimationActive={false} /><Line yAxisId="right" type="monotone" dataKey="projects" name="projects" stroke="#C8922E" strokeWidth={2.5} dot={{ r: 3, fill: '#C8922E', strokeWidth: 0 }} activeDot={{ r: 4 }} isAnimationActive={false} /></ComposedChart></ResponsiveContainer></CardContent>
+          <CardContent className="chart-content"><ResponsiveContainer width="100%" height="100%"><ComposedChart data={monthlyOperations} margin={{ left: 2, right: 10, top: 12, bottom: 0 }}><CartesianGrid stroke="rgba(100,116,139,.14)" strokeDasharray="3 5" vertical={false} /><XAxis dataKey="name" tickLine={false} axisLine={false} tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }} /><YAxis yAxisId="left" allowDecimals={false} tickLine={false} axisLine={false} tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }} width={30} /><YAxis yAxisId="right" orientation="right" allowDecimals={false} tickLine={false} axisLine={false} tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }} width={28} /><ChartTooltip contentStyle={{ borderRadius: 10, borderColor: 'rgba(22,82,184,.10)', boxShadow: '0 8px 24px rgba(15,39,68,.10)' }} formatter={(value, name) => [Number(value).toLocaleString(), name === 'policies' ? '政策发布' : name === 'approved' ? '获批政策' : '已签约线索']} /><Bar yAxisId="left" dataKey="policies" name="policies" fill="#93C5FD" radius={[4, 4, 0, 0]} barSize={18} isAnimationActive={false} /><Bar yAxisId="left" dataKey="approved" name="approved" fill="#1652B8" radius={[4, 4, 0, 0]} barSize={18} isAnimationActive={false} /><Line yAxisId="right" type="monotone" dataKey="projects" name="projects" stroke="#C8922E" strokeWidth={2.5} dot={{ r: 3, fill: '#C8922E', strokeWidth: 0 }} activeDot={{ r: 4 }} isAnimationActive={false} /></ComposedChart></ResponsiveContainer></CardContent>
         </Card>
         <Card className="chart-card os-glass-card dashboard-map-card">
           <CardHeader className="section-heading"><div><CardTitle><MapPinned className="section-heading-icon" />电子围栏与空间载体</CardTitle><CardDescription>{city} · 产业载体示意</CardDescription></div>{allowMap && <Button variant="ghost" size="sm" render={<Link to="/businessMap/index" />}>全屏地图 <ChevronRight data-icon="inline-end" /></Button>}</CardHeader>
@@ -129,10 +140,10 @@ export default function HomeDashboard() {
 
       <section className="dashboard-third-row" aria-label="常用功能与热门政策">
       <Card className="favorites-card">
-        <CardHeader className="favorites-header"><div><CardTitle>常用功能</CardTitle><CardDescription>快速进入日常工作模块</CardDescription></div><Button variant="outline" size="sm" onClick={() => setFavoriteOpen(true)}><Plus data-icon="inline-start" />管理功能 <Badge variant="secondary">{favorites.length}/10</Badge></Button></CardHeader>
+        <CardHeader className="favorites-header"><div><CardTitle>常用功能</CardTitle><CardDescription>快速进入日常工作模块</CardDescription></div><Button variant="outline" size="sm" onClick={() => setFavoriteOpen(true)}><Plus data-icon="inline-start" />管理功能 <Badge variant="secondary">{visibleFavorites.length}/10</Badge></Button></CardHeader>
         <CardContent className="favorites-list">
-          {favorites.filter(item => allowsRoute(principal, item.path)).map((item) => <Link to={item.path} className="favorite-link" key={item.path}><PlatformIcon name={item.icon} className="favorite-icon" /><span className="favorite-link-label">{item.title}</span><button aria-label={`移除${item.title}`} onClick={(event) => { event.preventDefault(); toggleFavorite(item); }}><X /></button></Link>)}
-          {!favorites.length && <p className="favorite-empty">常用功能还未设置，选择管理功能添加常用模块。</p>}
+          {visibleFavorites.map((item) => <Link to={item.path} className="favorite-link" key={item.path}><PlatformIcon name={item.icon} className="favorite-icon" /><span className="favorite-link-label">{item.title}</span><button aria-label={`移除${item.title}`} onClick={(event) => { event.preventDefault(); toggleFavorite(item); }}><X /></button></Link>)}
+          {!visibleFavorites.length && <p className="favorite-empty">常用功能还未设置，选择管理功能添加常用模块。</p>}
         </CardContent>
       </Card>
 

@@ -219,6 +219,11 @@
 .business-result-count { margin-left: auto; color: #788598; font-size: 12px; }
 .business-empty-hint { display: flex; min-height: 150px; align-items: center; justify-content: center; gap: 12px; color: #8390a0; }
 .business-empty-hint svg { width: 22px; height: 22px; color: #9ba8b8; }
+.not-found-hint { flex-direction:column; gap: 12px; padding: 34px 0; }
+.not-found-hint > svg { width: 40px; height: 40px; color: #b6c4d6; stroke-width: 1.4; }
+.not-found-hint strong { color: #1d2d40; font-size: 17px; white-space: nowrap; }
+.not-found-hint span { max-width: 460px; color: #718096; font-size: 13px; line-height: 1.8; text-align: center; }
+.not-found-actions { display: flex; gap: 10px; margin-top: 4px; }
 .business-inline-error { display: flex; align-items: center; gap: 9px; margin-bottom: 12px; padding: 9px 12px; border: 1px solid rgba(184, 50, 46, .22); border-radius: 9px; background: #fdf6f5; color: #a63c3c; font-size: 12px; }
 .business-inline-error > svg { width: 15px; height: 15px; flex: none; }
 .business-inline-error > span { flex: 1; min-width: 0; line-height: 1.6; }

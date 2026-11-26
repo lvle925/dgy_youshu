@@ -139,6 +139,7 @@ function LoginPage() {
   const [busy, setBusy] = useState(false);
   const loginLocation = useLocation();
   const [error, setError] = useState(() => (loginLocation.state as { reason?: string } | null)?.reason ?? '');
+  const [notice, setNotice] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [captcha, setCaptcha] = useState('');
   const [captchaToken, setCaptchaToken] = useState('');
@@ -215,8 +216,8 @@ function LoginPage() {
       }
       return;
     }
-    if (username.trim().length < 3 || password.length < 10) {
-      setError('账号至少 3 个字符，密码至少 10 个字符。');
+    if (username.trim().length < 3 || password.length < 12) {
+      setError('账号至少 3 个字符，密码至少 12 个字符。');
       return;
     }
     const needsTurnstile = challenge?.provider === 'turnstile';
@@ -243,9 +244,9 @@ function LoginPage() {
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : '无法连接后端服务。');
       void refreshCaptcha();
+      window.requestAnimationFrame(() => document.getElementById('captcha')?.focus());
     } finally {
       setBusy(false);
-      setPassword('');
     }
   }
 
@@ -303,6 +304,7 @@ function LoginPage() {
       return;
     }
     localStorage.setItem('DEMO_USER', result.user || username.trim());
+    setPassword('');
     await refresh();
     const redirect = (location.state as { from?: string } | null)?.from || '/home/index';
     navigate(redirect, { replace: true });
@@ -326,7 +328,8 @@ function LoginPage() {
           <p>{status.demoLoginEnabled && !status.initialized ? '本机演示入口可直接体验工作台。' : status.initialized ? '使用安全验证进入工作台。' : '首次使用，请创建管理员账号。'}</p>
         </div>
         {error && <Alert variant="destructive"><CircleHelp /><AlertTitle>无法继续</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>}
-        <div className="login-mode-tabs" role="tablist" aria-label="登录方式"><button type="button" role="tab" aria-selected={loginMode === 'sms'} className={loginMode === 'sms' ? 'is-active' : ''} onClick={() => { setLoginMode('sms'); setError(''); }}>短信验证码登录</button><button type="button" role="tab" aria-selected={loginMode === 'password'} className={loginMode === 'password' ? 'is-active' : ''} onClick={() => { setLoginMode('password'); setError(''); }}>账号密码登录</button></div>
+        {notice && <Alert><CircleHelp /><AlertTitle>请注意</AlertTitle><AlertDescription>{notice}</AlertDescription></Alert>}
+        <div className="login-mode-tabs" role="tablist" aria-label="登录方式"><button type="button" role="tab" aria-selected={loginMode === 'sms'} className={loginMode === 'sms' ? 'is-active' : ''} onClick={() => { setLoginMode('sms'); setError(''); setNotice(''); setPassword(''); }}>短信验证码登录</button><button type="button" role="tab" aria-selected={loginMode === 'password'} className={loginMode === 'password' ? 'is-active' : ''} onClick={() => { setLoginMode('password'); setError(''); setNotice(''); setPassword(''); }}>账号密码登录</button></div>
         <form className="login-form" onSubmit={submit}>
           {loginMode === 'sms' ? <>
             <label htmlFor="sms-phone">手机号</label>
@@ -334,12 +337,12 @@ function LoginPage() {
             <label className="captcha-label" htmlFor="sms-code">短信验证码</label>
             <div className="sms-code-row"><Input id="sms-code" autoComplete="one-time-code" inputMode="numeric" maxLength={6} value={smsCode} onChange={(event) => setSmsCode(event.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="请输入验证码" required /><Button type="button" variant="outline" disabled={smsSeconds > 0 || smsSending} onClick={() => void sendSmsCode()}>{smsSending ? '发送中…' : smsSeconds > 0 ? `${smsSeconds} 秒后重试` : '发送验证码'}</Button></div>
             {status.demoLoginEnabled && <p className="login-mode-note">本机演示账号 {status.demoPhone || '127127'}。短信码为 127127，也可直接免验证码演示登录。</p>}
-            <Button className="login-submit" type="submit" disabled={busy || (status.demoLoginEnabled && phone === status.demoPhone ? !smsChallengeId : false)}>{busy ? '正在验证' : '短信登录'}</Button>
+            <Button className="login-submit" type="submit" disabled={busy || !smsChallengeId || !/^\d{6}$/.test(smsCode)}>{busy ? '正在验证' : '短信登录'}</Button>
             {status.demoLoginEnabled && <Button className="demo-login-button" type="button" variant="outline" disabled={busy} onClick={() => void demoLogin()}>127127 免验证码演示登录</Button>}
           </> : <>
           <label htmlFor="username">账号</label>
           <Input id="username" autoComplete="username" value={username} onChange={(event) => setUsername(event.target.value)} placeholder="至少 3 个字符" required minLength={3} />
-          <div className="login-password-label"><label htmlFor="password">密码</label>{status.initialized && <button type="button" className="login-forget-password" onClick={() => setError('当前本地服务尚未配置密码找回能力，请联系管理员重置。')}>忘记密码</button>}</div>
+          <div className="login-password-label"><label htmlFor="password">密码</label>{status.initialized && <button type="button" className="login-forget-password" onClick={() => { setError(''); setNotice('当前本地服务未开放密码找回，请联系单位管理员重置后重试。'); }}>忘记密码</button>}</div>
           <div className="login-password-input"><Input id="password" autoComplete={status.initialized ? 'current-password' : 'new-password'} type={showPassword ? 'text' : 'password'} value={password} onChange={(event) => setPassword(event.target.value)} placeholder="至少 12 位，包含字母和数字" required minLength={12} /><button type="button" className="password-toggle" onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? '隐藏密码' : '显示密码'} aria-pressed={showPassword}>{showPassword ? <EyeOff /> : <Eye />}</button></div>
           <label className="captcha-label" htmlFor={challenge?.provider === 'turnstile' ? undefined : 'captcha'}>{challenge?.provider === 'turnstile' ? '安全验证' : '图片验证码'}</label>
           <CaptchaField challenge={challenge} answer={captcha} token={captchaToken} disabled={busy || captchaBusy} onAnswerChange={setCaptcha} onTokenChange={setCaptchaToken} onRefresh={() => void refreshCaptcha()} />
