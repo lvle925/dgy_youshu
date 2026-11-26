@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Building2, MapPin, Search } from "lucide-react";
 import { toast } from "sonner";
 import { ActionButton } from "@/app/AccessContext";
@@ -102,11 +102,28 @@ function CityMap({ city }: { city: string }) {
   const [companyMode, setCompanyMode] = useState<"all" | "potential">("all");
   const [focusPosition, setFocusPosition] = useState<GeoPosition | null>(null);
   const [focusKey, setFocusKey] = useState(0);
+  const [realBaseMap, setRealBaseMap] = useState(false);
+  const [realFences, setRealFences] = useState<Map<string, GeoPosition[]>>(new Map());
+  const [suggestions, setSuggestions] = useState<Array<{ title: string; address: string; district: string; lng: number; lat: number }>>([]);
+  /** 定位命中的园区，仅用于地图高亮，不弹详情抽屉。 */
+  const [focusParkId, setFocusParkId] = useState<string | null>(null);
   const markers = isShanghaiArea(city) ? mapMarkers.filter((marker) => city === "上海市" || regionMatches(marker.district, city)) : [];
   const allCityMarkers = isShanghaiArea(city) ? parkPointsFromGeoJson(toParkFeatureCollection(mapMarkers.filter((marker) => city === "上海市" || regionMatches(marker.district, city)))) : [];
   const matchingFeatures = toParkFeatureCollection(markers.filter((park) => (!district || district === park.district) && (!industry || industry === park.industry)));
   const matchingMarkers = parkPointsFromGeoJson(matchingFeatures);
   const visibleMarkers = matchingMarkers.filter((park) => park.name.includes(keyword.trim()));
+
+  // 真实底图初始中心取当前可见园区的包围盒中心，保证整片区域都能落在视野内。
+  const mapCenter = useMemo<GeoPosition>(() => {
+    const source = visibleMarkers.length ? visibleMarkers : allCityMarkers;
+    if (!source.length) return [121.6143, 31.2053];
+    const lngs = source.map((park) => park.position[0]);
+    const lats = source.map((park) => park.position[1]);
+    return [
+      (Math.min(...lngs) + Math.max(...lngs)) / 2,
+      (Math.min(...lats) + Math.max(...lats)) / 2,
+    ];
+  }, [visibleMarkers, allCityMarkers]);
   const inRange = matchingMarkers.filter((park) => containsPoint(boundary, park.position));
   const visibleParks = visibleMarkers.filter((park) => containsPoint(boundary, park.position));
   const pointsByPark = new Map(inRange.map((park) => [park.name, park]));
@@ -129,38 +146,110 @@ function CityMap({ city }: { city: string }) {
   const selectedRows = companyRows.filter((row) => containsPoint(boundary, row.officePosition) || containsPoint(boundary, row.registrationPosition));
   const companyCount = selectedRows.length;
 
-  function locateAddress() {
+  async function locateAddress() {
     const query = addressKeyword.trim();
     if (!query) return;
+    // 优先使用腾讯位置服务解析真实坐标，失败或未配置时回退到本地园区/企业匹配。
+    const remote = await api.geoGeocode(query, city).catch(() => null);
+    if (remote?.found && Number.isFinite(remote.lng) && Number.isFinite(remote.lat)) {
+      focusOn(remote.lng, remote.lat, remote.title || query);
+      toast.success("地图已定位到 " + (remote.title || query));
+      return;
+    }
     const marker = markers.find((item) => (item.name + item.district + item.industry).includes(query));
     const company = (companySource as typeof companies[number][]).find((item) => (String(item.name ?? "") + String(item.address ?? "") + String(item.park ?? "") + String(item.district ?? "")).includes(query));
     const companyPark = company ? markers.find((item) => String(company.park ?? "").includes(item.name)) : undefined;
     const companyDistrict = company ? markers.find((item) => String(company.district ?? "").includes(item.district)) : undefined;
     const target = marker ?? companyPark ?? companyDistrict ?? (company ? markers[0] : undefined);
-    if (!target) { toast.error("未找到匹配的园区、企业或地址"); return; }
+    if (!target) { toast.error(remote ? "腾讯地图与本地数据均未匹配到该地址" : "未找到匹配的园区、企业或地址"); return; }
     const companyRecord = company as (typeof company & Record<string, unknown>) | undefined;
     const coordinates = companyRecord && !marker ? [companyRecord.officeLng ?? companyRecord.lng, companyRecord.officeLat ?? companyRecord.lat].map(Number) : [];
     const hasCompanyCoordinates = coordinates.length === 2 && coordinates.every(Number.isFinite) && coordinates.some((coordinate) => coordinate !== 0);
-    setFocusPosition(hasCompanyCoordinates ? [coordinates[0], coordinates[1]] : [target.lng, target.lat]);
-    setFocusKey((value) => value + 1);
-    setSelected(allCityMarkers.find((park) => park.id === target.id) ?? null);
-    setKeyword("");
+    const position = hasCompanyCoordinates ? [coordinates[0], coordinates[1]] as GeoPosition : [target.lng, target.lat] as GeoPosition;
+    focusOn(position[0], position[1], target.name);
     toast.success("地图已定位到 " + target.name);
+  }
+
+  /** 将地图定位到指定坐标。定位不自动弹出园区详情，避免遮挡地图工具栏。 */
+  function focusOn(lng: number, lat: number, title: string) {
+    setFocusPosition([lng, lat]);
+    setFocusKey((value) => value + 1);
+    setKeyword("");
+    const matched = allCityMarkers.find((park) => title && (park.name.includes(title) || title.includes(park.name)));
+    setFocusParkId(matched?.id ?? null);
+  }
+
+  /** 输入时向腾讯位置服务请求候选地点；失败时静默忽略，保留手动定位能力。 */
+  async function loadSuggestions(value: string) {
+    const query = value.trim();
+    if (!realBaseMap || query.length < 2) { setSuggestions([]); return; }
+    try {
+      const result = await api.geoSuggest(query, city);
+      setSuggestions(Array.isArray(result?.items) ? result.items : []);
+    } catch {
+      setSuggestions([]);
+    }
   }
 
   function handleBoundary(next: Boundary | null) { setBoundary(next); if (!next) setResultsOpen(false); }
   function openResults() { setSelected(null); setResultsOpen(true); }
   const outsideShanghai = !isShanghaiArea(city);
 
+  // 探测后端是否已配置腾讯位置服务；可用时启用真实底图与真实园区边界。
+  useEffect(() => {
+    let cancelled = false;
+    api.geoStatus()
+      .then((status) => { if (!cancelled) setRealBaseMap(Boolean(status?.configured)); })
+      .catch(() => { if (!cancelled) setRealBaseMap(false); });
+    return () => { cancelled = true; };
+  }, []);
+
+  // 真实底图模式下按园区查询真实边界。
+  // 腾讯位置服务免费配额有限，因此不批量预取，改为用户选中园区时按需查询并缓存。
+  const fenceQueryRef = useRef(new Set<string>());
+
+  async function loadParkFence(park: ParkPoint) {
+    if (!realBaseMap || fenceQueryRef.current.has(park.id)) return;
+    fenceQueryRef.current.add(park.id);
+    try {
+      const result = await api.geoParkBoundary(park.name, city);
+      const item = result?.items?.[0];
+      const polygon = item?.polygon;
+      if (Array.isArray(polygon) && polygon.length >= 3) {
+        setRealFences((current) => {
+          const next = new Map(current);
+          next.set(park.id, polygon as GeoPosition[]);
+          return next;
+        });
+      }
+    } catch {
+      // 查询失败时保留示意围栏，不影响主流程
+    }
+  }
+
+  useEffect(() => {
+    if (!realBaseMap || !selected) return;
+    void loadParkFence(selected);
+  }, [realBaseMap, selected, city]);
+
   return <div className="business-page business-map-page">
     <PageHeading title="商机地图" description={city + " · 产业载体、注册企业与办公企业空间分析"} />
     <div className="business-map-layout">
       <PageSection title="地图范围" description={boundary ? `已圈选 ${companyCount} 家企业，可在右侧查看企业关系` : visibleParks.length + " 个园区 · " + visibleCompanies.length + " 家演示企业"}>
-        <div className="business-map-filters"><div className="business-map-search-line"><label className="business-map-field"><span>地图定位</span><SearchField value={addressKeyword} onChange={setAddressKeyword} placeholder="搜索地址、园区或企业" onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); locateAddress(); } }} /></label><Button type="button" size="sm" onClick={locateAddress}><Search data-icon="inline-start" />定位</Button></div><label className="business-map-field"><span>结果快筛</span><SearchField value={keyword} onChange={setKeyword} placeholder="按园区、企业或地址快筛左侧列表" /></label><NativeSelect label="区域" value={district} onChange={setDistrict} options={[...new Set(markers.map((park) => park.district))]} /><NativeSelect label="产业" value={industry} onChange={setIndustry} options={[...new Set(markers.map((park) => park.industry))]} /></div>
+        <div className="business-map-filters"><div className="business-map-search-line"><label className="business-map-field"><span>地图定位</span><div className="business-map-locate">
+          <SearchField value={addressKeyword} onChange={(value) => { setAddressKeyword(value); void loadSuggestions(value); }} placeholder="搜索地址、园区或企业" onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); void locateAddress(); } if (event.key === "Escape") setSuggestions([]); }} />
+          {suggestions.length > 0 && <ul className="business-map-suggest" role="listbox" aria-label="地址候选">
+            {suggestions.map((item, index) => <li key={`${item.title}-${index}`} role="option" aria-selected={false}>
+              <button type="button" onClick={() => { setAddressKeyword(item.title); setSuggestions([]); focusOn(item.lng, item.lat, item.title); }}>
+                <strong>{item.title || item.address}</strong><small>{item.address || item.district || "腾讯地图匹配地点"}</small>
+              </button>
+            </li>)}
+          </ul>}
+        </div></label><Button type="button" size="sm" onClick={() => void locateAddress()}><Search data-icon="inline-start" />定位</Button></div><label className="business-map-field"><span>结果快筛</span><SearchField value={keyword} onChange={setKeyword} placeholder="按园区、企业或地址快筛左侧列表" /></label><NativeSelect label="区域" value={district} onChange={setDistrict} options={[...new Set(markers.map((park) => park.district))]} /><NativeSelect label="产业" value={industry} onChange={setIndustry} options={[...new Set(markers.map((park) => park.industry))]} /></div>
         <SectionTabs value={tab} onChange={setTab} items={[{ key: "parks", label: "园区", count: visibleParks.length }, { key: "companies", label: "企业", count: visibleCompanies.length }]} />
         <div className="map-result-list">{tab === "parks" && visibleParks.map((park) => <button key={park.id} type="button" onClick={() => setSelected(park)} className={boundary ? "is-selected" : undefined}><span className="map-marker-dot"><MapPin /></span><span><strong>{park.name}</strong><small>{park.district} · {park.industry} · {park.enterprises} 家在驻</small></span></button>)}{tab === "companies" && visibleCompanies.map((row) => <button key={row.id} type="button" onClick={() => setSelected(row.officePark)}><span className="map-marker-dot"><Building2 /></span><span><strong>{row.name}</strong><small>{row.officePark.name} · {row.industry}</small></span></button>)}{(tab === "parks" ? !visibleParks.length : !visibleCompanies.length) && <p className="business-empty-hint">当前范围暂无{tab === "parks" ? "园区" : "企业"}</p>}</div>
       </PageSection>
-      <SpatialMap parks={tab === "parks" ? visibleMarkers : matchingMarkers} boundary={boundary} onBoundary={handleBoundary} onBoundaryComplete={openResults} selected={selected?.id} onSelect={setSelected} focusPosition={focusPosition} focusKey={focusKey} />
+      <SpatialMap parks={tab === "parks" ? visibleMarkers : matchingMarkers} boundary={boundary} onBoundary={handleBoundary} onBoundaryComplete={openResults} selected={focusParkId ?? selected?.id} onSelect={setSelected} focusPosition={focusPosition} focusKey={focusKey} useTencentBaseMap={realBaseMap} realFences={realFences} mapCenter={mapCenter} />
       {outsideShanghai && <div className="business-map-empty" role="status"><MapPin aria-hidden="true" /><strong>当前地图仅覆盖上海市示例数据</strong><span>{city} 暂无园区点位与企业坐标，可切回上海市继续查看商机分布。</span><Button variant="outline" size="sm" onClick={() => setCity("上海市")}>切回上海市</Button></div>}
     </div>
     <Sheet open={resultsOpen} onOpenChange={setResultsOpen}><SheetContent side="right" className="business-detail-sheet map-company-sheet"><SheetHeader><SheetTitle>圈选范围企业</SheetTitle><SheetDescription>基于 GeoJSON 边界实时筛选注册企业与办公企业，支持潜在招引、潜在流失分析</SheetDescription></SheetHeader><div className="map-company-panel-body"><div className="map-company-summary-bar"><span><strong>{companyCount.toLocaleString()}</strong> 范围内企业</span><span><strong>{selectedRows.filter((row) => containsPoint(boundary, row.registrationPosition)).length.toLocaleString()}</strong> 注册企业</span><span><strong>{selectedRows.filter((row) => containsPoint(boundary, row.officePosition)).length.toLocaleString()}</strong> 办公企业</span></div><CompanyResults rows={selectedRows.map((row) => ({ ...row, selection: boundary }))} tab={companyTab} mode={companyMode} onTab={(value) => { setCompanyTab(value); setCompanyMode("all"); }} onMode={setCompanyMode} /><div className="map-company-sheet-footer"><ActionButton action="新增" onClick={async () => { try { await api.create("clues", { company: "圈选范围企业", intent: companyTab === "office" ? "潜在招引企业跟进" : "潜在流失企业稳商", region: city, source: "商机地图圈选", status: "待跟进", date: new Date().toISOString().slice(0, 10) }); toast.success("已加入项目线索"); } catch (cause) { toast.error(cause instanceof Error ? cause.message : "加入项目线索失败"); } }}>纳入招商台账</ActionButton></div></div></SheetContent></Sheet>

@@ -12,8 +12,8 @@
 | 项 | 值 |
 | --- | --- |
 | 仓库 / 分支 | https://github.com/lvle925/dgy_youshu ，`main` |
-| HEAD | `ae403ad`（已推送，`main` 与 `origin/main` 同步） |
-| 本轮提交 | `7716542` B0 → `6b2de71` B1 → `cfedae0` B2 → `57a8737` B3 → `0f48585` B4 → `a89b6a8` B5 → `e130efe` 文档 → `2f513c5` 接手指南 → `ae403ad` 交付包重建 |
+| HEAD | 见 `git log -1`（腾讯地图接入批次已推送，`main` 与 `origin/main` 同步） |
+| 本轮提交 | `7716542` B0 → `6b2de71` B1 → `cfedae0` B2 → `57a8737` B3 → `0f48585` B4 → `a89b6a8` B5 → `e130efe`/`2f513c5` 文档 → `ae403ad` 交付包重建 → `3692e0c` 功能缺口修复 → 腾讯地图接入批次 |
 | 工作区 | 干净，仅剩两个**未跟踪**输入：`dgy_youshu/`（同事代码副本）、`dgy_youshu-develop_glf.zip`（同事开发包），**未做逐文件比对合并**，别误删 |
 | 本轮范围 | 按用户提供的《全量逐页前端 UI/交互审查》执行 Batch 0~5，共 39 个页面/组件（只改前端源码）。**已补做交付包重建**：交付目录与 ZIP 已同步到 Batch 0~5 之后的最新 dist，并在解压目录 compose 验证通过（见 §6 第 1 项）。README 与截图仍待处理 |
 
@@ -55,7 +55,9 @@ npm run dev                                    # Vite 127.0.0.1:5199，代理到
 1. ~~**重建交付包**（阻塞交付）~~ —— **已完成**：`site-final/` 与 ZIP 已同步到最新 `dist`，ZIP 115 文件、正斜杠路径、根级平铺、不含 `.env`；并在**解压目录** compose 起来验证通过。**每次改前端或后端后都必须重做这一步**（后端需先 `mvn package` 再更新 `deploy/docker-package/backend/app.jar`）。
 2. ~~**重拍地图截图**~~ —— **已完成**：全部 50 张截图按 1440×900 重拍（46 张页面图 + 6 张 1440×598 总览图），取自当前交付包实例；旧的 `1904×922` 口径已消除。
 3. **同事代码比对合并**：`dgy_youshu/` 与 `dgy_youshu-develop_glf.zip` 尚未做逐文件 diff，合并结论待定。**注意：`git add -A` 会把它们误纳入版本控制，暂存时务必排除。**
-4. **功能缺口**（详见 `PROJECT_SESSION_SUMMARY.md` 第 10 节共 13 条）：地图地址定位仍是本地字符串检索；地图结果「纳入招商台账」仍创建一条通用线索而非逐条入库；地图数据仍以 8 个上海园区示例为主；`clues` 抽屉「纳入招商台账」筛选口径待与左侧筛选统一。
+4. **功能缺口**（详见 `PROJECT_SESSION_SUMMARY.md` 第 10 节共 13 条）：地图结果「纳入招商台账」仍创建一条通用线索而非逐条入库；`clues` 抽屉「纳入招商台账」筛选口径待与左侧筛选统一。
+   - ~~地图地址定位仍是本地字符串检索~~ → **已接入腾讯位置服务**（服务端签名，见 `docs/tendcent-map-integration.md`）。**当前阻塞：该 Key 的 WebService 每日配额已耗尽（status 121），次日重置后需实测一次完整解析**。底图（JS API）不受该配额限制，已验证可用。
+   - ~~地图数据仍以 8 个上海园区示例为主~~ → **底图已换真实腾讯地图瓦片**；园区**真实边界多边形**的查询链路已就绪（`/api/geo/park-boundary`），但同样受配额限制，尚未取到真实 polygon，目前回退到示意围栏。
 5. ~~**README 同步**~~ —— **已完成**：产品亮点补入层级化导航、统一表单与表格交互、中文字段与确认交互三段；说明截图取自当前交付包；补充交付包重建流程与解压目录验收要求。
 
 ### 本轮一并修掉的遗留问题
@@ -66,6 +68,8 @@ npm run dev                                    # Vite 127.0.0.1:5199，代理到
 - `RecordPermissions`：`companyArchives` 补入 `/businessMap/index`，地图页读取企业档案不再被拒。
 - `RecordsController.inScope()`：按集合区分公共/私有语义，私有数据无园区归属时不再一律放行；走访工单与记录按企业名反查园区归属。新增 2 个测试覆盖该行为。
 - 地图结果抽屉补 `10/20/50` 分页。
+- **接入腾讯位置服务**：底图换真实腾讯地图 JS API GL 瓦片；地址定位与关键词联想改走后端签名接口；`SpatialMap` 的坐标换算抽象为适配器（离线线性投影 / 真实墨卡托投影共用一套几何逻辑）；`containsPoint` 改为纯经纬度空间运算，与投影解耦。
+- 修掉真实底图下的三个交互缺陷：地图移动后覆盖层不同步（补 `onMove` 订阅）、定位后自动弹详情抽屉遮挡工具栏、定位后放大量过大导致点位飞出视野。
 
 ## 7. 已知坑（别踩）
 
@@ -74,7 +78,9 @@ npm run dev                                    # Vite 127.0.0.1:5199，代理到
 - **构建时避开批量删除阈值**：本机沙箱对单次删除超过 50 个文件会拦截（vite 的 `emptyDir` 会触发 `SAFE_DELETE_BULK_CONFIRM_REQUIRED`）。用 `npx vite build --emptyOutDir false`，并先手动分批 `rm` 掉 `dist/assets` 下的旧文件；构建完必须核对 `dist/assets` 文件数与 `dist` 是否有多余旧 hash 残留。
 - **打包 ZIP 用 Python `zipfile`**：`Compress-Archive` 写出的条目用**反斜杠**分隔符，与原包约定的正斜杠不一致，会影响 Linux/Docker 环境解压。
 - **后端测试需自带 MySQL**：`mvn test` 的测试默认连 `127.0.0.1:3307/youshu_test`。在容器里跑要用 `--network youshu-test_default` 并设 `TEST_MYSQL_URL` 指向 `mysql-test:3306`，否则报 `Connection refused` 而误判为代码问题。
-- **地图几何**：`SpatialMap` 已从拉伸（`preserveAspectRatio="none"`）改为等比（`xMidYMid meet`），点位位置用 `ResizeObserver` 测量后的 letterbox 换算。改动该组件时，**必须**同步维护 `markerStyle()` / `viewBoxPoint()` 的坐标换算，否则 HTML 点位会与 SVG 围栏错位。
+- **地图几何（已重构）**：`SpatialMap` 现在有两套坐标系 —— 离线示意底图用 `viewBox 0-100` 线性投影，真实底图用腾讯地图的 `projectToContainer` / `unprojectFromContainer`。改动该组件时，**必须**同步维护 `toScreen()` / `fromScreen()` 这一对换算函数，以及 `markerStyle()`（离线百分比定位）与 `realMarkerStyle()`（真实像素定位）两套定位方式。选区判定 `containsPoint()` 已在经纬度空间完成，**不要**再改回屏幕坐标实现。
+- **真实底图必须订阅 `onMove`**：地图移动/缩放后腾讯地图的投影结果会变，覆盖层与点位需要重绘。若新增腾讯图层或调整点位定位，务必确认 `viewportTick` 依赖链完整，否则会出现点位与底图错位。
+- **腾讯位置服务配额极小**：该 Key 的 WebService 免费额度连续调用十几次即触发 status 121。服务端已加 6 小时缓存 + 每日 200 次预算上限；园区真实边界按需查询，不做批量预取。改这块时不要引入批量循环调用。
 - **紧凑地图**（首页缩略图，`compact`）仍保留 `none` 拉伸表现，与全屏地图不一致，属有意为之。
 - **文本框控件统一**：`PagePrimitives.NativeSelect` 是统一下拉入口；新增表单下拉请用 `bare` + `allowEmpty={false}`，不要再写原生 `<select className="business-input">`。
 - **中文字段展示**：业务详情抽屉请用 `DetailFields`，不要直接 `Object.entries(row)` 渲染（会出现 `parkId`、`departmentId` 这类英文技术字段）。映射表已补齐 `city`/`targetCity`/`desc`/`level` 等字段，新增业务字段时**记得同步加映射**，否则会以英文键名显示。`DetailFields` 只用于 serviceRequests / visitOrders / visitRecords / 操作日志四个集合；企业档案用自定义 `ArchiveDetail`。

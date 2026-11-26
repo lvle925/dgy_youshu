@@ -29,4 +29,8 @@ export const api = {
   memberImport: (rows) => request('/members/import', { method: 'POST', body: JSON.stringify(rows) }),
   memberLockStates: () => request('/members/lock-state'),
   changePassword: (password) => request('/auth/change-password', { method: 'POST', body: JSON.stringify({ password }) }),
+  geoStatus: () => request('/geo/status'),
+  geoGeocode: (address, region) => request('/geo/geocode?' + new URLSearchParams({ address, ...(region ? { region } : {}) })),
+  geoSuggest: (keyword, region) => request('/geo/suggest?' + new URLSearchParams({ keyword, ...(region ? { region } : {}) })),
+  geoParkBoundary: (name, city) => request('/geo/park-boundary?' + new URLSearchParams({ name, ...(city ? { city } : {}) })),
 };

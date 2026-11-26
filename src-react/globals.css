@@ -764,6 +764,12 @@ body { background: var(--os-ambient-bg); color: var(--foreground); }
 .dashboard-map-content { padding: 0 18px 18px; }
 .spatial-map { position: relative; min-height: 530px; overflow: hidden; isolation: isolate; background: #E9EDF0; }
 .spatial-map--compact { min-height: 0; height: 244px; border-radius: 12px; border: 1px solid var(--border-subtle); }
+.tencent-map-canvas { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; }
+.tencent-map-canvas[data-failed="true"] { display: none; }
+.spatial-map[data-base-map="tencent"] .spatial-map-canvas { z-index: 1; background: transparent; }
+.spatial-map[data-base-map="tencent"] .spatial-map-canvas svg { background: transparent; }
+.spatial-map[data-base-map="tencent"] .spatial-selection--real { fill: #1652b819; stroke: #1652b8; }
+.spatial-map[data-base-map="tencent"] .spatial-point { z-index: 2; }
 .spatial-map-canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; cursor: grab; }
 .spatial-map-canvas:active { cursor: grabbing; }
 .spatial-map[data-tool="rectangle"] .spatial-map-canvas, .spatial-map[data-tool="polygon"] .spatial-map-canvas { cursor: crosshair; }

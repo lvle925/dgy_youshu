@@ -16,7 +16,8 @@
 ## 产品设计与亮点
 
 - **霁蓝、黛青、鎏金 Bento 视觉体系**：面向政务内部工作的空间式信息编排、统一状态与权限交互。
-- **纯 SVG 离线地图**：电子围栏、拖动、矩形框选和多边形圈选不依赖外部地图瓦片，园区点位与围栏遵循 GeoJSON Feature/Polygon 和 `[lng, lat]` 坐标契约。地图按等比呈现并支持滚轮缩放与平移约束，园区点位通过 `ResizeObserver` 实测的 letterbox 换算与电子围栏保持居中对齐。
+- **腾讯位置服务真实地图**：商机地图底图接入腾讯地图 JS API GL，渲染真实路网、水系与 POI；地址定位与关键词联想经服务端签名后调用腾讯位置服务地理编码与地点检索接口，未配置凭据时自动回退到离线示意底图与本地检索。
+- **纯 GeoJSON 围栏与圈选契约**：园区围栏与用户圈选统一使用 GeoJSON Feature/Polygon 与 `[lng, lat]` 坐标，选区判定完全在经纬度空间完成，与底图投影方式解耦，离线示意底图与真实底图共用同一套筛选口径。
 - **层级化导航与多页签**：面包屑按「工作台 > 分组 > 子分组 > 当前页」四级展开，页签支持自动滚入视野与「关闭右侧」，便于在 30+ 业务页面间连续作业。
 - **统一表单与表格交互**：所有业务下拉统一使用同一套选择器组件，表格提供吸顶表头、骨架屏与空态重置，列表在数据加载、失败与无结果三种状态下分别呈现。
 - **中文字段与确认交互**：业务详情抽屉统一按中文标签渲染，不直接暴露 `parkId`、`departmentId` 等内部技术字段；破坏性操作统一使用自定义确认弹窗并写入审计记录。
@@ -145,7 +146,8 @@
 | 登录验证码 | 本地演示免验证码入口；密码登录 Cloudflare Turnstile 测试密钥或绑定 Session 的图片验证码 | 接入单位认可的人机校验服务及正式短信网关，并关闭演示登录 |
 | 电话外呼 | AI 话术、任务、记录和看板演示数据持久化 | 对接经审批的语音服务、线路、录音存储和转写服务 |
 | 企业与政务数据 | 本地合成企业、园区、政策及风险样例 | 对接获准的工商、信用、招投标、政策、用工和园区系统数据接口 |
-| 地图 | 离线 SVG 示意底图与标准 GeoJSON 数据 | GIS 渲染层接入天地图、高德或腾讯内网瓦片，不改变业务坐标契约 |
+| 地图底图 | 腾讯地图 JS API GL 真实瓦片，未配置凭据时回退离线 SVG 示意图 | 切换为政务内网 GIS 瓦片服务，继续沿用 `[lng, lat]` 与 GeoJSON 围栏契约 |
+| 地图服务 | 腾讯位置服务 WebService 地址解析、关键词联想与园区边界（服务端签名，凭据不入前端） | 迁至内网地图网关，保留签名与缓存策略 |
 
 当前项目**不能替代部署单位的等保测评或生产安全配置**。上线前需按单位要求完成身份源、网络分区、密码与密钥、短信及 GIS 服务、数据来源授权、日志保留和灾备配置。
 
@@ -178,9 +180,22 @@ MYSQL_HOST_PORT=3307
 MYSQL_USER=youshu
 MYSQL_PASSWORD=youshu_local
 MYSQL_ROOT_PASSWORD=youshu_root_local
+# 腾讯位置服务（可选，留空则地图回退到离线示意底图）
+TENCENT_MAP_KEY=
+TENCENT_MAP_SECRET_KEY=
 ```
 
 登录页预填 `127127`，点免验证码入口即可进入。也可发送本地演示短信并输入 `127127`。账号密码登录使用 Compose 内置的 Cloudflare 测试站点密钥。测试密钥只用于本机验收，部署时替换为正式服务配置，并设置 `APP_AUTH_DEMO_LOGIN_ENABLED=false`。
+
+### 腾讯位置服务接入
+
+商机地图可接入腾讯位置服务：底图由 JS API GL 渲染真实瓦片，地址定位、关键词联想与园区边界由服务端签名后调用 WebService 接口。
+
+- `TENCENT_MAP_KEY` 同时用于前端 JS API 与后端 WebService；`TENCENT_MAP_SECRET_KEY` **仅存在于后端**，用于计算请求签名，不得写入前端代码或提交到仓库。
+- SecretKey 与 Key 需属于同一账号下的同一应用；WebService 调用需在控制台开启 SN 校验。
+- 凭据缺失或调用失败时，地图自动回退到离线示意底图与本地园区匹配，业务流程不受影响。
+- 免费额度按接口独立计算且很小，因此服务端对查询结果做 6 小时缓存，并设置每日调用预算上限，接近上限时直接短路，避免把配额消耗在必然失败的请求上。园区真实边界按需查询（选中园区时），不做批量预取。
+- 签名算法与 JS API 调用契约见 [腾讯位置服务接入说明](docs/tendcent-map-integration.md)。
 
 ### 五类内置政务角色测试说明
 
@@ -277,5 +292,17 @@ docker compose -p youshu-package-verify -f deploy/docker-package/compose.yaml do
 ```
 
 测试使用独立 MySQL 8.4 临时容器，不读写本机演示数据库卷。打包验收使用独立端口和数据库卷，验收后删除该临时卷；**验收须在压缩包解压目录中执行**，以确保压缩包本身可用，而非仅验证仓库内的交付目录。截图文件位于 `docs/screenshots/`，README 所有本地图片与文件链接均应存在。
+
+后端测试在容器内运行，需与 compose 的测试 MySQL 同网络：
+
+```bash
+docker compose -p youshu-test --profile test up -d mysql-test
+docker run --rm --network youshu-test_default \
+  -v "$PWD/backend:/app" -w /app maven:3.9-eclipse-temurin-21 \
+  -e TEST_MYSQL_URL='jdbc:mysql://mysql-test:3306/youshu_test?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true' \
+  -e TEST_MYSQL_USERNAME=youshu_test -e TEST_MYSQL_PASSWORD=youshu_test_password \
+  mvn -DskipTests=false test
+docker compose -p youshu-test --profile test down -v
+```
 
 更多会话交接信息见 [PROJECT_SESSION_SUMMARY.md](PROJECT_SESSION_SUMMARY.md)。

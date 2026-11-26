@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useRef, useState, type PointerEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent } from "react";
 import { Hand, MapPin, Pentagon, RotateCcw, Square, Trash2, Undo2, ZoomIn, ZoomOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { TencentMapCanvas, type TencentMapHandle } from "@/components/TencentMapCanvas";
 
 export type ScreenPoint = { x: number; y: number };
 export type GeoPosition = [lng: number, lat: number];
@@ -21,6 +22,7 @@ export type Boundary = SpatialFeature<GeoJsonPolygon> & { properties: { id: stri
 const MAP_BOUNDS = { west: 121.15, east: 121.9, south: 30.86, north: 31.42 };
 const SCREEN_BOUNDS = { left: 6, right: 94, top: 6, bottom: 94 };
 
+/** 离线示意地图的线性投影：经纬度 → viewBox 0-100 空间。 */
 function project(position: GeoPosition): ScreenPoint {
   const [lng, lat] = position;
   return {
@@ -41,42 +43,46 @@ function boundaryPoints(boundary: Boundary | null): GeoPosition[] {
   return boundary.geometry.coordinates[0]?.slice(0, -1) ?? [];
 }
 
-function toScreenBoundary(boundary: Boundary | null): ScreenPoint[] {
-  return boundaryPoints(boundary).map(project);
-}
-
-function createBoundary(tool: Tool, points: ScreenPoint[]): Boundary {
-  const [first, second] = points;
-  const screenPoints = tool === "rectangle" && first && second
-    ? [first, { x: second.x, y: first.y }, second, { x: first.x, y: second.y }]
-    : points;
-  const coordinates = screenPoints.map(unproject);
-  if (coordinates.length) coordinates.push(coordinates[0]);
-  return {
-    type: "Feature",
-    geometry: { type: "Polygon", coordinates: [coordinates] },
-    properties: { id: "selection", selectionTool: tool === "rectangle" ? "rectangle" : "polygon" },
-  };
-}
-
+/**
+ * 判断经纬度是否落在选区内。
+ *
+ * 运算全部在经纬度空间完成，与具体投影方式无关，
+ * 因此离线示意底图与腾讯地图真实底图可以共用同一套判定口径。
+ */
 export function containsPoint(boundary: Boundary | null, position: GeoPosition) {
-  const points = toScreenBoundary(boundary);
-  const point = project(position);
-  if (!boundary || points.length < 2) return true;
+  if (!boundary) return true;
+  const ring = boundaryPoints(boundary);
+  if (ring.length < 2) return true;
+  const [lng, lat] = position;
   if (boundary.properties.selectionTool === "rectangle") {
-    return point.x >= Math.min(...points.map(item => item.x)) && point.x <= Math.max(...points.map(item => item.x))
-      && point.y >= Math.min(...points.map(item => item.y)) && point.y <= Math.max(...points.map(item => item.y));
+    const lngs = ring.map((point) => point[0]);
+    const lats = ring.map((point) => point[1]);
+    return lng >= Math.min(...lngs) && lng <= Math.max(...lngs)
+      && lat >= Math.min(...lats) && lat <= Math.max(...lats);
   }
-  if (points.length < 3) return true;
+  if (ring.length < 3) return true;
   let inside = false;
-  for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
-    const a = points[i], b = points[j];
-    const cross = (point.x - a.x) * (b.y - a.y) - (point.y - a.y) * (b.x - a.x);
-    if (Math.abs(cross) < 0.0001 && point.x >= Math.min(a.x, b.x) && point.x <= Math.max(a.x, b.x)
-      && point.y >= Math.min(a.y, b.y) && point.y <= Math.max(a.y, b.y)) return true;
-    if ((a.y > point.y) !== (b.y > point.y) && point.x < (b.x - a.x) * (point.y - a.y) / (b.y - a.y) + a.x) inside = !inside;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const a = ring[i], b = ring[j];
+    const cross = (lng - a[0]) * (b[1] - a[1]) - (lat - a[1]) * (b[0] - a[0]);
+    if (Math.abs(cross) < 1e-12 && lng >= Math.min(a[0], b[0]) && lng <= Math.max(a[0], b[0])
+      && lat >= Math.min(a[1], b[1]) && lat <= Math.max(a[1], b[1])) return true;
+    if ((a[1] > lat) !== (b[1] > lat) && lng < (b[0] - a[0]) * (lat - a[1]) / (b[1] - a[1]) + a[0]) inside = !inside;
   }
   return inside;
+}
+
+/** 园区示意围栏的经纬度偏移，与投影方式无关。 */
+const FENCE_OFFSET = { lng: 0.03, lat: 0.025 };
+const FENCE_SHAPE: Array<[number, number]> = [
+  [-1, -0.85], [0.72, -1], [1, 0.22], [0.48, 0.86], [-0.84, 0.72],
+];
+
+function fencePolygon(position: GeoPosition): GeoPosition[] {
+  return FENCE_SHAPE.map(([dx, dy]) => [
+    position[0] + dx * FENCE_OFFSET.lng,
+    position[1] + dy * FENCE_OFFSET.lat,
+  ]);
 }
 
 const roads = [
@@ -105,7 +111,68 @@ function BaseMap() {
   </>;
 }
 
-export function SpatialMap({ parks, selected, onSelect, boundary = null, onBoundary, compact = false, focusPosition = null, focusKey, onBoundaryComplete }: {
+/**
+ * 腾讯地图图层：在真实底图上绘制园区围栏。
+ * 围栏优先使用后端返回的真实边界，缺失时回退到园区点位偏移示意。
+ */
+function useTencentLayers(
+  handle: TencentMapHandle | null,
+  parks: ParkPoint[],
+  realFences: Map<string, GeoPosition[]>,
+) {
+  const fenceRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (!handle || !window.TMap) return;
+    const TMap = window.TMap;
+    const styles = {
+      fence: new TMap.PolygonStyle({ color: "rgba(22,82,184,0.16)", showBorder: true, borderColor: "#1652B8", borderWidth: 2 }),
+      fenceActive: new TMap.PolygonStyle({ color: "rgba(200,146,46,0.24)", showBorder: true, borderColor: "#C8922E", borderWidth: 2 }),
+    };
+    const fence = new TMap.MultiPolygon({ id: "park-fences", map: handle.instance, styles, geometries: [] });
+    fenceRef.current = fence;
+    return () => {
+      try { fence.destroy?.(); } catch { /* 忽略销毁异常 */ }
+      fenceRef.current = null;
+    };
+  }, [handle]);
+
+  useEffect(() => {
+    const fence = fenceRef.current;
+    if (!fence || !window.TMap) return;
+    const TMap = window.TMap;
+    const geometries = parks.map((park) => {
+      const real = realFences.get(park.id);
+      const points = real && real.length >= 3 ? real : fencePolygon(park.position);
+      return {
+        id: park.id,
+        styleId: "fence",
+        paths: points.map(([lng, lat]) => new TMap.LatLng(lat, lng)),
+      };
+    });
+    fence.setGeometries(geometries);
+  }, [parks, realFences]);
+}
+
+/**
+ * 依据点位分布推算合适的初始缩放级别。
+ * 腾讯地图 zoom 越大越局部，需保证所有园区都能落在可视区内。
+ */
+function fitZoom(positions: GeoPosition[]): number {
+  if (positions.length < 2) return 13;
+  const lngs = positions.map((position) => position[0]);
+  const lats = positions.map((position) => position[1]);
+  const span = Math.max(Math.max(...lngs) - Math.min(...lngs), Math.max(...lats) - Math.min(...lats));
+  // 实测 765×648 容器在 zoom 10 下可容纳约 0.6° 经度跨度，这里留一档余量。
+  if (span > 0.5) return 9;
+  if (span > 0.25) return 10;
+  if (span > 0.1) return 11;
+  if (span > 0.04) return 12;
+  if (span > 0.015) return 13;
+  return 14;
+}
+
+export function SpatialMap({ parks, selected, onSelect, boundary = null, onBoundary, compact = false, focusPosition = null, focusKey, onBoundaryComplete, realFences, useTencentBaseMap = false, mapCenter, mapZoom }: {
   parks: ParkPoint[];
   selected?: string;
   onSelect: (park: ParkPoint) => void;
@@ -115,6 +182,12 @@ export function SpatialMap({ parks, selected, onSelect, boundary = null, onBound
   focusPosition?: GeoPosition | null;
   focusKey?: string | number;
   onBoundaryComplete?: () => void;
+  /** 园区真实边界，key 为园区 id，值为 GeoJSON 环坐标。 */
+  realFences?: Map<string, GeoPosition[]>;
+  /** 是否启用腾讯地图真实底图。 */
+  useTencentBaseMap?: boolean;
+  mapCenter?: GeoPosition;
+  mapZoom?: number;
 }) {
   const [tool, setTool] = useState<Tool>("pan");
   const [offset, setOffset] = useState(zero);
@@ -125,6 +198,18 @@ export function SpatialMap({ parks, selected, onSelect, boundary = null, onBound
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const [frame, setFrame] = useState({ width: 0, height: 0 });
+  const [mapHandle, setMapHandle] = useState<TencentMapHandle | null>(null);
+  const [mapFailed, setMapFailed] = useState(false);
+  /** 地图视口变化计数，用于在移动/缩放后重算点位与选区坐标。 */
+  const [viewportTick, setViewportTick] = useState(0);
+
+  const useRealMap = Boolean(useTencentBaseMap) && !compact && !mapFailed;
+  const fenceMap = useMemo(() => realFences ?? new Map<string, GeoPosition[]>(), [realFences]);
+  const center = mapCenter ?? (parks[0]?.position ?? [121.6143, 31.2053] as GeoPosition);
+  const initialZoom = useMemo(
+    () => mapZoom ?? fitZoom(parks.map((park) => park.position)),
+    [mapZoom, parks],
+  );
 
   useEffect(() => {
     const element = containerRef.current;
@@ -137,34 +222,39 @@ export function SpatialMap({ parks, selected, onSelect, boundary = null, onBound
     return () => observer.disconnect();
   }, []);
 
-  // 完整地图等比呈现避免拉伸，缩略图保持原有铺满效果。
-  const layout = useMemo(() => {
-    const width = frame.width || 1;
-    const height = frame.height || 1;
-    if (compact) {
-      return { width, height, scaleX: width / 100, scaleY: height / 100, left: 0, top: 0 };
+  /**
+   * 坐标适配器：离线示意底图用 viewBox 0-100 线性映射，
+   * 真实底图用腾讯地图的墨卡托投影，两者输出同一套 SVG 坐标。
+   */
+  const viewBoxSize = useRealMap
+    ? { width: frame.width || 765, height: frame.height || 648 }
+    : { width: 100, height: 100 };
+
+  const toScreen = useCallback((position: GeoPosition): ScreenPoint => {
+    if (useRealMap && mapHandle) {
+      const point = mapHandle.projectToContainer(position);
+      return { x: point.x, y: point.y };
     }
-    const scale = Math.min(width, height) / 100;
-    return {
-      width,
-      height,
-      scaleX: scale,
-      scaleY: scale,
-      left: (width - 100 * scale) / 2,
-      top: (height - 100 * scale) / 2,
-    };
-  }, [frame, compact]);
+    void viewportTick;
+    return project(position);
+  }, [useRealMap, mapHandle, viewportTick]);
+
+  const fromScreen = useCallback((point: ScreenPoint): GeoPosition => {
+    void viewportTick;
+    if (useRealMap && mapHandle) return mapHandle.unprojectFromContainer(point);
+    return unproject(point);
+  }, [useRealMap, mapHandle, viewportTick]);
 
   useEffect(() => {
-    if (!focusPosition || compact) return;
-    const point = project(focusPosition);
-    setZoom(1.55);
-    setOffset({ x: (50 - point.x) * 1.55, y: (50 - point.y) * 1.55 });
-  }, [focusKey, compact]);
+    if (!focusPosition || compact || !mapHandle) return;
+    // 定位后居中，但不放大超过可容纳全部园区的级别，避免部分点位飞出视野。
+    mapHandle.setZoom(initialZoom);
+    mapHandle.setCenter(focusPosition);
+  }, [focusKey, compact, mapHandle, initialZoom]);
 
   useEffect(() => {
     const svg = svgRef.current;
-    if (!svg || compact) return;
+    if (!svg || compact || useRealMap) return;
     const onWheel = (event: WheelEvent) => {
       if (anchor) return;
       event.preventDefault();
@@ -172,18 +262,31 @@ export function SpatialMap({ parks, selected, onSelect, boundary = null, onBound
     };
     svg.addEventListener("wheel", onWheel, { passive: false });
     return () => svg.removeEventListener("wheel", onWheel);
-  }, [anchor, compact]);
+  }, [anchor, compact, useRealMap]);
 
-  function viewBoxPoint(event: PointerEvent<SVGSVGElement>) {
+  useTencentLayers(mapHandle, useRealMap ? parks : [], fenceMap);
+
+  // 地图移动或缩放后，腾讯地图的投影结果会变化，需要重绘覆盖层与点位。
+  useEffect(() => {
+    if (!mapHandle) return;
+    return mapHandle.onViewportChange(() => setViewportTick((value) => value + 1));
+  }, [mapHandle]);
+
+  /** 客户端坐标 → SVG viewBox 坐标。 */
+  function clientToViewBox(event: PointerEvent<SVGSVGElement>) {
     const box = event.currentTarget.getBoundingClientRect();
+    const scaleX = box.width ? viewBoxSize.width / box.width : 1;
+    const scaleY = box.height ? viewBoxSize.height / box.height : 1;
     return {
-      x: (event.clientX - box.left - layout.left) / layout.scaleX,
-      y: (event.clientY - box.top - layout.top) / layout.scaleY,
+      x: (event.clientX - box.left) * scaleX,
+      y: (event.clientY - box.top) * scaleY,
     };
   }
 
+  /** SVG viewBox 坐标 → 选区用的屏幕坐标（离线模式需扣除缩放与平移）。 */
   function screenCoordinates(event: PointerEvent<SVGSVGElement>) {
-    const point = viewBoxPoint(event);
+    const point = clientToViewBox(event);
+    if (useRealMap) return point;
     return {
       x: 50 + (point.x - offset.x - 50) / zoom,
       y: 50 + (point.y - offset.y - 50) / zoom,
@@ -199,17 +302,31 @@ export function SpatialMap({ parks, selected, onSelect, boundary = null, onBound
     };
   }
 
+  function createBoundaryFromScreen(nextTool: Tool, points: ScreenPoint[]): Boundary {
+    const [first, second] = points;
+    const screenPoints = nextTool === "rectangle" && first && second
+      ? [first, { x: second.x, y: first.y }, second, { x: first.x, y: second.y }]
+      : points;
+    const coordinates = screenPoints.map(fromScreen);
+    if (coordinates.length) coordinates.push(coordinates[0]);
+    return {
+      type: "Feature",
+      geometry: { type: "Polygon", coordinates: [coordinates] },
+      properties: { id: "selection", selectionTool: nextTool === "rectangle" ? "rectangle" : "polygon" },
+    };
+  }
+
   function start(event: PointerEvent<SVGSVGElement>) {
     if (compact || event.button !== 0 || !onBoundary) return;
     const point = screenCoordinates(event);
     if (tool === "polygon") {
-      const points = drawing && boundary ? [...toScreenBoundary(boundary), point] : [point];
-      onBoundary(createBoundary("polygon", points));
+      const points = drawing && boundary ? [...boundaryPoints(boundary).map(toScreen), point] : [point];
+      onBoundary(createBoundaryFromScreen("polygon", points));
       setDrawing(true);
     } else {
       event.currentTarget.setPointerCapture(event.pointerId);
-      setAnchor(tool === "pan" ? viewBoxPoint(event) : point);
-      if (tool === "rectangle") onBoundary(createBoundary("rectangle", [point, point]));
+      setAnchor(tool === "pan" ? clientToViewBox(event) : point);
+      if (tool === "rectangle") onBoundary(createBoundaryFromScreen("rectangle", [point, point]));
     }
   }
 
@@ -219,9 +336,9 @@ export function SpatialMap({ parks, selected, onSelect, boundary = null, onBound
       if (tool === "polygon" && drawing) setPreview(screenCoordinates(event));
       return;
     }
-    if (tool === "rectangle") onBoundary?.(createBoundary("rectangle", [anchor, screenCoordinates(event)]));
-    if (tool === "pan") {
-      const point = viewBoxPoint(event);
+    if (tool === "rectangle") onBoundary?.(createBoundaryFromScreen("rectangle", [anchor, screenCoordinates(event)]));
+    if (tool === "pan" && !useRealMap) {
+      const point = clientToViewBox(event);
       setOffset((current) => clampOffset({ x: current.x + point.x - anchor.x, y: current.y + point.y - anchor.y }));
       setAnchor(point);
     }
@@ -236,7 +353,7 @@ export function SpatialMap({ parks, selected, onSelect, boundary = null, onBound
   }
 
   function undoPoint() {
-    const points = toScreenBoundary(boundary);
+    const points = boundaryPoints(boundary);
     if (points.length === 0) return;
     const rest = points.slice(0, -1);
     if (rest.length < 3) {
@@ -244,7 +361,12 @@ export function SpatialMap({ parks, selected, onSelect, boundary = null, onBound
       setDrawing(false);
       return;
     }
-    onBoundary?.(createBoundary("polygon", rest));
+    const coordinates = [...rest, rest[0]];
+    onBoundary?.({
+      type: "Feature",
+      geometry: { type: "Polygon", coordinates: [coordinates] },
+      properties: { id: "selection", selectionTool: "polygon" },
+    });
   }
 
   function clearSelection() {
@@ -255,7 +377,7 @@ export function SpatialMap({ parks, selected, onSelect, boundary = null, onBound
   }
 
   function finish() {
-    if (toScreenBoundary(boundary).length < 3) onBoundary?.(null);
+    if (boundaryPoints(boundary).length < 3) onBoundary?.(null);
     else onBoundaryComplete?.();
     setDrawing(false);
     setPreview(null);
@@ -264,17 +386,20 @@ export function SpatialMap({ parks, selected, onSelect, boundary = null, onBound
   function endSelection() {
     setAnchor(null);
     if (tool !== "rectangle" || !boundary || boundary.properties.selectionTool !== "rectangle") return;
-    const points = toScreenBoundary(boundary);
+    const points = boundaryPoints(boundary).map(toScreen);
     const width = Math.max(...points.map((point) => point.x)) - Math.min(...points.map((point) => point.x));
     const height = Math.max(...points.map((point) => point.y)) - Math.min(...points.map((point) => point.y));
     if (width >= 1 && height >= 1) onBoundaryComplete?.();
   }
 
-  const selectedBoundary = toScreenBoundary(boundary);
-  const rectangle = boundary?.properties.selectionTool === "rectangle" ? selectedBoundary : [];
+  const selectionRing = boundaryPoints(boundary).map(toScreen);
+  const rectangle = boundary?.properties.selectionTool === "rectangle" ? selectionRing : [];
   const rectangleX = rectangle.map((point) => point.x);
   const rectangleY = rectangle.map((point) => point.y);
-  const polygon = boundary?.properties.selectionTool === "polygon" ? selectedBoundary : [];
+  const polygon = boundary?.properties.selectionTool === "polygon" ? selectionRing : [];
+  const previewRing = drawing && polygon.length > 0 && preview
+    ? [...polygon, preview]
+    : polygon;
   const hint = tool === "polygon"
     ? drawing
       ? "依次点击至少三个顶点"
@@ -285,46 +410,79 @@ export function SpatialMap({ parks, selected, onSelect, boundary = null, onBound
       ? boundary && !anchor
         ? "框选已完成，园区与企业已按范围筛选"
         : "按住并拖出选区"
-      : "拖动地图或选择园区浏览";
+      : useRealMap
+        ? "拖动地图或选择园区浏览"
+        : "拖动地图或选择园区浏览";
 
+  /** 离线模式：viewBox 坐标 → 容器百分比位置。 */
   function markerStyle(point: ScreenPoint) {
-    const x = layout.left + (50 + (point.x - 50) * zoom + offset.x) * layout.scaleX;
-    const y = layout.top + (50 + (point.y - 50) * zoom + offset.y) * layout.scaleY;
-    return { left: `${(x / layout.width) * 100}%`, top: `${(y / layout.height) * 100}%` };
+    const width = frame.width || 1;
+    const height = frame.height || 1;
+    const scale = compact ? { scaleX: width / 100, scaleY: height / 100, left: 0, top: 0 } : (() => {
+      const s = Math.min(width, height) / 100;
+      return { scaleX: s, scaleY: s, left: (width - 100 * s) / 2, top: (height - 100 * s) / 2 };
+    })();
+    const x = scale.left + (50 + (point.x - 50) * zoom + offset.x) * scale.scaleX;
+    const y = scale.top + (50 + (point.y - 50) * zoom + offset.y) * scale.scaleY;
+    return { left: `${(x / width) * 100}%`, top: `${(y / height) * 100}%` };
   }
 
-  return <div ref={containerRef} className={compact ? "spatial-map spatial-map--compact" : "spatial-map os-glass-card"} data-tool={tool}>
-    <svg ref={svgRef} viewBox="0 0 100 100" preserveAspectRatio={compact ? "none" : "xMidYMid meet"} className="spatial-map-canvas" aria-label="园区路网与电子围栏示意"
+  /** 真实底图模式：直接使用腾讯地图的像素投影，保证与底图严格对齐。 */
+  const realMarkerStyle = useCallback((park: ParkPoint) => {
+    // viewportTick 参与依赖，确保地图移动后重新计算投影结果。
+    void viewportTick;
+    const point = mapHandle
+      ? mapHandle.projectToContainer(park.position)
+      : project(park.position);
+    return { left: `${point.x}px`, top: `${point.y}px` };
+  }, [mapHandle, viewportTick]);
+
+  const handleMapReady = useCallback((handle: TencentMapHandle) => {
+    setMapHandle(handle);
+  }, []);
+
+  return <div ref={containerRef} className={compact ? "spatial-map spatial-map--compact" : "spatial-map os-glass-card"} data-tool={tool} data-base-map={useRealMap ? "tencent" : "offline"}>
+    {useRealMap && <TencentMapCanvas
+      className="spatial-map-base"
+      center={center}
+      zoom={initialZoom}
+      onReady={handleMapReady}
+      onError={() => setMapFailed(true)}
+    />}
+    <svg ref={svgRef}
+      viewBox={useRealMap ? `0 0 ${viewBoxSize.width} ${viewBoxSize.height}` : "0 0 100 100"}
+      preserveAspectRatio={compact || useRealMap ? "none" : "xMidYMid meet"}
+      className="spatial-map-canvas"
+      style={useRealMap && tool === "pan" ? { pointerEvents: "none" } : undefined}
+      aria-label="园区路网与电子围栏示意"
       onPointerDown={start} onPointerMove={move} onPointerUp={endSelection}
       onPointerCancel={() => setAnchor(null)} onDoubleClick={tool === "polygon" ? finish : undefined}>
-      <g transform={"translate(" + offset.x + " " + offset.y + ") translate(50 50) scale(" + zoom + ") translate(-50 -50)"}>
+      {!useRealMap && <g transform={"translate(" + offset.x + " " + offset.y + ") translate(50 50) scale(" + zoom + ") translate(-50 -50)"}>
         <BaseMap />
-        {parks.map(park => {
-          const point = project(park.position);
-          return <polygon key={park.id} className="spatial-fence" data-in-range={containsPoint(boundary, park.position)}
-            points={boundaryPath([{ x: point.x - 4.4, y: point.y - 4 }, { x: point.x + 3.2, y: point.y - 4.8 }, { x: point.x + 4.6, y: point.y + 1 }, { x: point.x + 2.2, y: point.y + 4 }, { x: point.x - 3.8, y: point.y + 3.4 }])} />;
-        })}
-        {rectangle.length >= 4 && <rect className="spatial-selection" x={Math.min(...rectangleX)} y={Math.min(...rectangleY)} width={Math.max(...rectangleX) - Math.min(...rectangleX)} height={Math.max(...rectangleY) - Math.min(...rectangleY)} />}
-        {polygon.length >= 3 && <polygon className="spatial-selection" points={boundaryPath(polygon)} />}
-        {drawing && polygon.length > 0 && <polyline className="spatial-outline" points={boundaryPath(preview ? [...polygon, preview] : polygon)} />}
-      </g>
+        {parks.map(park => (
+          <polygon key={park.id} className="spatial-fence" data-in-range={containsPoint(boundary, park.position)}
+            points={boundaryPath(fencePolygon(park.position).map(project))} />
+        ))}
+      </g>}
+      {rectangle.length >= 4 && <rect className="spatial-selection" x={Math.min(...rectangleX)} y={Math.min(...rectangleY)} width={Math.max(...rectangleX) - Math.min(...rectangleX)} height={Math.max(...rectangleY) - Math.min(...rectangleY)} />}
+      {polygon.length >= 3 && <polygon className="spatial-selection" points={boundaryPath(polygon)} />}
+      {drawing && previewRing.length > 0 && <polyline className="spatial-outline" points={boundaryPath(previewRing)} />}
     </svg>
-    {parks.map(park => {
-      const point = project(park.position);
-      return <button type="button" className="spatial-point" data-active={selected === park.id} data-in-range={containsPoint(boundary, park.position)}
+    {parks.map(park => (
+      <button type="button" className="spatial-point" data-active={selected === park.id} data-in-range={containsPoint(boundary, park.position)}
       aria-label={park.name + " · 在驻企业 " + park.enterprises + " 家"} key={park.id}
-      style={markerStyle(point)} onClick={() => onSelect(park)}>
+      style={useRealMap ? realMarkerStyle(park) : markerStyle(project(park.position))} onClick={() => onSelect(park)}>
       <MapPin /><span role="tooltip">{park.name}<small>在驻企业 {park.enterprises} 家</small></span>
-    </button>;
-    })}
+    </button>
+    ))}
     {!compact && <>
       <div className="spatial-tools os-glass-card" aria-label="地图工具">
         {([{ value: "pan", icon: Hand, label: "拖动" }, { value: "polygon", icon: Pentagon, label: "多边形圈选" }, { value: "rectangle", icon: Square, label: "矩形框选" }] as const).map(({ value, icon: Icon, label }) =>
           <Button key={value} type="button" size="sm" variant={tool === value ? "default" : "ghost"} aria-pressed={tool === value} onClick={() => choose(value)}><Icon data-icon="inline-start" />{label}</Button>)}
-        <Button type="button" size="sm" variant="ghost" onClick={() => { choose("pan"); onBoundary?.(null); setOffset(zero); setZoom(1); }}><RotateCcw data-icon="inline-start" />重置</Button>
+        <Button type="button" size="sm" variant="ghost" onClick={() => { choose("pan"); onBoundary?.(null); setOffset(zero); setZoom(1); mapHandle?.setZoom(initialZoom); mapHandle?.setCenter(center); }}><RotateCcw data-icon="inline-start" />重置</Button>
         <span className="spatial-zoom-controls" aria-label="缩放地图">
-          <Button type="button" size="icon-sm" variant="ghost" aria-label="放大" onClick={() => setZoom(value => Math.min(2.5, Number((value + 0.2).toFixed(1))))}><ZoomIn /></Button>
-          <Button type="button" size="icon-sm" variant="ghost" aria-label="缩小" onClick={() => setZoom(value => Math.max(0.8, Number((value - 0.2).toFixed(1))))}><ZoomOut /></Button>
+          <Button type="button" size="icon-sm" variant="ghost" aria-label="放大" onClick={() => { const next = Math.min(2.5, Number((zoom + 0.2).toFixed(1))); setZoom(next); mapHandle?.setZoom(Math.min(18, initialZoom * next)); }}><ZoomIn /></Button>
+          <Button type="button" size="icon-sm" variant="ghost" aria-label="缩小" onClick={() => { const next = Math.max(0.8, Number((zoom - 0.2).toFixed(1))); setZoom(next); mapHandle?.setZoom(Math.max(6, initialZoom * next)); }}><ZoomOut /></Button>
         </span>
       </div>
       <div className="spatial-hint os-glass-card">
