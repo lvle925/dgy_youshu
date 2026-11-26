@@ -1,5 +1,10 @@
 # 腾讯位置服务接入契约（实测确认）
 
+> **重要：腾讯地图只是当前演示用的临时服务商，不是项目绑定依赖。**
+> 业务层通过 `MapProvider`（服务端）与 `MapBaseRenderer`（前端）两层契约访问地图能力，
+> 腾讯实现位于这两层契约之下。部署到单位环境后如需改用政务内网 GIS、天地图、高德或自建服务，
+> 新增一个实现并切换配置即可，业务页面与接口无需改动。替换步骤见文末「可替换服务商架构」。
+
 密钥：
 - Key（前端 JS API + 后端 WebService）：见 `.env` 的 `TENCENT_MAP_KEY`
 - SecretKey（仅后端签名用，**禁止进入前端代码**）：见 `.env` 的 `TENCENT_MAP_SECRET_KEY`
@@ -22,7 +27,7 @@ sig = md5(请求路径 + "?" + 按参数名升序拼接的原始参数串 + Secr
 4. `sig` 本身不参与签名；最终 URL 为 `...?参数&sig=<sig>`。
 5. 错误形式：`SK+query+SK` 与 `URI+query+sig=SK` 都是错的，会返回 `status: 111`。
 
-参考实现：`backend/src/main/java/com/youshu/local/TencentMapService.java`
+参考实现：`backend/src/main/java/com/youshu/local/TencentMapProvider.java`
 
 ## 错误码
 
@@ -110,8 +115,56 @@ new TMap.MultiMarker({
 `new TMap.Map(container, { center: new TMap.LatLng(31.2053, 121.6143), zoom: 12 })`
 渲染出完整真实瓦片：路网、河道、POI 标注、缩放控件与版权标识，区域与张江高科完全对应。
 
+## 可替换服务商架构
+
+腾讯实现被隔离在两层契约之下，其余代码只依赖契约：
+
+| 层 | 契约 | 当前实现 | 门面/分发 |
+| --- | --- | --- | --- |
+| 服务端 | `backend/.../MapProvider.java` | `TencentMapProvider.java` | `MapService.java` |
+| 前端 | `src-react/components/map/mapBase.ts` | `tencentMapBase.tsx` | `MapBaseCanvas.tsx` |
+
+统一返回结构由契约固定，因此换服务商时调用方零改动：
+
+- `geocode(address, region)` → `{ lng, lat, title, address, district }`
+- `suggest(keyword, region)` → `[{ title, address, district, lng, lat }]`
+- `searchPlaces(name, city)` → `[{ id, title, address, lng, lat, polygon? }]`
+- `MapViewport` → `projectToContainer` / `unprojectFromContainer` / `setCenter` / `setZoom` /
+  `getZoom` / `onViewportChange` / `drawFences`
+
+`MapService` 统一处理与服务商无关的两件事：查询结果缓存（TTL 6 小时）与每日预算（200 次）。
+服务商把各自的配额耗尽错误码转换成契约异常 `MapQuotaExceededException`，门面捕获后熔断到次日，
+不感知具体服务商。
+
+### 新增其它服务商
+
+1. 服务端新建类实现 `MapProvider`，实现 `name()` / `displayName()` / `configured()` 及三个查询方法；
+   加 `@Component` 后会被 `MapService` 构造函数自动注册。
+2. 前端新建 `xxxMapBase.ts`，导出 `MapBaseRenderer` 实现，提供同一套 `MapViewport` 方法。
+3. 在 `src-react/components/map/MapBaseCanvas.tsx` 的 `RENDERERS` 注册表加一行。
+4. 配置 `MAP_PROVIDER=<新服务商 name>` 与 `VITE_MAP_PROVIDER=<同一 name>`。
+5. 若新服务商不需要前端 JS API（例如纯内网 GIS 返回瓦片地址），保留一个空实现也可，
+   离线示意底图仍可用。
+
+### 切换方式
+
+```dotenv
+# 服务端选择 WebService 服务商，前端选择底图渲染器，两者名称保持一致
+MAP_PROVIDER=tencent
+VITE_MAP_PROVIDER=tencent
+```
+
+不配置任何凭据时 `/api/geo/status` 返回 `configured=false`，前端自动回退到离线 SVG 示意底图，
+页面仍可完整操作（定位与围栏使用本地示例数据）。
+
 ## 相关文件
 
-- 后端签名与调用：`backend/src/main/java/com/youshu/local/TencentMapService.java`
+- 服务端契约：`backend/src/main/java/com/youshu/local/MapProvider.java`
+- 服务端配额异常：`backend/src/main/java/com/youshu/local/MapQuotaExceededException.java`
+- 服务端门面：`backend/src/main/java/com/youshu/local/MapService.java`
+- 腾讯服务端实现：`backend/src/main/java/com/youshu/local/TencentMapProvider.java`
 - 后端接口：`backend/src/main/java/com/youshu/local/GeoController.java`
+- 前端契约：`src-react/components/map/mapBase.ts`
+- 前端分发：`src-react/components/map/MapBaseCanvas.tsx`
+- 腾讯前端实现：`src-react/components/map/tencentMapBase.tsx`
 - 前端封装：`src/api.js`（`geoStatus` / `geoGeocode` / `geoSuggest` / `geoParkBoundary`）

@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent } from "react";
 import { Hand, MapPin, Pentagon, RotateCcw, Square, Trash2, Undo2, ZoomIn, ZoomOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { TencentMapCanvas, type TencentMapHandle } from "@/components/TencentMapCanvas";
+import { MapBaseCanvas } from "@/components/map/MapBaseCanvas";
+import type { MapViewport } from "@/components/map/mapBase";
 
 export type ScreenPoint = { x: number; y: number };
 export type GeoPosition = [lng: number, lat: number];
@@ -112,46 +113,26 @@ function BaseMap() {
 }
 
 /**
- * 腾讯地图图层：在真实底图上绘制园区围栏。
+ * 在真实底图上绘制园区围栏。
  * 围栏优先使用后端返回的真实边界，缺失时回退到园区点位偏移示意。
+ * 具体绘制方式由地图适配层决定，业务层只提供经纬度环。
  */
-function useTencentLayers(
-  handle: TencentMapHandle | null,
+function useMapLayers(
+  handle: MapViewport | null,
   parks: ParkPoint[],
   realFences: Map<string, GeoPosition[]>,
+  boundary: Boundary | null,
 ) {
-  const fenceRef = useRef<any>(null);
-
   useEffect(() => {
-    if (!handle || !window.TMap) return;
-    const TMap = window.TMap;
-    const styles = {
-      fence: new TMap.PolygonStyle({ color: "rgba(22,82,184,0.16)", showBorder: true, borderColor: "#1652B8", borderWidth: 2 }),
-      fenceActive: new TMap.PolygonStyle({ color: "rgba(200,146,46,0.24)", showBorder: true, borderColor: "#C8922E", borderWidth: 2 }),
-    };
-    const fence = new TMap.MultiPolygon({ id: "park-fences", map: handle.instance, styles, geometries: [] });
-    fenceRef.current = fence;
-    return () => {
-      try { fence.destroy?.(); } catch { /* 忽略销毁异常 */ }
-      fenceRef.current = null;
-    };
-  }, [handle]);
-
-  useEffect(() => {
-    const fence = fenceRef.current;
-    if (!fence || !window.TMap) return;
-    const TMap = window.TMap;
-    const geometries = parks.map((park) => {
+    if (!handle?.drawFences) return;
+    const fences = parks.map((park) => {
       const real = realFences.get(park.id);
-      const points = real && real.length >= 3 ? real : fencePolygon(park.position);
-      return {
-        id: park.id,
-        styleId: "fence",
-        paths: points.map(([lng, lat]) => new TMap.LatLng(lat, lng)),
-      };
+      const ring = real && real.length >= 3 ? real : fencePolygon(park.position);
+      return { id: park.id, ring, active: containsPoint(boundary, park.position) };
     });
-    fence.setGeometries(geometries);
-  }, [parks, realFences]);
+    const cleanup = handle.drawFences(fences);
+    return typeof cleanup === "function" ? cleanup : undefined;
+  }, [handle, parks, realFences, boundary]);
 }
 
 /**
@@ -172,7 +153,7 @@ function fitZoom(positions: GeoPosition[]): number {
   return 14;
 }
 
-export function SpatialMap({ parks, selected, onSelect, boundary = null, onBoundary, compact = false, focusPosition = null, focusKey, onBoundaryComplete, realFences, useTencentBaseMap = false, mapCenter, mapZoom }: {
+export function SpatialMap({ parks, selected, onSelect, boundary = null, onBoundary, compact = false, focusPosition = null, focusKey, onBoundaryComplete, realFences, useRealBaseMap = false, mapCenter, mapZoom }: {
   parks: ParkPoint[];
   selected?: string;
   onSelect: (park: ParkPoint) => void;
@@ -184,8 +165,8 @@ export function SpatialMap({ parks, selected, onSelect, boundary = null, onBound
   onBoundaryComplete?: () => void;
   /** 园区真实边界，key 为园区 id，值为 GeoJSON 环坐标。 */
   realFences?: Map<string, GeoPosition[]>;
-  /** 是否启用腾讯地图真实底图。 */
-  useTencentBaseMap?: boolean;
+  /** 是否启用真实地图底图（服务商由地图适配层决定）。 */
+  useRealBaseMap?: boolean;
   mapCenter?: GeoPosition;
   mapZoom?: number;
 }) {
@@ -198,12 +179,12 @@ export function SpatialMap({ parks, selected, onSelect, boundary = null, onBound
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const [frame, setFrame] = useState({ width: 0, height: 0 });
-  const [mapHandle, setMapHandle] = useState<TencentMapHandle | null>(null);
+  const [mapHandle, setMapHandle] = useState<MapViewport | null>(null);
   const [mapFailed, setMapFailed] = useState(false);
   /** 地图视口变化计数，用于在移动/缩放后重算点位与选区坐标。 */
   const [viewportTick, setViewportTick] = useState(0);
 
-  const useRealMap = Boolean(useTencentBaseMap) && !compact && !mapFailed;
+  const useRealMap = Boolean(useRealBaseMap) && !compact && !mapFailed;
   const fenceMap = useMemo(() => realFences ?? new Map<string, GeoPosition[]>(), [realFences]);
   const center = mapCenter ?? (parks[0]?.position ?? [121.6143, 31.2053] as GeoPosition);
   const initialZoom = useMemo(
@@ -264,7 +245,7 @@ export function SpatialMap({ parks, selected, onSelect, boundary = null, onBound
     return () => svg.removeEventListener("wheel", onWheel);
   }, [anchor, compact, useRealMap]);
 
-  useTencentLayers(mapHandle, useRealMap ? parks : [], fenceMap);
+  useMapLayers(mapHandle, useRealMap ? parks : [], fenceMap, boundary);
 
   // 地图移动或缩放后，腾讯地图的投影结果会变化，需要重绘覆盖层与点位。
   useEffect(() => {
@@ -437,12 +418,12 @@ export function SpatialMap({ parks, selected, onSelect, boundary = null, onBound
     return { left: `${point.x}px`, top: `${point.y}px` };
   }, [mapHandle, viewportTick]);
 
-  const handleMapReady = useCallback((handle: TencentMapHandle) => {
+  const handleMapReady = useCallback((handle: MapViewport) => {
     setMapHandle(handle);
   }, []);
 
-  return <div ref={containerRef} className={compact ? "spatial-map spatial-map--compact" : "spatial-map os-glass-card"} data-tool={tool} data-base-map={useRealMap ? "tencent" : "offline"}>
-    {useRealMap && <TencentMapCanvas
+  return <div ref={containerRef} className={compact ? "spatial-map spatial-map--compact" : "spatial-map os-glass-card"} data-tool={tool} data-base-map={useRealMap ? "real" : "offline"}>
+    {useRealMap && <MapBaseCanvas
       className="spatial-map-base"
       center={center}
       zoom={initialZoom}

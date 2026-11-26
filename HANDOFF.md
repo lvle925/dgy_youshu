@@ -12,10 +12,10 @@
 | 项 | 值 |
 | --- | --- |
 | 仓库 / 分支 | https://github.com/lvle925/dgy_youshu ，`main` |
-| HEAD | 见 `git log -1`（腾讯地图接入批次已推送，`main` 与 `origin/main` 同步） |
-| 本轮提交 | `7716542` B0 → `6b2de71` B1 → `cfedae0` B2 → `57a8737` B3 → `0f48585` B4 → `a89b6a8` B5 → `e130efe`/`2f513c5` 文档 → `ae403ad` 交付包重建 → `3692e0c` 功能缺口修复 → 腾讯地图接入批次 |
-| 工作区 | 干净，仅剩两个**未跟踪**输入：`dgy_youshu/`（同事代码副本）、`dgy_youshu-develop_glf.zip`（同事开发包），**未做逐文件比对合并**，别误删 |
-| 本轮范围 | 按用户提供的《全量逐页前端 UI/交互审查》执行 Batch 0~5，共 39 个页面/组件（只改前端源码）。**已补做交付包重建**：交付目录与 ZIP 已同步到 Batch 0~5 之后的最新 dist，并在解压目录 compose 验证通过（见 §6 第 1 项）。README 与截图仍待处理 |
+| HEAD | 见 `git log -1`（截至腾讯地图接入批次 `a5558ce` 已推送；地图 provider 化收尾为待提交改动） |
+| 本轮提交 | `7716542` B0 → `6b2de71` B1 → `cfedae0` B2 → `57a8737` B3 → `0f48585` B4 → `a89b6a8` B5 → `e130efe`/`2f513c5` 文档 → `ae403ad` 交付包重建 → `3692e0c` 功能缺口修复 → 腾讯地图接入批次 → 地图 provider 化收尾 |
+| 工作区 | 仅剩两个**未跟踪**输入：`dgy_youshu/`（同事代码副本）、`dgy_youshu-develop_glf.zip`（同事开发包），**按用户要求不合并**，别误删 |
+| 本轮范围 | 按用户提供的《全量逐页前端 UI/交互审查》执行 Batch 0~5，共 39 个页面/组件。**交付包重建、截图重拍、README 同步、地图接入与 provider 化均已完成**，并在解压目录 compose 做过运行时回归（见 §6）；同事代码不合并 |
 
 ## 3. 跑起来
 
@@ -40,7 +40,8 @@ npm run dev                                    # Vite 127.0.0.1:5199，代理到
 | 通用原语（页面骨架/下拉/表单/错误条） | `src-react/pages/PagePrimitives.tsx` |
 | 共享业务组件 | `src/components/shared/`（`DataTable`、`ChipFilter`、`FilterDrawer`、`MetricCard`、`StatusTag`、`PermissionTree`） |
 | 本轮新增 | `src/components/shared/ConfirmDialog.tsx`、`src/components/shared/DetailFields.tsx`（中文字段标签映射） |
-| 离线 SVG 地图 | `src-react/components/SpatialMap.tsx` + `src-react/lib/spatialData.ts` |
+| 地图业务组件 | `src-react/components/SpatialMap.tsx` + `src-react/lib/spatialData.ts` |
+| 地图服务契约（可替换） | 后端 `MapProvider` / `MapService` / `MapQuotaExceededException`；前端 `src-react/components/map/{mapBase,MapBaseCanvas,tencentMapBase}` |
 | 业务页 | `src-react/pages/{investment,opportunity,stability,admin}/` |
 | 后端 | `backend/src/main/java/com/youshu/local`（认证、权限、集合 CRUD、审计、报表） |
 
@@ -68,7 +69,7 @@ npm run dev                                    # Vite 127.0.0.1:5199，代理到
 - `RecordPermissions`：`companyArchives` 补入 `/businessMap/index`，地图页读取企业档案不再被拒。
 - `RecordsController.inScope()`：按集合区分公共/私有语义，私有数据无园区归属时不再一律放行；走访工单与记录按企业名反查园区归属。新增 2 个测试覆盖该行为。
 - 地图结果抽屉补 `10/20/50` 分页。
-- **接入腾讯位置服务**：底图换真实腾讯地图 JS API GL 瓦片；地址定位与关键词联想改走后端签名接口；`SpatialMap` 的坐标换算抽象为适配器（离线线性投影 / 真实墨卡托投影共用一套几何逻辑）；`containsPoint` 改为纯经纬度空间运算，与投影解耦。
+- **接入腾讯位置服务并做可替换抽象**：底图换真实腾讯地图 JS API GL 瓦片；地址定位与关键词联想改走后端签名接口；`SpatialMap` 的坐标换算抽象为适配器（离线线性投影 / 真实底图投影共用一套几何逻辑）；`containsPoint` 改为纯经纬度空间运算，与投影解耦。**腾讯只是临时演示 provider**：服务端 `MapProvider` + 前端 `MapBaseRenderer` 两层契约隔离具体实现，换服务商只需新增实现并切换 `MAP_PROVIDER` / `VITE_MAP_PROVIDER`，业务页面无需改动。
 - 修掉真实底图下的三个交互缺陷：地图移动后覆盖层不同步（补 `onMove` 订阅）、定位后自动弹详情抽屉遮挡工具栏、定位后放大量过大导致点位飞出视野。
 
 ## 7. 已知坑（别踩）
@@ -78,9 +79,10 @@ npm run dev                                    # Vite 127.0.0.1:5199，代理到
 - **构建时避开批量删除阈值**：本机沙箱对单次删除超过 50 个文件会拦截（vite 的 `emptyDir` 会触发 `SAFE_DELETE_BULK_CONFIRM_REQUIRED`）。用 `npx vite build --emptyOutDir false`，并先手动分批 `rm` 掉 `dist/assets` 下的旧文件；构建完必须核对 `dist/assets` 文件数与 `dist` 是否有多余旧 hash 残留。
 - **打包 ZIP 用 Python `zipfile`**：`Compress-Archive` 写出的条目用**反斜杠**分隔符，与原包约定的正斜杠不一致，会影响 Linux/Docker 环境解压。
 - **后端测试需自带 MySQL**：`mvn test` 的测试默认连 `127.0.0.1:3307/youshu_test`。在容器里跑要用 `--network youshu-test_default` 并设 `TEST_MYSQL_URL` 指向 `mysql-test:3306`，否则报 `Connection refused` 而误判为代码问题。
-- **地图几何（已重构）**：`SpatialMap` 现在有两套坐标系 —— 离线示意底图用 `viewBox 0-100` 线性投影，真实底图用腾讯地图的 `projectToContainer` / `unprojectFromContainer`。改动该组件时，**必须**同步维护 `toScreen()` / `fromScreen()` 这一对换算函数，以及 `markerStyle()`（离线百分比定位）与 `realMarkerStyle()`（真实像素定位）两套定位方式。选区判定 `containsPoint()` 已在经纬度空间完成，**不要**再改回屏幕坐标实现。
-- **真实底图必须订阅 `onMove`**：地图移动/缩放后腾讯地图的投影结果会变，覆盖层与点位需要重绘。若新增腾讯图层或调整点位定位，务必确认 `viewportTick` 依赖链完整，否则会出现点位与底图错位。
-- **腾讯位置服务配额极小**：该 Key 的 WebService 免费额度连续调用十几次即触发 status 121。服务端已加 6 小时缓存 + 每日 200 次预算上限；园区真实边界按需查询，不做批量预取。改这块时不要引入批量循环调用。
+- **地图几何（已重构）**：`SpatialMap` 现在有两套坐标系 —— 离线示意底图用 `viewBox 0-100` 线性投影，真实底图用 `MapViewport.projectToContainer` / `unprojectFromContainer`（腾讯适配器内部映射到 `TMap`）。改动该组件时，**必须**同步维护 `toScreen()` / `fromScreen()` 这一对换算函数，以及 `markerStyle()`（离线百分比定位）与 `realMarkerStyle()`（真实像素定位）两套定位方式。选区判定 `containsPoint()` 已在经纬度空间完成，**不要**再改回屏幕坐标实现。
+- **地图 provider 不要写死**：业务代码只依赖 `MapProvider` / `MapBaseRenderer` 契约。新增服务商不要改 `GeoController` 或 `SpatialMap`；前端渲染器要在 `MapBaseCanvas` 的 `RENDERERS` 注册，服务端实现加 `@Component` 即可自动注册。腾讯特有的逻辑只允许留在 `tencentMapBase.tsx` / `TencentMapProvider.java`。
+- **真实底图必须订阅视口变化**：地图移动/缩放后投影结果会变，覆盖层与点位需要重绘。若新增图层或调整点位定位，务必确认 `viewportTick` 依赖链完整，否则会出现点位与底图错位。
+- **腾讯位置服务配额极小**：该 Key 的 WebService 免费额度连续调用十几次即触发 status 121。服务商需把私有错误码转换为 `MapQuotaExceededException`，由 `MapService` 统一熔断；已加 6 小时缓存 + 每日 200 次预算上限。园区真实边界按需查询，不做批量预取。改这块时不要引入批量循环调用。
 - **紧凑地图**（首页缩略图，`compact`）仍保留 `none` 拉伸表现，与全屏地图不一致，属有意为之。
 - **文本框控件统一**：`PagePrimitives.NativeSelect` 是统一下拉入口；新增表单下拉请用 `bare` + `allowEmpty={false}`，不要再写原生 `<select className="business-input">`。
 - **中文字段展示**：业务详情抽屉请用 `DetailFields`，不要直接 `Object.entries(row)` 渲染（会出现 `parkId`、`departmentId` 这类英文技术字段）。映射表已补齐 `city`/`targetCity`/`desc`/`level` 等字段，新增业务字段时**记得同步加映射**，否则会以英文键名显示。`DetailFields` 只用于 serviceRequests / visitOrders / visitRecords / 操作日志四个集合；企业档案用自定义 `ArchiveDetail`。

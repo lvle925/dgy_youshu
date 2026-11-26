@@ -14,19 +14,22 @@
 
 ## 地图服务（可选）
 
-商机地图底图可接入腾讯位置服务。在 `.env` 中填写：
+地图能力为可替换服务商架构。当前配置的腾讯位置服务只是**演示用临时方案**，业务层不绑定具体服务商；
+部署到单位环境后可改用政务内网 GIS、天地图、高德或自建服务，新增实现并切换下面的 `MAP_PROVIDER` 即可。
 
 ```dotenv
+MAP_PROVIDER=tencent
 TENCENT_MAP_KEY=你的 Key
 TENCENT_MAP_SECRET_KEY=你的 SecretKey
 ```
 
+- `MAP_PROVIDER` 选择服务端实现；前端底图渲染器由构建时的 `VITE_MAP_PROVIDER` 决定，两者名称保持一致。
 - Key 同时用于前端 JS API 底图与后端 WebService 调用；SecretKey 仅在后端用于签名，不要写入前端代码。
 - 两个凭据需属于同一账号下的同一应用，WebService 需在控制台开启 SN 校验。
 - 留空时地图自动使用内置离线示意底图，功能流程不受影响。
-- 免费额度较小，服务端已做结果缓存与每日调用预算保护；园区真实边界按需查询，不做批量预取。
+- 免费额度较小，服务端已做结果缓存、每日调用预算与配额耗尽熔断；园区真实边界按需查询，不做批量预取。
 
-签名算法与接口契约见仓库内 `docs/tendcent-map-integration.md`。
+签名算法、接口契约与新增服务商步骤见仓库内 `docs/tendcent-map-integration.md`。
 
 ## 端口
 

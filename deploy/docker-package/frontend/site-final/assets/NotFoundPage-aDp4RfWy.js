@@ -1,6 +1,0 @@
-import{c as i,q as t,j as s,v as n,$ as o}from"./main-rR129JFl.js";import{P as c,a as r}from"./PagePrimitives-Z17MkMa2.js";import{H as d}from"./house-DkFBcrXi.js";import"./card-nVJQZeK5.js";/**
- * @license lucide-react v1.75.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */const e={name:"compass",size:24,node:[["circle",{cx:"12",cy:"12",r:"10",key:"1mglay"}],["path",{d:"m16.24 7.76-1.804 5.411a2 2 0 0 1-1.265 1.265L7.76 16.24l1.804-5.411a2 2 0 0 1 1.265-1.265z",key:"9ktpf1"}]]};e.node;const l=i(e);function p(){const a=t();return s.jsxs("div",{className:"business-page",children:[s.jsx(c,{title:"页面不存在",description:"当前地址没有对应的工作台页面。"}),s.jsx(r,{children:s.jsxs("div",{className:"business-empty-hint not-found-hint",children:[s.jsx(l,{"aria-hidden":"true"}),s.jsx("strong",{children:"404 · 未找到该页面"}),s.jsx("span",{children:"可能是地址输入有误、页面已调整，或当前账号没有访问该模块的权限。"}),s.jsxs("div",{className:"not-found-actions",children:[s.jsxs(n,{variant:"outline",onClick:()=>a(-1),children:[s.jsx(o,{"data-icon":"inline-start"}),"返回上一页"]}),s.jsxs(n,{onClick:()=>a("/home/index"),children:[s.jsx(d,{"data-icon":"inline-start"}),"返回首页"]})]})]})})]})}export{p as default};

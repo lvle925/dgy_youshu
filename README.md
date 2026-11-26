@@ -180,22 +180,27 @@ MYSQL_HOST_PORT=3307
 MYSQL_USER=youshu
 MYSQL_PASSWORD=youshu_local
 MYSQL_ROOT_PASSWORD=youshu_root_local
-# 腾讯位置服务（可选，留空则地图回退到离线示意底图）
+# 地图服务商（可选，留空则地图回退到离线示意底图）
+MAP_PROVIDER=tencent
 TENCENT_MAP_KEY=
 TENCENT_MAP_SECRET_KEY=
 ```
 
 登录页预填 `127127`，点免验证码入口即可进入。也可发送本地演示短信并输入 `127127`。账号密码登录使用 Compose 内置的 Cloudflare 测试站点密钥。测试密钥只用于本机验收，部署时替换为正式服务配置，并设置 `APP_AUTH_DEMO_LOGIN_ENABLED=false`。
 
-### 腾讯位置服务接入
+### 地图服务接入（当前为腾讯位置服务）
 
-商机地图可接入腾讯位置服务：底图由 JS API GL 渲染真实瓦片，地址定位、关键词联想与园区边界由服务端签名后调用 WebService 接口。
+商机地图的底层能力已做成**可替换服务商架构**。当前接入的腾讯位置服务只是**演示用临时方案**，
+业务页面与接口并不绑定腾讯：服务端通过 `MapProvider` 契约、前端通过 `MapBaseRenderer` 契约访问地图，
+更换为政务内网 GIS、天地图、高德或自建服务时，新增实现并切换 `MAP_PROVIDER` / `VITE_MAP_PROVIDER` 即可，
+调用方无需改动。替换步骤见 [腾讯位置服务接入说明](docs/tendcent-map-integration.md) 的「可替换服务商架构」。
 
+- `MAP_PROVIDER` 选择服务端 WebService 实现，`VITE_MAP_PROVIDER` 选择前端底图渲染器，两者名称保持一致；当前均为 `tencent`。
 - `TENCENT_MAP_KEY` 同时用于前端 JS API 与后端 WebService；`TENCENT_MAP_SECRET_KEY` **仅存在于后端**，用于计算请求签名，不得写入前端代码或提交到仓库。
 - SecretKey 与 Key 需属于同一账号下的同一应用；WebService 调用需在控制台开启 SN 校验。
 - 凭据缺失或调用失败时，地图自动回退到离线示意底图与本地园区匹配，业务流程不受影响。
-- 免费额度按接口独立计算且很小，因此服务端对查询结果做 6 小时缓存，并设置每日调用预算上限，接近上限时直接短路，避免把配额消耗在必然失败的请求上。园区真实边界按需查询（选中园区时），不做批量预取。
-- 签名算法与 JS API 调用契约见 [腾讯位置服务接入说明](docs/tendcent-map-integration.md)。
+- 免费额度按接口独立计算且很小，因此服务端对查询结果做 6 小时缓存，并设置每日调用预算上限；配额耗尽后由契约异常触发熔断，直到次日重置。园区真实边界按需查询（选中园区时），不做批量预取。
+- 签名算法、JS API 调用契约与新增服务商步骤见 [地图接入说明](docs/tendcent-map-integration.md)。
 
 ### 五类内置政务角色测试说明
 

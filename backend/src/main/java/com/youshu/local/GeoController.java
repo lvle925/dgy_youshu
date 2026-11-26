@@ -19,10 +19,10 @@ import java.util.Map;
 @RequestMapping("/api/geo")
 public class GeoController {
     private static final String ROUTE = "/businessMap/index";
-    private final TencentMapService maps;
+    private final MapService maps;
     private final WorkspaceAccess access;
 
-    GeoController(TencentMapService maps, WorkspaceAccess access) {
+    GeoController(MapService maps, WorkspaceAccess access) {
         this.maps = maps;
         this.access = access;
     }
@@ -33,8 +33,9 @@ public class GeoController {
         var principal = access.current(session);
         if (!principal.allows(ROUTE, "智慧招商", null)) throw WorkspaceAccess.denied("没有查看地图权限");
         Map<String, Object> payload = new LinkedHashMap<>();
-        payload.put("configured", maps.isConfigured());
-        payload.put("provider", "腾讯位置服务");
+        payload.put("configured", maps.configured());
+        payload.put("provider", maps.providerName());
+        payload.put("providerName", maps.providerDisplayName());
         return payload;
     }
 
@@ -81,7 +82,7 @@ public class GeoController {
             HttpSession session) {
         var principal = access.current(session);
         if (!principal.allows(ROUTE, "智慧招商", null)) throw WorkspaceAccess.denied("没有查看地图权限");
-        List<Map<String, Object>> items = maps.parkBoundary(name, city);
+        List<Map<String, Object>> items = maps.searchPlaces(name, city);
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("items", items);
         payload.put("count", items.size());
