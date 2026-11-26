@@ -50,13 +50,34 @@ function CompanyResults({ rows, tab, mode, onTab, onMode }: {
       : !containsPoint(row.selection, row.registrationPosition))
     : sourceRows;
 
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const pageCount = Math.max(1, Math.ceil(filteredRows.length / pageSize));
+  const currentPage = Math.min(page, pageCount);
+  const visibleRows = filteredRows.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  // 切换注册/办公视图或潜在筛选时回到第一页，避免停留在越界页码
+  const tabKey = `${tab}-${mode}`;
+  const [lastTabKey, setLastTabKey] = useState(tabKey);
+  if (lastTabKey !== tabKey) {
+    setLastTabKey(tabKey);
+    setPage(1);
+  }
+
   return <div className="map-company-results">
     <div className="map-company-switchers">
       <SectionTabs value={tab} onChange={(value) => onTab(value as "registration" | "office")} items={[{ key: "registration", label: "注册企业", count: registered.length }, { key: "office", label: "办公企业", count: office.length }]} />
       <div className="map-company-mode" role="group" aria-label="企业关系筛选"><Button size="sm" variant={mode === "all" ? "default" : "outline"} onClick={() => onMode("all")}>全部</Button><Button size="sm" variant={mode === "potential" ? "default" : "outline"} onClick={() => onMode("potential")}>{tab === "registration" ? "潜在流失" : "潜在招引"}</Button></div>
     </div>
     <div className="map-company-summary"><strong>{filteredRows.length.toLocaleString()}</strong><span>家企业</span><small>{mode === "potential" ? (tab === "registration" ? "本地注册但异地办公" : "本地办公但异地注册") : (tab === "registration" ? "当前范围内注册登记" : "当前范围内办公经营")}</small></div>
-    <div className="map-company-list">{filteredRows.map((row) => <div key={row.id} className="map-company-list-item"><div><strong>{row.name}</strong><small>{row.address || `${row.district} · ${row.officePark.name}`}</small></div><span>{row.industry}</span><span>{row.district}</span></div>)}{!filteredRows.length && <p className="business-empty-hint">当前范围暂无匹配企业</p>}</div>
+    <div className="map-company-list">{visibleRows.map((row) => <div key={row.id} className="map-company-list-item"><div><strong>{row.name}</strong><small>{row.address || `${row.district} · ${row.officePark.name}`}</small></div><span>{row.industry}</span><span>{row.district}</span></div>)}{!filteredRows.length && <p className="business-empty-hint">当前范围暂无匹配企业</p>}</div>
+    {filteredRows.length > 0 && <div className="data-table-pagination">
+      <span>每页</span>
+      <NativeSelect bare label="每页条数" allowEmpty={false} value={String(pageSize)} onChange={(value) => { setPageSize(Number(value)); setPage(1); }} options={[{ value: "10", label: "10 条" }, { value: "20", label: "20 条" }, { value: "50", label: "50 条" }]} />
+      <span className="data-table-page-label">第 {currentPage} / {pageCount} 页</span>
+      <Button variant="outline" size="sm" disabled={currentPage <= 1} onClick={() => setPage(currentPage - 1)}>上一页</Button>
+      <Button variant="outline" size="sm" disabled={currentPage >= pageCount} onClick={() => setPage(currentPage + 1)}>下一页</Button>
+    </div>}
   </div>;
 }
 

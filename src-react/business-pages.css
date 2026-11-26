@@ -410,7 +410,8 @@ button.business-company-item:hover strong { color: #1652b8; }
 .map-company-sheet-actions { display: flex; justify-content: flex-end; }
 .map-company-summary-bar { display: flex; flex-wrap: wrap; gap: 8px 18px; padding: 10px 14px; border: 1px solid rgba(22,82,184,.12); border-radius: 10px; background: linear-gradient(135deg, #f5f8ff, #fff); color: #64748b; font-size: 12px; }
 .map-company-summary-bar strong { margin-right: 4px; color: #1652B8; font-size: 18px; font-variant-numeric: tabular-nums; }
-.map-company-list { display: grid; min-height: 0; max-height: 420px; overflow-y: auto; border: 1px solid rgba(15,39,68,.06); border-radius: 12px; }
+.map-company-list { display: grid; min-height: 0; max-height: 320px; overflow-y: auto; border: 1px solid rgba(15,39,68,.06); border-radius: 12px; }
+.map-company-results .data-table-pagination { justify-content: flex-end; gap: 8px; min-height: 0; margin-top: -2px; padding: 0; border: 0; }
 .map-company-list-item { display: grid; grid-template-columns: minmax(0,1.7fr) minmax(0,1fr) minmax(0,.8fr); gap: 10px; align-items: center; padding: 10px 13px; border-bottom: 1px solid #edf0f4; font-size: 12px; }
 .map-company-list-item:last-child { border-bottom: 0; }
 .map-company-list-item strong,.map-company-list-item small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

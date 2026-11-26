@@ -9,7 +9,7 @@ final class RecordPermissions {
         Map.entry("members", List.of("/member/index", "/member/role")),
         Map.entry("departments", List.of("/member/departments")),
         Map.entry("roles", List.of("/member/role", "/member/index")),
-        Map.entry("companyArchives", List.of("/myCampus/corporateArchives/index", "/home/index")),
+        Map.entry("companyArchives", List.of("/myCampus/corporateArchives/index", "/businessMap/index", "/home/index")),
         Map.entry("migrationWarnings", List.of("/myCampus/migrationWarning/index", "/home/index")),
         Map.entry("migrationRules", List.of("/myCampus/migrationWarning/index")),
         Map.entry("serviceRequests", List.of("/myCampus/guarantee/index", "/myCampus/visitManage/index", "/home/index")),

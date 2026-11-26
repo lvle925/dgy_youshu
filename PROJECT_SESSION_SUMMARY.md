@@ -229,16 +229,16 @@ GeoJSON 选区采用闭合 Polygon 环，坐标使用 `[lng, lat]`。园区点�
 
 1. ~~**本轮 6 个提交尚未推送。**~~ **已解决**：`7716542`、`6b2de71`、`cfedae0`、`57a8737`、`0f48585`、`a89b6a8` 及后续文档提交均已推送，`main` 与 `origin/main` 同步于 `ae403ad`。
 2. ~~**完整 Docker ZIP 与交付目录版本有差异。**~~ **已解决**：`ae403ad` 已重建交付目录与 ZIP。[deploy/youshu-docker-package.zip](C:/Users/Administrator/Desktop/网站逆向/deploy/youshu-docker-package.zip) 现为 31,282,471 字节、115 个文件，首页引用 `main-DAl2jQt3.js` / `main-7rVNy_fF.css`，与 `deploy/docker-package/frontend/site-final/` 及最新 `dist` 三方一致；ZIP 采用正斜杠路径、根级平铺、不含 `.env`。已在解压目录 compose 验证通过（MySQL 8.4 healthy、演示登录成功、companyArchives 30 / policies 20 / parksBuildings 10 / serviceRequests 4 条数据、地图 `xMidYMid meet` 且 8 个点位与围栏对齐、确认弹窗为自定义 `ConfirmDialog`）。**后续每次改前端都需重做这一步。**
-3. **地图截图尺寸有偏差。** 两张最新地图图像实际均为 `1904×922`。上轮回复声称固定 `1440×900` 与实际文件有出入。首页的 `features/home.png` 和 `dashboard.png` 实测均为 `1440×900`。地图图像需要按实际像素验证后重拍；本轮同样未重拍。
+3. ~~**地图截图尺寸有偏差。**~~ **已解决**：全部 50 张截图已按统一口径重拍 —— 46 张页面图为 `1440×900`，6 张模块总览为 `1440×598`，取自当前交付包实例（CDP `Emulation.setDeviceMetricsOverride` 设 `deviceScaleFactor=1`），旧的 `1904×922` 口径已消除。
 4. **地址定位采用本地字符串检索。** 搜索现有园区名、区域、行业、企业名、地址和园区字段，取首个匹配结果。任意地址地理编码、在线地址建议需要继续接入。命中无坐标企业时按园区、区域或首个园区回落。
 5. **地图数据以 8 个上海园区示例为主。** `SpatialMap` 投影边界固定在上海附近，其他城市当前返回空园区集。本轮已在切到非上海城市时给出提示浮层与「切回上海市」按钮，但底图仍为 SVG 路网和水系示意，围栏外观按园区点附近偏移生成，真实园区多边形需继续接入。
 6. **部分企业坐标是演示推算。** 缺失办公坐标时使用所属园区点，无法匹配园区时按数组顺序分配园区。缺失注册坐标时从企业区县匹配园区并加微小偏移。由此生成的潜在招引/流失记录只能代表演示计算结果，旧记录真实位置仍需补齐。
 7. **地图页面存在合成数据兜底。** `companySource = companyData.rows.length ? companyData.rows : companies` 会在后端合法空列表、接口错误和权限拒绝时回落到前端样例。后续应结合 loading、source、error 和演示模式处理，避免授权查询结果被前端样例掩盖。
-8. **地图读取集合的授权映射需要对齐。** `RecordPermissions` 的 companyArchives 允许路由包含企业档案和首页，当前未列入 `/businessMap/index`。仅拥有地图权限的账号需要端到端验证。
+8. ~~**地图读取集合的授权映射需要对齐。**~~ **已解决**：`RecordPermissions` 的 `companyArchives` 已补入 `/businessMap/index`，与 `clues` 的映射口径一致，地图页读取企业档案不再被拒。
 9. **筛选口径和台账动作需要完善。** 抽屉 `selectedRows` 按选区筛选，左侧关键词、区域、产业过滤还需与抽屉一致化。抽屉「纳入招商台账」目前创建公司名为「圈选范围企业」的一条通用线索，按具体企业认领或逐条入库仍需实现。
-10. **地图结果区改为无横向滚动的企业列表。** 原 `min-width: 610px` 四列表格已替换为三列列表（企业名+地址、行业、区域），底部「纳入招商台账」改为 sticky footer；统一 `10 / 20 / 50` 分页仍未进入该抽屉。
+10. **地图结果区改为无横向滚动的企业列表。** 原 `min-width: 610px` 四列表格已替换为三列列表（企业名+地址、行业、区域），底部「纳入招商台账」改为 sticky footer。**分页已补齐**：抽屉内提供 `10 / 20 / 50` 每页条数与上一页/下一页，切换注册/办公视图或潜在筛选时自动回到第一页。
 11. **地图验收本轮已补测缩放与坐标一致性。** 矩形框选的绘制矩形与鼠标拖拽路径逐像素吻合，缩放后 HTML 园区点位仍与 SVG 电子围栏居中对齐；拖动平移、多点多边形完成、重置与边界点仍值得复验。地图专项自动化回归测试仍未补。
-12. **后端数据范围需覆盖无园区归属记录。** `RecordsController.inScope()` 在指定园区用户已拥有园区授权、目标记录的 parkId 与 park 同时为空时返回 true。后续应核对这类业务记录的公共/私有归属，补足跨园区验收。
+12. ~~**后端数据范围需覆盖无园区归属记录。**~~ **已解决**：`RecordsController.inScope()` 现按集合区分语义 —— 公共集合（policies / industryNodes / supplyRelations / biddingRecords / members / roles / departments / tenantSettings / aiScripts）保持全园区可见；公海集合（clues）无园区归属时仍可见但已归属线索按园区隔离；其余私有业务数据无园区归属时**不再一律放行**，改为按关联企业反查园区归属，查不到则拒绝。走访工单与走访记录在创建时按企业名自动补齐 `park` / `parkId`。新增 2 个测试覆盖该行为，并用旧逻辑验证过测试确实会失败。
 13. **同事代码合并仍待确认。** 用户曾明确希望比较 `dgy_youshu/` 并合并兼容改动。当前会话记录没有完成逐文件评审及合并的证据，两个未跟踪输入需保留供后续检查。
 
 ## 10. Git 历史与验证证据
@@ -262,7 +262,9 @@ GeoJSON 选区采用闭合 Polygon 环，坐标使用 `[lng, lat]`。园区点�
 
 浏览器实测的一个选区得到 6 家范围内企业（3 家注册、5 家办公）。数字随选区变化。
 
-本轮查看到磁盘保留的 Surefire 报告，CaptchaServiceTest 有 5 个测试，SmsVerificationServiceTest 有 3 个测试，WorkspaceFlowsTest 有 11 个测试，合计 19 个，失败和错误均为 0。这些属于已有测试报告。本轮文档整理的验证证据来自文件和运行状态核查。
+后端测试在 `maven:3.9-eclipse-temurin-21` 容器内、接入 `youshu-test` compose 的 MySQL 8.4 实例运行（需 `--network youshu-test_default` 并设 `TEST_MYSQL_URL` 指向 `mysql-test:3306/youshu_test`）：CaptchaServiceTest 5 个、SmsVerificationServiceTest 3 个、WorkspaceFlowsTest 13 个（含本轮新增的园区数据范围 2 个），合计 21 个，失败和错误均为 0，BUILD SUCCESS。
+
+本轮新增的 2 个测试分别覆盖：指定园区账号不得看到无园区归属的走访工单；指定园区账号仍可全量读取公共政策集合。已用改动前的代码验证过这两个测试确实会失败，确认断言有效。
 
 README 当前共检查到 56 个本地图片/文件链接，目标全部存在。`docs/screenshots/` 下有 50 张 PNG。文件存在性、图像尺寸和业务状态展示需要分别核对。
 

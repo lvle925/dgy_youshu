@@ -52,17 +52,28 @@ npm run dev                                    # Vite 127.0.0.1:5199，代理到
 
 ## 6. 接下来做什么（按优先级）
 
-1. ~~**重建交付包**（阻塞交付）~~ —— **已于 `ae403ad` 完成**：`deploy/docker-package/frontend/site-final/` 与 `deploy/youshu-docker-package.zip` 已同步到最新 `dist`（`main-DAl2jQt3.js` / `main-7rVNy_fF.css`），ZIP 115 文件、正斜杠路径、根级平铺、不含 `.env`；并在**解压目录** compose 起来验证通过（MySQL healthy、演示登录成功、业务数据正常、地图点位与围栏对齐、确认弹窗为自定义 `ConfirmDialog`）。**下次再改前端后必须重做这一步。**
-2. **重拍地图截图**：现有 `docs/screenshots/features/business-map.png` 与 `docs/screenshots/map.png` 实测 `1904×922`，而首页截图是 `1440×900`，口径不一致；需按 `1440×900` 重新截取并核对 README 索引。
-3. **同事代码比对合并**：`dgy_youshu/` 与 `dgy_youshu-develop_glf.zip` 尚未做逐文件 diff，合并结论待定。
-4. **功能缺口**（详见 `PROJECT_SESSION_SUMMARY.md` 第 10 节共 13 条）：地图结果抽屉仍无 `10/20/50` 分页；`RecordPermissions` 未把 `/businessMap/index` 纳入 companyArchives 授权；地图地址定位仍是本地字符串检索；`RecordsController.inScope()` 对无园区归属记录的口径待核。
-5. **README 同步**：本轮未改 README，产品描述与新交互（面包屑层级、下拉控件、抽屉排版）如有出入需补。
+1. ~~**重建交付包**（阻塞交付）~~ —— **已完成**：`site-final/` 与 ZIP 已同步到最新 `dist`，ZIP 115 文件、正斜杠路径、根级平铺、不含 `.env`；并在**解压目录** compose 起来验证通过。**每次改前端或后端后都必须重做这一步**（后端需先 `mvn package` 再更新 `deploy/docker-package/backend/app.jar`）。
+2. ~~**重拍地图截图**~~ —— **已完成**：全部 50 张截图按 1440×900 重拍（46 张页面图 + 6 张 1440×598 总览图），取自当前交付包实例；旧的 `1904×922` 口径已消除。
+3. **同事代码比对合并**：`dgy_youshu/` 与 `dgy_youshu-develop_glf.zip` 尚未做逐文件 diff，合并结论待定。**注意：`git add -A` 会把它们误纳入版本控制，暂存时务必排除。**
+4. **功能缺口**（详见 `PROJECT_SESSION_SUMMARY.md` 第 10 节共 13 条）：地图地址定位仍是本地字符串检索；地图结果「纳入招商台账」仍创建一条通用线索而非逐条入库；地图数据仍以 8 个上海园区示例为主；`clues` 抽屉「纳入招商台账」筛选口径待与左侧筛选统一。
+5. ~~**README 同步**~~ —— **已完成**：产品亮点补入层级化导航、统一表单与表格交互、中文字段与确认交互三段；说明截图取自当前交付包；补充交付包重建流程与解压目录验收要求。
+
+### 本轮一并修掉的遗留问题
+
+- `MemberPage` 4 处、`RolePage` 1 处原生 `<select className="business-input">` → 改用 `NativeSelect`（为此给 `NativeSelect` 补了 `disabled` 与 `placeholder`）。全仓现已零原生 select、零 `window.confirm`。
+- `VisitManagePage` 本地重复实现的 `DetailFields` → 复用共享组件，通过 `labels` 保留「工单主题/执行人」语义。
+- `DetailFields` 的 `labels` 覆盖原先被 `recordFieldLabels` 抢先，修正为**页面级优先**。
+- `RecordPermissions`：`companyArchives` 补入 `/businessMap/index`，地图页读取企业档案不再被拒。
+- `RecordsController.inScope()`：按集合区分公共/私有语义，私有数据无园区归属时不再一律放行；走访工单与记录按企业名反查园区归属。新增 2 个测试覆盖该行为。
+- 地图结果抽屉补 `10/20/50` 分页。
 
 ## 7. 已知坑（别踩）
 
-- **交付包必须重建**：`site-final/` 与 ZIP 现已与源码一致（`ae403ad`），但**下次改前端后二者立刻会再次落后于源码**。改完前端务必走「`dist` → `site-final/` → 重打 ZIP → 解压目录 compose 验证」四步，别拿现成的 `docker-package-web-1`（5259 端口）当验收依据——它跑的是上一次打包的静态资源。
-- **构建时避开批量删除阈值**：本机沙箱对单次删除超过 50 个文件会拦截（vite 的 `emptyDir` 会触发 `SAFE_DELETE_BULK_CONFIRM_REQUIRED`）。用 `npx vite build --emptyOutDir false`，并先手动 `rm` 掉 `dist/assets` 下的旧文件；构建完必须核对 `dist/assets` 文件数与 `dist` 是否有多余旧 hash 残留。
+- **交付包必须重建**：`site-final/` 与 ZIP 现已与源码一致，但**下次改前端后二者立刻会再次落后于源码**。改完前端务必走「`dist` → `site-final/` → 重打 ZIP → 解压目录 compose 验证」四步，别拿现成的 `docker-package-web-1`（5259 端口）当验收依据——它跑的是上一次打包的静态资源。
+- **后端改动也需更新交付包**：交付包的 `backend/app.jar` 是预编译产物。改后端后必须 `mvn package` 生成 `local-api-0.1.0.jar` 并复制到 `deploy/docker-package/backend/app.jar`，否则交付包跑的还是旧后端。
+- **构建时避开批量删除阈值**：本机沙箱对单次删除超过 50 个文件会拦截（vite 的 `emptyDir` 会触发 `SAFE_DELETE_BULK_CONFIRM_REQUIRED`）。用 `npx vite build --emptyOutDir false`，并先手动分批 `rm` 掉 `dist/assets` 下的旧文件；构建完必须核对 `dist/assets` 文件数与 `dist` 是否有多余旧 hash 残留。
 - **打包 ZIP 用 Python `zipfile`**：`Compress-Archive` 写出的条目用**反斜杠**分隔符，与原包约定的正斜杠不一致，会影响 Linux/Docker 环境解压。
+- **后端测试需自带 MySQL**：`mvn test` 的测试默认连 `127.0.0.1:3307/youshu_test`。在容器里跑要用 `--network youshu-test_default` 并设 `TEST_MYSQL_URL` 指向 `mysql-test:3306`，否则报 `Connection refused` 而误判为代码问题。
 - **地图几何**：`SpatialMap` 已从拉伸（`preserveAspectRatio="none"`）改为等比（`xMidYMid meet`），点位位置用 `ResizeObserver` 测量后的 letterbox 换算。改动该组件时，**必须**同步维护 `markerStyle()` / `viewBoxPoint()` 的坐标换算，否则 HTML 点位会与 SVG 围栏错位。
 - **紧凑地图**（首页缩略图，`compact`）仍保留 `none` 拉伸表现，与全屏地图不一致，属有意为之。
 - **文本框控件统一**：`PagePrimitives.NativeSelect` 是统一下拉入口；新增表单下拉请用 `bare` + `allowEmpty={false}`，不要再写原生 `<select className="business-input">`。

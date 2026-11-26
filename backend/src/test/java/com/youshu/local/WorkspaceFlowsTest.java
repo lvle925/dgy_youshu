@@ -123,6 +123,46 @@ class WorkspaceFlowsTest {
     }
 
     @Test
+    void parkScopedMemberCannotSeeRecordsWithoutParkOwnership() throws Exception {
+        MockHttpSession owner = demo();
+        jdbc.update("DELETE FROM records WHERE collection='visitOrders' AND JSON_UNQUOTE(JSON_EXTRACT(payload,'$.title'))='无园区归属测试工单'");
+        create(owner, "visitOrders", Map.of("title", "无园区归属测试工单", "status", "待走访", "owner", "测试专员"));
+        String role = id(create(owner, "roles", Map.of("name", "张江走访范围", "permissions", List.of(
+            "route:/myCampus/visitManage/index", "action:/myCampus/visitManage/index:edit"), "status", "启用")));
+        String username = "visit-park-" + UUID.randomUUID();
+        String password = "VisitPark123456";
+        id(create(owner, "members", Map.of("username", username, "initialPassword", password,
+            "name", "走访专员", "status", "启用", "roleId", role, "dataScope", "ASSIGNED_PARKS", "parkIds", List.of("张江人工智能岛"))));
+        var login = mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
+                .content(json.writeValueAsBytes(Map.of("username", username, "password", password))))
+            .andExpect(status().isOk()).andReturn();
+        var member = (MockHttpSession) login.getRequest().getSession(false);
+        // 无园区归属的私有工单不得对指定园区账号可见
+        mvc.perform(get("/api/records/visitOrders").session(member))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$[?(@.title=='无园区归属测试工单')]").isEmpty());
+    }
+
+    @Test
+    void parkScopedMemberStillReadsPublicCollections() throws Exception {
+        MockHttpSession owner = demo();
+        String role = id(create(owner, "roles", Map.of("name", "政策查看范围", "permissions", List.of(
+            "route:/policy/index"), "status", "启用")));
+        String username = "policy-park-" + UUID.randomUUID();
+        String password = "PolicyPark123456";
+        id(create(owner, "members", Map.of("username", username, "initialPassword", password,
+            "name", "政策专员", "status", "启用", "roleId", role, "dataScope", "ASSIGNED_PARKS", "parkIds", List.of("张江人工智能岛"))));
+        var login = mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
+                .content(json.writeValueAsBytes(Map.of("username", username, "password", password))))
+            .andExpect(status().isOk()).andReturn();
+        var member = (MockHttpSession) login.getRequest().getSession(false);
+        // 政策本身与园区无关，应保持全量可见
+        mvc.perform(get("/api/records/policies").session(member))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$[0]").exists());
+    }
+
+    @Test
     void selfOnlyScopeHidesUnassignedRecordsAndKeepsNewRecordsOwned() throws Exception {
         MockHttpSession owner = demo();
         jdbc.update("DELETE FROM records WHERE collection='clues' AND JSON_UNQUOTE(JSON_EXTRACT(payload,'$.company')) IN ('未分配项目','本人负责项目')");

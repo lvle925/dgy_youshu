@@ -69,9 +69,20 @@ public class RecordsController {
     }
 
     private void ensureParkMetadata(String collection, String id, Map<String, Object> row) {
-        if (!Set.of("parksBuildings", "campusList").contains(collection)) return;
-        row.putIfAbsent("park", row.getOrDefault("name", ""));
-        row.putIfAbsent("parkId", id);
+        if (Set.of("parksBuildings", "campusList").contains(collection)) {
+            row.putIfAbsent("park", row.getOrDefault("name", ""));
+            row.putIfAbsent("parkId", id);
+            return;
+        }
+        // 走访工单与走访记录以企业名关联业务，需补齐园区归属才能参与数据范围隔离。
+        if (!Set.of("visitOrders", "visitRecords").contains(collection)) return;
+        boolean hasPark = !String.valueOf(row.getOrDefault("park", "")).isBlank()
+            || !String.valueOf(row.getOrDefault("parkId", "")).isBlank();
+        if (hasPark) return;
+        String park = resolveParkByCompany(row);
+        if (park.isBlank()) return;
+        row.put("park", park);
+        row.putIfAbsent("parkId", park);
     }
 
     private void ensureMemberScopeFields() {
@@ -315,7 +326,26 @@ public class RecordsController {
         return row;
     }
 
+    /**
+     * 公共集合：内容本身与园区无关（政策、产业节点、招投标、账号与组织结构等），
+     * 全园区共享，不参与数据范围隔离。
+     */
+    private static final Set<String> PUBLIC_COLLECTIONS = Set.of(
+        "members", "roles", "departments", "tenantSettings", "aiScripts",
+        "policies", "industryNodes", "supplyRelations", "biddingRecords"
+    );
+
+    /**
+     * 线索集合：公海线索允许全园区查看（项目需跨园区流转与认领），
+     * 但已归属到具体园区的线索仍按园区授权隔离。
+     */
+    private static final Set<String> OPEN_POOL_COLLECTIONS = Set.of("clues");
+
     private boolean inScope(WorkspaceAccess.Principal principal, Map<String, Object> row) {
+        return inScope(principal, null, row);
+    }
+
+    private boolean inScope(WorkspaceAccess.Principal principal, String collection, Map<String, Object> row) {
         if (principal.administrator() || "ALL_PARKS".equals(principal.dataScope())) return true;
         String parkId = String.valueOf(row.getOrDefault("parkId", ""));
         String parkName = String.valueOf(row.getOrDefault("park", ""));
@@ -324,12 +354,43 @@ public class RecordsController {
             return ownerId.equals(principal.user()) || ownerId.equals(principal.memberId());
         }
         if (principal.parkIds().isEmpty()) return false;
-        if (parkId.isBlank() && parkName.isBlank()) return true;
-        return principal.parkIds().contains(parkId) || principal.parkIds().contains(parkName);
+        if (!parkId.isBlank() || !parkName.isBlank())
+            return principal.parkIds().contains(parkId) || principal.parkIds().contains(parkName);
+        if (collection != null && PUBLIC_COLLECTIONS.contains(collection)) return true;
+        // 无园区归属时，先尝试按关联企业反查园区；查不到再按集合语义判定。
+        String derivedPark = resolveParkByCompany(row);
+        if (!derivedPark.isBlank()) return principal.parkIds().contains(derivedPark);
+        if (collection != null && OPEN_POOL_COLLECTIONS.contains(collection)) return true;
+        // 私有业务数据无法判定园区归属时不予放行，避免跨园区可见。
+        return false;
+    }
+
+    /**
+     * 走访记录等以企业名关联业务的数据，可通过企业档案反查其所属园区。
+     */
+    private String resolveParkByCompany(Map<String, Object> row) {
+        String company = String.valueOf(row.getOrDefault("company", "")).trim();
+        if (company.isBlank()) return "";
+        List<String> parks = jdbc.query(
+            "SELECT payload FROM records WHERE collection='companyArchives'",
+            (rs, index) -> {
+                Map<String, Object> archive = parse(rs.getString(1));
+                String name = String.valueOf(archive.getOrDefault("name", "")).trim();
+                if (!name.equals(company)) return "";
+                String park = String.valueOf(archive.getOrDefault("park", "")).trim();
+                String parkId = String.valueOf(archive.getOrDefault("parkId", "")).trim();
+                return parkId.isBlank() ? park : parkId;
+            }
+        );
+        return parks.stream().filter(park -> !park.isBlank()).findFirst().orElse("");
     }
 
     private void requireScope(WorkspaceAccess.Principal principal, Map<String, Object> row) {
         if (!inScope(principal, row)) throw WorkspaceAccess.denied("超出当前账号的数据范围");
+    }
+
+    private void requireScope(WorkspaceAccess.Principal principal, String collection, Map<String, Object> row) {
+        if (!inScope(principal, collection, row)) throw WorkspaceAccess.denied("超出当前账号的数据范围");
     }
 
     private void checkIdentityScope(WorkspaceAccess.Principal principal, String collection, Map<String, Object> row) {
@@ -460,7 +521,7 @@ public class RecordsController {
     @GetMapping("/records/{collection}") public List<Map<String, Object>> list(@PathVariable String collection, HttpSession session) {
         var principal = authorize(session, collection, null);
         return jdbc.query("SELECT payload FROM records WHERE collection=? ORDER BY id", (rs, n) -> parse(rs.getString(1)), collection)
-            .stream().filter(row -> Set.of("members", "roles", "departments").contains(collection) || inScope(principal, row))
+            .stream().filter(row -> Set.of("members", "roles", "departments").contains(collection) || inScope(principal, collection, row))
             .map(row -> visible(collection, row)).toList();
     }
     @Operation(summary = "新增业务记录")
@@ -482,7 +543,7 @@ public class RecordsController {
             && String.valueOf(row.getOrDefault("username", "")).equals(principal.user()) && memberRoleHasSensitivePermission(row))
             throw WorkspaceAccess.denied("系统管理员不能为本人授予敏感明文查看权限");
         checkIdentityScope(principal, collection, row);
-        if (!principal.administrator() && !Set.of("members", "roles", "tenantSettings", "aiScripts", "departments").contains(collection)) requireScope(principal, row);
+        if (!principal.administrator() && !Set.of("members", "roles", "tenantSettings", "aiScripts", "departments").contains(collection)) requireScope(principal, collection, row);
         if (collection.equals("members")) saveMemberAccount(id, row);
         save(collection, id, row);
         audit.record(principal, collection, "新增", collection, id, null, row, "成功", request, 0);
@@ -496,7 +557,7 @@ public class RecordsController {
         Map<String, Object> row = jdbc.query("SELECT payload FROM records WHERE collection=? AND id=? FOR UPDATE",
             (rs, n) -> parse(rs.getString(1)), collection, id).stream().findFirst()
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "记录不存在"));
-        if (!Set.of("members", "roles", "departments").contains(collection)) requireScope(principal, row);
+        if (!Set.of("members", "roles", "departments").contains(collection)) requireScope(principal, collection, row);
         Map<String, Object> before = new LinkedHashMap<>(row);
         if (collection.equals("investigationTasks")) {
             patch.remove("history");
@@ -523,7 +584,7 @@ public class RecordsController {
         ensureParkMetadata(collection, id, row);
         checkIdentityScope(principal, collection, row);
         if (collection.equals("departments")) validateDepartment(row, id);
-        if (!Set.of("members", "roles", "departments").contains(collection)) requireScope(principal, row);
+        if (!Set.of("members", "roles", "departments").contains(collection)) requireScope(principal, collection, row);
         if (collection.equals("members")) saveMemberAccount(id, row);
         save(collection, id, row);
         audit.record(principal, collection, "编辑", collection, id, before, row, "成功", request, 0);
@@ -556,7 +617,7 @@ public class RecordsController {
         var principal = authorize(session, collection, "删除");
         Map<String, Object> before = jdbc.query("SELECT payload FROM records WHERE collection=? AND id=? FOR UPDATE", (rs, n) -> parse(rs.getString(1)), collection, id)
             .stream().findFirst().orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "记录不存在"));
-        if (!Set.of("members", "roles", "departments").contains(collection)) requireScope(principal, before);
+        if (!Set.of("members", "roles", "departments").contains(collection)) requireScope(principal, collection, before);
         if (collection.equals("roles") && Boolean.TRUE.equals(before.get("immutable")))
             throw WorkspaceAccess.denied("等保内置角色不可删除或修改");
         if (collection.equals("roles") && jdbc.queryForObject("SELECT COUNT(*) FROM records WHERE collection='members' AND JSON_UNQUOTE(JSON_EXTRACT(payload,'$.roleId'))=?", Integer.class, id) > 0)
@@ -584,7 +645,7 @@ public class RecordsController {
         List<String> found = jdbc.query("SELECT payload FROM records WHERE collection='visitOrders' AND id=? FOR UPDATE", (rs, n) -> rs.getString(1), id);
         if (found.isEmpty()) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "工单不存在");
         Map<String, Object> order = parse(found.get(0));
-        requireScope(principal, order);
+        requireScope(principal, "visitOrders", order);
         if ("已完成".equals(order.get("status"))) throw new ResponseStatusException(HttpStatus.CONFLICT, "工单已完成");
         String result = String.valueOf(input.getOrDefault("result", "")).trim();
         if (result.isEmpty()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "请填写走访结果");
@@ -605,7 +666,7 @@ public class RecordsController {
             Map<String, Object> serviceRequest = jdbc.query("SELECT payload FROM records WHERE collection='serviceRequests' AND id=? FOR UPDATE",
                 (rs, n) -> parse(rs.getString(1)), serviceRequestId).stream().findFirst()
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "关联企业诉求不存在"));
-            requireScope(principal, serviceRequest);
+            requireScope(principal, "serviceRequests", serviceRequest);
             Map<String, Object> before = new LinkedHashMap<>(serviceRequest);
             serviceRequest.put("status", "已办结");
             serviceRequest.put("resolution", result);
