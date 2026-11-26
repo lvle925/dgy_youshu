@@ -17,6 +17,7 @@ const contains = (input: string, query: string) => input.toLowerCase().includes(
 
 export default function EnterpriseExpansionPage() {
   const [filter, setFilter] = useState<ChipFilterValue>({});
+  const [advancedOpen, setAdvancedOpen] = useState(false);
   const [keyword, setKeyword] = useState("");
   const [product, setProduct] = useState("");
   const [region, setRegion] = useState("");
@@ -35,7 +36,10 @@ export default function EnterpriseExpansionPage() {
     contains(row.target, region) && row.score >= lower && row.score <= upper &&
     row.investment >= Number(minInvestment || 0) && row.investment <= Number(maxInvestment || Infinity) &&
     row.output >= Number(minOutput || 0) && row.output <= Number(maxOutput || Infinity));
-  const active = !!(keyword || product || region || range || minInvestment || maxInvestment || minOutput || maxOutput || Object.values(filter).some(items => items.length));
+  const active = !!(keyword || product || region || range || minScore || maxScore || minInvestment || maxInvestment || minOutput || maxOutput || Object.values(filter).some(items => items.length));
+  const invalidInvestment = Number(minInvestment || 0) > Number(maxInvestment || Infinity);
+  const invalidOutput = Number(minOutput || 0) > Number(maxOutput || Infinity);
+  const invalidScore = Number(minScore || 0) > Number(maxScore || 100);
 
   function reset() {
     setFilter({}); setKeyword(""); setProduct(""); setRegion(""); setRange("");
@@ -43,24 +47,29 @@ export default function EnterpriseExpansionPage() {
   }
 
   return <div className="business-page">
-    <PageHeading title="企业扩张" description="按企业产品、扩张需求和投资计划筛选演示信号" />
+    <PageHeading title="企业扩张" description="按企业产品、扩张需求和投资计划筛选企业扩张线索" />
     <PageSection title="扩张筛选">
       <div className="business-form-grid">
         <FormField label="扩张关键词"><Input value={keyword} onChange={e => setKeyword(e.target.value)} placeholder="企业名称或扩张意向" /></FormField>
         <FormField label="产品服务"><Input value={product} onChange={e => setProduct(e.target.value)} placeholder="产品、服务或行业" /></FormField>
         <FormField label="目标区域"><Input value={region} onChange={e => setRegion(e.target.value)} placeholder="输入计划落地区域" /></FormField>
         <NativeSelect label="扩张意愿度" value={range} onChange={setRange} options={scoreRanges} />
-        {range === "自定义" && <>
-          <FormField label="意愿度下限"><Input type="number" min={0} max={100} value={minScore} onChange={e => setMinScore(e.target.value)} /></FormField>
-          <FormField label="意愿度上限"><Input type="number" min={0} max={100} value={maxScore} onChange={e => setMaxScore(e.target.value)} /></FormField>
+        <div className="business-form-actions"><Button variant="outline" onClick={() => setAdvancedOpen(current => !current)}>{advancedOpen ? "收起高级筛选" : "展开高级筛选"}</Button><Button variant="ghost" onClick={reset}>重置筛选</Button></div>
+        {advancedOpen && <>
+          {range === "自定义" && <>
+            <FormField label="意愿度下限"><Input type="number" min={0} max={100} value={minScore} onChange={e => setMinScore(e.target.value)} /></FormField>
+            <FormField label="意愿度上限"><Input type="number" min={0} max={100} value={maxScore} onChange={e => setMaxScore(e.target.value)} /></FormField>
+            {invalidScore && <p className="business-range-hint">意愿度下限不能大于上限。</p>}
+          </>}
+          <FormField label="投资规模下限（万元）"><Input type="number" min={0} value={minInvestment} onChange={e => setMinInvestment(e.target.value)} /></FormField>
+          <FormField label="投资规模上限（万元）"><Input type="number" min={0} value={maxInvestment} onChange={e => setMaxInvestment(e.target.value)} /></FormField>
+          {invalidInvestment && <p className="business-range-hint">投资规模下限不能大于上限。</p>}
+          <FormField label="产值预估下限（万元）"><Input type="number" min={0} value={minOutput} onChange={e => setMinOutput(e.target.value)} /></FormField>
+          <FormField label="产值预估上限（万元）"><Input type="number" min={0} value={maxOutput} onChange={e => setMaxOutput(e.target.value)} /></FormField>
+          {invalidOutput && <p className="business-range-hint">产值预估下限不能大于上限。</p>}
         </>}
-        <FormField label="投资规模下限（万元）"><Input type="number" min={0} value={minInvestment} onChange={e => setMinInvestment(e.target.value)} /></FormField>
-        <FormField label="投资规模上限（万元）"><Input type="number" min={0} value={maxInvestment} onChange={e => setMaxInvestment(e.target.value)} /></FormField>
-        <FormField label="产值预估下限（万元）"><Input type="number" min={0} value={minOutput} onChange={e => setMinOutput(e.target.value)} /></FormField>
-        <FormField label="产值预估上限（万元）"><Input type="number" min={0} value={maxOutput} onChange={e => setMaxOutput(e.target.value)} /></FormField>
       </div>
       <ChipFilter groups={groups} value={filter} onChange={setFilter} />
-      <Button variant="outline" onClick={reset}>重置筛选</Button>
     </PageSection>
     <StatBar scope={active ? "当前筛选结果" : "全库总量"} items={[
       { label: "企业扩张信号", value: filtered.length },

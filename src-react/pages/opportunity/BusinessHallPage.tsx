@@ -1,5 +1,5 @@
 import { api } from "../../../src/api.js";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Plus, Target } from "lucide-react";
 import { toast } from "sonner";
 import { ActionButton } from "@/app/AccessContext";
@@ -43,10 +43,18 @@ function CityHall({ city }: { city: string }) {
   const [draftRules, setDraftRules] = useState<ChipFilterValue>({});
   const [saving, setSaving] = useState(false);
   const cityCompanies = companies.rows.filter(row => row.city === city);
+  const [addingId, setAddingId] = useState("");
+  const [addedIds, setAddedIds] = useState<string[]>([]);
   const matching = cityCompanies.filter(row => (!industry || industry === row.industry) && row.name.includes(keyword.trim()) &&
     capital(row) >= (model?.minimum ?? 0) && (!model?.rules.length || model.rules.some(rule => row.tags.includes(rule))) &&
     (!filters.rules?.length || filters.rules.some(rule => row.tags.includes(rule))));
   const groups = [{ key: "rules", label: "商机信号", options: rules }];
+  const industryStats = useMemo(() => {
+    const totals = new Map<string, number>();
+    matching.forEach(row => totals.set(row.industry, (totals.get(row.industry) ?? 0) + 1));
+    const max = Math.max(1, ...totals.values());
+    return [...totals.entries()].map(([name, count]) => ({ name, count, percent: Math.round((count / max) * 100) }));
+  }, [matching]);
 
   function edit(editing: boolean) {
     setName(editing && model ? model.name : city + "产业精准招商模型");
@@ -56,12 +64,15 @@ function CityHall({ city }: { city: string }) {
   }
 
   async function addLead(row: MatchCompany) {
+    setAddingId(row.id);
     try {
       await api.create("clues", { company: row.name, intent: "招商模型匹配企业", region: city, targetCity: city, industry: row.industry,
         source: "商机大厅", status: "待跟进", park: row.park, score: row.score, contact: row.contact,
         date: new Date().toISOString().slice(0, 10), desc: "由商机模型匹配进入线索池" });
+      setAddedIds(current => [...current, row.id]);
       toast.success("已加入项目线索");
     } catch (cause) { toast.error(cause instanceof Error ? cause.message : "加入线索失败"); }
+    finally { setAddingId(""); }
   }
 
   async function markContact(row: MatchCompany) {
@@ -74,14 +85,14 @@ function CityHall({ city }: { city: string }) {
   return <div className="business-page">
     <PageHeading title="商机大厅" description={city + " · 按招商模型筛选企业并维护联系记录"} source={companies.source}
       actions={<ActionButton action="新增" onClick={() => edit(false)}><Plus data-icon="inline-start" />新建模型</ActionButton>} />
-    <PageSection title="招商模型">
+    <PageSection title="招商模型" error={companies.error || models.error} onRetry={() => { void companies.refresh(); void models.refresh(); }}>
       <div className="model-summary">
         <div><span className="model-summary-icon"><Target /></span><div>
           <strong>{model?.name ?? city + "产业精准招商模型"}</strong>
           <p>{city} · 已收录 {cityCompanies.length} 家企业{model && " · 更新于 " + model.updated}</p>
         </div></div>
         <div className="business-toolbar">
-          {!!localModels.length && <label className="business-native-select"><span>选择模型</span><select value={model?.id ?? ""} onChange={event => setModelId(event.target.value)}>{localModels.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>}
+          {!!localModels.length && <NativeSelect label="选择模型" allowEmpty={false} value={model?.id ?? ""} onChange={value => setModelId(value)} options={localModels.map(item => ({ value: item.id, label: item.name }))} />}
           {model && <ActionButton action="编辑" variant="outline" onClick={() => edit(true)}>编辑模型</ActionButton>}
         </div>
       </div>
@@ -102,17 +113,27 @@ function CityHall({ city }: { city: string }) {
           { key: "score", header: "匹配度", sortable: true, cell: row => row.score + " 分" },
           { key: "contacted", header: "联系状态", cell: row => <StatusValue value={row.contacted ? "已联系" : "待联系"} /> },
           { key: "action", header: "操作", cell: row => <ActionButton action="编辑" variant="outline" size="sm" onClick={() => void markContact(row)}>{row.contacted ? "取消标记" : "标记已联系"}</ActionButton> },
-        ]} renderDetails={row => <div className="business-detail-prose"><h3>{row.name}</h3><p>{row.city} · {row.industry}</p><p>联系人 {row.contact || "待补充"}</p><StatusValue value={row.contacted ? "已联系" : "待联系"} /><div className="business-toolbar"><ActionButton action="新增" onClick={() => void addLead(row)}>加入项目线索</ActionButton></div></div>} />
+        ]} renderDetails={row => <div className="business-detail-prose"><h3>{row.name}</h3><p>{row.city} · {row.industry}</p><p>联系人 {row.contact || "待补充"}</p><StatusValue value={row.contacted ? "已联系" : "待联系"} /><div className="business-toolbar"><ActionButton action="新增" disabled={addingId === row.id || addedIds.includes(row.id)} onClick={() => void addLead(row)}>{addedIds.includes(row.id) ? "已加入线索" : addingId === row.id ? "加入中…" : "加入项目线索"}</ActionButton></div></div>} />
       </>}
-      {tab === "analysis" && <StatBar scope="当前筛选结果" items={[
+      {tab === "analysis" && <>
+        <StatBar scope="当前筛选结果" items={[
         { label: "匹配企业", value: matching.length },
         { label: "已联系", value: matching.filter(row => row.contacted).length },
         { label: "行业数", value: new Set(matching.map(row => row.industry)).size },
         { label: "高匹配度", value: matching.filter(row => row.score >= 85).length },
         { label: "平均匹配度", value: matching.length ? (matching.reduce((sum, row) => sum + row.score, 0) / matching.length).toFixed(1) : "—" },
-      ]} />}
-      {tab === "rules" && <div className="business-detail-prose"><h3>模型筛选规则</h3><p>最低注册资本 {model?.minimum ?? 0} 万元</p><p>{model?.rules.length ? model.rules.join("、") : "当前包含所有商机信号"}</p></div>}
-      {(companies.error || models.error) && <p role="status">{companies.error || models.error}</p>}
+      ]} />
+        <div className="business-distribution">
+          <strong>行业分布</strong>
+          {industryStats.map(item => <div key={item.name}><span>{item.name}</span><i style={{ width: `${item.percent}%` }} /><b>{item.count} 家</b></div>)}
+          {!industryStats.length && <p className="business-muted">当前筛选范围内没有匹配企业。</p>}
+        </div>
+      </>}
+      {tab === "rules" && <div className="business-rule-cards">
+        <div><strong>最低注册资本</strong><span>{model?.minimum ?? 0} 万元</span></div>
+        <div><strong>命中信号</strong><span>{(model?.rules ?? []).length} 条规则</span></div>
+        <div className="business-rule-chips">{(model?.rules ?? []).map(rule => <span key={rule} className="business-rule-chip">{rule}</span>)}{!(model?.rules ?? []).length && <p className="business-muted">当前模型未设置信号规则，将匹配全部企业。</p>}</div>
+      </div>}
     </PageSection>
     <FormDialog open={!!mode} onOpenChange={open => !open && setMode(null)} title={mode === "edit" ? "编辑模型" : "新建模型"} busy={saving} onSubmit={async event => {
       event.preventDefault();

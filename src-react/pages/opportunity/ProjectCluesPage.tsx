@@ -14,6 +14,7 @@ import { clues } from "../../../src/data/mock.js";
 import { api } from "../../../src/api.js";
 import { Download, Eye, Plus, Target } from "lucide-react";
 import { useState, type FormEvent } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 type Row = Record<string, any> & { id: string | number };
@@ -31,6 +32,7 @@ export function ProjectCluesPage() {
   const { city } = useCurrentCity();
   const principal = usePrincipal();
   const enqueue = useReportExport();
+  const navigate = useNavigate();
   const canEdit = useAllowedAction("编辑");
   const canViewSensitive = useAllowedAction("查看敏感信息");
   const [keyword, setKeyword] = useState("");
@@ -38,6 +40,9 @@ export function ProjectCluesPage() {
   const [band, setBand] = useState("");
   const [selected, setSelected] = useState<Row | null>(null);
   const [sensitiveContact, setSensitiveContact] = useState<{ contact: string; phone: string } | null>(null);
+  const [sensitiveLoading, setSensitiveLoading] = useState(false);
+  const [stageFilter, setStageFilter] = useState("");
+  const [ownership, setOwnership] = useState("");
   const [addOpen, setAddOpen] = useState(false);
   const [progressOpen, setProgressOpen] = useState(false);
   const [form, setForm] = useState({ company: "", intent: "", region: "", industry: "", source: "商机摸排", contact: "", phone: "", park: "", desc: "" });
@@ -46,14 +51,19 @@ export function ProjectCluesPage() {
   const filtered = data.rows
     .filter((row) => !keyword || `${row.company} ${row.intent} ${row.industry}`.includes(keyword))
     .filter((row) => !status || row.status === status)
+    .filter((row) => !stageFilter || (row.stage || stages[0]) === stageFilter)
+    .filter((row) => !ownership || (ownership === "公海" ? !row.owner : Boolean(row.owner)))
     .filter((row) => !band || scoreBands.find((item) => item.key === band)?.matches(Number(row.score ?? 0)));
 
   async function showSensitiveContact(row: Row) {
+    setSensitiveLoading(true);
     try {
       const result = await api.sensitiveProjectContact(row.id);
       setSensitiveContact({ contact: result.contact || "未登记", phone: result.phone || "未登记" });
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "无法查阅敏感信息");
+    } finally {
+      setSensitiveLoading(false);
     }
   }
 
@@ -166,10 +176,10 @@ export function ProjectCluesPage() {
       <MetricCard title="落地纳统" value={data.rows.filter((row) => row.stage === stages[4]).length} description="已形成落地成果" />
     </div>
     <PageSection title="招商项目台账" description={`当前筛选 ${filtered.length} 条，完整企业信息按角色和园区数据范围授权`}>
-      <div className="risk-segments" aria-label="意愿度分层">
+      <div className="clue-score-segments" aria-label="意愿度分层">
         {scoreBands.map((item) => <Button key={item.key} variant={band === item.key ? "default" : "outline"} aria-pressed={band === item.key} onClick={() => setBand(band === item.key ? "" : item.key)}>{item.label} · {data.rows.filter((row) => item.matches(Number(row.score ?? 0))).length}</Button>)}
       </div>
-      <div className="business-toolbar"><SearchField value={keyword} onChange={setKeyword} placeholder="企业名称、行业或项目线索" /><NativeSelect label="跟进状态" value={status} onChange={setStatus} options={clueStatuses} /></div>
+      <div className="business-toolbar"><SearchField value={keyword} onChange={setKeyword} placeholder="企业名称、行业或项目线索" /><NativeSelect label="跟进状态" value={status} onChange={setStatus} options={clueStatuses} /><NativeSelect label="推进阶段" value={stageFilter} onChange={setStageFilter} options={stages} /><NativeSelect label="项目归属" value={ownership} onChange={setOwnership} options={["公海", "本人跟进"]} /></div>
       <DataTable columns={columns} data={filtered} openRowDetails={false} onRowClick={setSelected} detailTitle="项目线索详情" />
     </PageSection>
 
@@ -185,7 +195,7 @@ export function ProjectCluesPage() {
             <div><dt>推荐园区</dt><dd>{selected.park || "待匹配"}</dd></div>
             <div><dt>跟进归属</dt><dd>{selected.owner ? `${selected.owner} · ${selected.ownerDepartment || ""}` : "公海项目"}</dd></div>
             <div><dt>联系人</dt><dd>{sensitiveContact?.contact || selected.contact || "未登记"}</dd></div>
-            <div><dt>联系电话</dt><dd className="sensitive-phone-value">{sensitiveContact?.phone || selected.phone || "未登记"}{!sensitiveContact && canViewSensitive && <ActionButton action="查看敏感信息" target="/business/projectCluesUpdate/index" size="sm" variant="ghost" onClick={() => void showSensitiveContact(selected)}><Eye data-icon="inline-start" />查看完整号码</ActionButton>}</dd></div>
+            <div><dt>联系电话</dt><dd className="sensitive-phone-value">{sensitiveLoading ? "正在查阅授权信息…" : sensitiveContact?.phone || selected.phone || "未登记"}{!sensitiveContact && !sensitiveLoading && canViewSensitive && <ActionButton action="查看敏感信息" target="/business/projectCluesUpdate/index" size="sm" variant="ghost" onClick={() => void showSensitiveContact(selected)}><Eye data-icon="inline-start" />查看完整号码</ActionButton>}</dd></div>
             <div><dt>最近进展</dt><dd>{selected.note || "暂无进展记录"}</dd></div>
           </dl>
           <section className="project-stage-timeline" aria-label="项目推进时间轴">
@@ -200,6 +210,7 @@ export function ProjectCluesPage() {
             {canEdit && <Button variant="outline" onClick={() => { setProgress({ note: "", status: selected.status || "跟进中" }); setProgressOpen(true); }}>记录跟进</Button>}
             {canEdit && !selected.owner && <Button onClick={() => void claim(selected)}>公海认领</Button>}
             {canEdit && stages.indexOf(selected.stage || stages[0]) < stages.length - 1 && <Button onClick={() => void advance(selected)}>推进至下一阶段</Button>}
+            <Button variant="ghost" onClick={() => { const id = selected.id; setSelected(null); navigate(`/clue/detail/${id}`); }}>在新页面查看完整详情</Button>
           </div>
         </>}
       </SheetContent>
@@ -217,7 +228,7 @@ export function ProjectCluesPage() {
     </FormDialog>
 
     <FormDialog open={progressOpen} onOpenChange={setProgressOpen} title="记录项目进展" description={selected?.company} onSubmit={saveProgress}>
-      <FormField label="跟进状态"><select className="business-input" value={progress.status} onChange={(event) => setProgress({ ...progress, status: event.target.value })}>{clueStatuses.map((item) => <option key={item}>{item}</option>)}</select></FormField>
+      <FormField label="跟进状态"><NativeSelect bare label="跟进状态" allowEmpty={false} value={progress.status} onChange={(value) => setProgress({ ...progress, status: value })} options={clueStatuses} /></FormField>
       <FormField label="进展说明" required><Textarea value={progress.note} onChange={(event) => setProgress({ ...progress, note: event.target.value })} placeholder="记录接洽、评审、选址或签约情况" required /></FormField>
     </FormDialog>
   </div>;
