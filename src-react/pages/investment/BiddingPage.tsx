@@ -1,5 +1,6 @@
 import { DataTable, type DataColumn } from "@/../src/components/shared/DataTable";
 import { MetricCard } from "@/../src/components/shared/MetricCard";
+import { Button } from "@/components/ui/button";
 import { useBusinessCollection } from "@/lib/useBusinessCollection";
 import { NativeSelect, PageHeading, PageSection, SearchField, StatusValue } from "@/pages/PagePrimitives";
 import { biddingRows } from "../../../src/data/mock.js";
@@ -12,7 +13,12 @@ export function BiddingPage() {
   const data = useBusinessCollection<Row>({ key: "youshu-bidding-records", seed: biddingRows, apiCollection: "biddingRecords" });
   const [keyword, setKeyword] = useState("");
   const [type, setType] = useState("");
-  const rows = data.rows.filter((row) => (!keyword || `${row.title} ${row.buyer}`.includes(keyword)) && (!type || row.type === type));
+  const rows = data.rows.filter((row) => {
+    const needle = keyword.trim().toLowerCase();
+    const hit = !needle || `${row.title ?? ""} ${row.buyer ?? ""} ${row.region ?? ""}`.toLowerCase().includes(needle);
+    return hit && (!type || row.type === type);
+  });
+  const hasFilter = Boolean(keyword.trim() || type);
   const topNotices = useMemo(() => rows.filter((row) => row.type === "招标公告" && row.status === "报名中").slice(0, 4), [rows]);
   const buyerRows = useMemo(() => {
     const buyers = new Map<string, number>();
@@ -38,11 +44,11 @@ export function BiddingPage() {
       <MetricCard title="采购单位" value={buyerRows.length} description="按公告数据去重" />
     </div>
     <PageSection title="招投标公告" description={`筛选结果 ${rows.length} 条`}>
-      <div className="business-toolbar"><SearchField value={keyword} onChange={setKeyword} placeholder="搜索项目名称或采购单位" /><NativeSelect label="公告类型" value={type} onChange={setType} options={["招标公告", "中标公告"]} /></div>
-      <DataTable columns={columns} data={rows} detailTitle="招投标项目" />
+      <div className="business-toolbar"><SearchField value={keyword} onChange={setKeyword} placeholder="搜索项目名称、采购单位或项目地区" /><NativeSelect label="公告类型" value={type} onChange={setType} options={["招标公告", "中标公告"]} />{hasFilter && <Button variant="ghost" onClick={() => { setKeyword(""); setType(""); }}>重置筛选</Button>}</div>
+      <DataTable columns={columns} data={rows} detailTitle="招投标项目" onResetFilters={hasFilter ? () => { setKeyword(""); setType(""); } : undefined} emptyText="没有符合条件的招投标公告" />
     </PageSection>
     <div className="business-chart-grid">
-      <PageSection title="当前可报名公告" description="从数据库中筛选仍开放报名的项目">
+      <PageSection title="当前可报名公告" description={`${hasFilter ? "当前筛选结果中" : "全部公告中"}仍开放报名的项目`}>
         <div className="recommend-list">{topNotices.length ? topNotices.map((row) => <div key={row.id}><StatusValue value={row.status} /><div><strong>{row.title}</strong><small>{row.buyer} · {row.budget} · 截止 {row.deadline || "待补充"}</small></div></div>) : <p className="text-muted-foreground">当前筛选范围暂无开放报名公告</p>}</div>
       </PageSection>
       <PageSection title="采购单位分布" description="根据已登记公告记录汇总">

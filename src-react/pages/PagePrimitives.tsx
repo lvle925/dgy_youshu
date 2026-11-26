@@ -1,4 +1,4 @@
-import type { FormEvent, ReactNode } from "react";
+import type { FormEvent, KeyboardEvent, ReactNode } from "react";
 import { AlertCircle, Database, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -119,15 +119,17 @@ export function SearchField({
   value,
   onChange,
   placeholder = "搜索名称、编号或关键词",
+  onKeyDown,
 }: {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
+  onKeyDown?: (event: KeyboardEvent<HTMLInputElement>) => void;
 }) {
   return (
     <div className="business-search-field">
       <Search aria-hidden="true" />
-      <Input value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} />
+      <Input value={value} onChange={(event) => onChange(event.target.value)} onKeyDown={onKeyDown} placeholder={placeholder} />
     </div>
   );
 }
@@ -139,29 +141,40 @@ export function NativeSelect({
   onChange,
   options,
   label,
+  allowEmpty = true,
+  bare = false,
 }: {
   value: string;
   onChange: (value: string) => void;
-  options: string[];
+  options: string[] | Array<{ value: string; label: string }>;
   label: string;
+  allowEmpty?: boolean;
+  bare?: boolean;
 }) {
+  const items = options.map((option) => typeof option === "string" ? { value: option, label: option } : option);
   return (
     <label className="business-native-select">
-      <span>{label}</span>
+      {!bare && <span>{label}</span>}
       <Select
-        value={value || ALL_OPTION}
+        value={value || (allowEmpty ? ALL_OPTION : items[0]?.value ?? "")}
         onValueChange={(next) => onChange(next === ALL_OPTION ? "" : String(next ?? ""))}
       >
         <SelectTrigger size="sm" aria-label={label}>
           <SelectValue>
-            {(selected) => (selected && selected !== ALL_OPTION ? String(selected) : "全部")}
+            {(selected) =>
+              selected && selected !== ALL_OPTION
+                ? items.find((item) => item.value === selected)?.label ?? String(selected)
+                : allowEmpty
+                  ? "全部"
+                  : String(value || items[0]?.label || "")
+            }
           </SelectValue>
         </SelectTrigger>
         <SelectContent alignItemWithTrigger={false}>
-          <SelectItem value={ALL_OPTION}>全部</SelectItem>
-          {options.map((option) => (
-            <SelectItem key={option} value={option}>
-              {option}
+          {allowEmpty && <SelectItem value={ALL_OPTION}>全部</SelectItem>}
+          {items.map((item) => (
+            <SelectItem key={item.value} value={item.value}>
+              {item.label}
             </SelectItem>
           ))}
         </SelectContent>
