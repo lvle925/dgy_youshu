@@ -128,7 +128,11 @@ export function PermissionTree({
         />
       </div>
       <div className="permission-tree-summary">
-        已选择 {value.length} 项<span>子选父必选 · 父级可联动子级</span>
+        <span>已选择 {value.length} 项</span><span>子选父必选 · 父级可联动子级</span>
+        <div className="permission-tree-actions">
+          <button type="button" onClick={() => onChange(allNodes.map((node) => node.id))}>全选</button>
+          <button type="button" onClick={() => onChange([])}>清空</button>
+        </div>
       </div>
       {nodes.map((node) => renderNode(node))}
       {allNodes.length === 0 && <p>暂无权限节点</p>}

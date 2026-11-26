@@ -6,7 +6,8 @@ import { api } from "../../../src/api.js";
 import { DataTable, type DataColumn } from "@/../src/components/shared/DataTable";
 import { MetricCard } from "@/../src/components/shared/MetricCard";
 import { members, parks, roles } from "../../../src/data/mock.js";
-import { FormDialog, FormField, NativeSelect, PageHeading, PageSection, SearchField, StatusValue } from "@/pages/PagePrimitives";
+import { FormDialog, FormField, InlineError, NativeSelect, PageHeading, PageSection, SearchField, StatusValue } from "@/pages/PagePrimitives";
+import { ConfirmDialog } from "@/../src/components/shared/ConfirmDialog";
 import { Download, Plus, Upload, UserRound, UserRoundX } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { toast } from "sonner";
@@ -33,6 +34,7 @@ export function MemberPage() {
   const [editing, setEditing] = useState<Row | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [passwordTarget, setPasswordTarget] = useState<Row | null>(null);
+  const [logoutTarget, setLogoutTarget] = useState<Row | null>(null);
   const [resetPassword, setResetPassword] = useState("");
   const fileInput = useRef<HTMLInputElement>(null);
   const blankForm = { name: "", phone: "", role: "", roleId: "", username: "", initialPassword: "", departmentId: "", dept: "", dataScope: "ASSIGNED_PARKS", parkIds: [] as string[], park: "", status: "启用", validUntil: "" };
@@ -64,7 +66,7 @@ export function MemberPage() {
       <ActionButton action="编辑" size="sm" variant="ghost" onClick={() => openEditor(row)}>编辑</ActionButton>
       {row.username && <ActionButton action="编辑" size="sm" variant="ghost" onClick={() => setPasswordTarget(row)}>重置密码</ActionButton>}
       {lockByUsername.has(String(row.username)) && <ActionButton action="编辑" size="sm" variant="ghost" onClick={() => void unlock(row)}>人工解锁</ActionButton>}
-      {row.username && <ActionButton action="编辑" size="sm" variant="ghost" onClick={() => void forceLogout(row)}>强制下线</ActionButton>}
+      {row.username && <ActionButton action="编辑" size="sm" variant="ghost" onClick={() => setLogoutTarget(row)}>强制下线</ActionButton>}
       <ActionButton action="删除" size="sm" variant="ghost" onClick={() => setRemoving(row)}>删除</ActionButton>
     </div> },
   ];
@@ -124,8 +126,7 @@ export function MemberPage() {
   }
 
   async function forceLogout(row: Row) {
-    if (!window.confirm(`确定强制下线 ${row.name} 的全部登录会话吗？`)) return;
-    try { await api.memberForceLogout(row.id); toast.success("该成员的登录会话已失效"); }
+    try { await api.memberForceLogout(row.id); toast.success("该成员的登录会话已失效"); setLogoutTarget(null); }
     catch (cause) { toast.error(cause instanceof Error ? cause.message : "强制下线失败"); }
   }
 
@@ -184,23 +185,25 @@ export function MemberPage() {
     </PageSection>
 
     <FormDialog open={formOpen} onOpenChange={setFormOpen} title={editing ? "编辑成员与授权" : "添加成员"} description="登录账号首次登录时必须修改初始密码。三员角色由系统管理员分配。" onSubmit={saveMember} width="max-w-3xl">
+      {principal?.role === "安全保密员" && <InlineError tone="info" message="当前账号为安全保密员：部门、角色、登录账号与账号状态不可修改，仅可调整数据范围与授权园区。" />}
       <FormField label="姓名" required><Input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} required /></FormField>
       <FormField label="手机号"><Input value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} /></FormField>
       <FormField label="所属部门"><select className="business-input" value={form.departmentId} disabled={principal?.role === "安全保密员"} onChange={(event) => setForm({ ...form, departmentId: event.target.value })}><option value="">选择部门</option>{departmentData.rows.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></FormField>
       <FormField label="角色"><select className="business-input" value={form.roleId} disabled={principal?.role === "安全保密员"} onChange={(event) => { const selected = roleData.rows.find((item) => String(item.id) === event.target.value); setForm({ ...form, roleId: event.target.value, role: selected?.name ?? "" }); }}><option value="">选择角色</option>{roleData.rows.filter((item) => item.status === "启用" && !(form.username === principal?.user && item.id === "builtin-security-officer")).map((item) => <option key={item.id} value={item.id}>{item.name}{item.exclusiveGroup ? " · 三员角色" : ""}</option>)}</select>{form.username === principal?.user && <small className="form-help">系统管理员不能为本人分配安全保密员角色。</small>}</FormField>
       <FormField label="登录账号"><Input autoComplete="off" disabled={principal?.role === "安全保密员"} value={form.username} onChange={(event) => setForm({ ...form, username: event.target.value })} /></FormField>
-      {!editing && <FormField label="初始密码"><Input type="password" autoComplete="new-password" minLength={12} disabled={principal?.role === "安全保密员"} value={form.initialPassword} onChange={(event) => setForm({ ...form, initialPassword: event.target.value })} /></FormField>}
+      {!editing && <FormField label="初始密码"><Input type="password" autoComplete="new-password" minLength={12} disabled={principal?.role === "安全保密员"} value={form.initialPassword} onChange={(event) => setForm({ ...form, initialPassword: event.target.value })} /><small className="form-help">至少 12 位，需同时包含字母和数字。</small></FormField>}
       <FormField label="数据范围"><select className="business-input" value={form.dataScope} onChange={(event) => setForm({ ...form, dataScope: event.target.value, parkIds: event.target.value === "ASSIGNED_PARKS" ? form.parkIds : [] })}><option value="ALL_PARKS">全部园区</option><option value="ASSIGNED_PARKS">指定园区</option><option value="SELF_ONLY">仅本人负责</option></select></FormField>
-      {form.dataScope === "ASSIGNED_PARKS" && <FormField label="授权园区"><select className="business-input" multiple value={form.parkIds} onChange={(event) => setForm({ ...form, parkIds: Array.from(event.target.selectedOptions, (option) => option.value) })}>{(parks as Row[]).map((park) => <option key={park.id} value={park.name}>{park.name}</option>)}</select></FormField>}
+      {form.dataScope === "ASSIGNED_PARKS" && <FormField label="授权园区"><div className="park-checkbox-group">{(parks as Row[]).map((park) => <label key={park.id}><input type="checkbox" checked={form.parkIds.includes(park.name)} onChange={(event) => setForm({ ...form, parkIds: event.target.checked ? [...form.parkIds, park.name] : form.parkIds.filter((id) => id !== park.name) })} /><span>{park.name}</span></label>)}<Button type="button" variant="ghost" size="sm" onClick={() => setForm({ ...form, parkIds: [] })}>清空已选</Button></div></FormField>}
       <FormField label="账号有效期"><Input type="date" value={form.validUntil} onChange={(event) => setForm({ ...form, validUntil: event.target.value })} /></FormField>
       <FormField label="账号状态"><select className="business-input" disabled={principal?.role === "安全保密员"} value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value })}><option>启用</option><option>停用</option></select></FormField>
     </FormDialog>
 
     <FormDialog open={Boolean(passwordTarget)} onOpenChange={(open) => { if (!open) { setPasswordTarget(null); setResetPassword(""); } }} title="管理员重置密码" description={`${passwordTarget?.name} 下次登录时须修改新密码`} onSubmit={submitResetPassword}>
-      <FormField label="新初始密码" required><Input type="password" autoComplete="new-password" minLength={12} value={resetPassword} onChange={(event) => setResetPassword(event.target.value)} required /></FormField>
+      <FormField label="新初始密码" required><Input type="password" autoComplete="new-password" minLength={12} value={resetPassword} onChange={(event) => setResetPassword(event.target.value)} required /><small className="form-help">至少 12 位，需同时包含字母和数字。</small></FormField>
     </FormDialog>
 
     <FormDialog open={Boolean(removing)} onOpenChange={(open) => !open && setRemoving(null)} title="删除成员" description={removing?.name} submitLabel="确认删除" onSubmit={async (event) => { event.preventDefault(); if (!removing) return; try { await data.removeRecord(removing.id); setRemoving(null); toast.success("成员已删除"); } catch (cause) { toast.error(cause instanceof Error ? cause.message : "删除失败"); } }} />
+  <ConfirmDialog open={Boolean(logoutTarget)} onOpenChange={(open) => !open && setLogoutTarget(null)} title="强制下线" description={`确定让「${logoutTarget?.name ?? ""}」的全部登录会话立即失效？该操作会写入审计记录。`} confirmText="确认下线" destructive onConfirm={() => { if (logoutTarget) void forceLogout(logoutTarget); }} />
   </div>;
 }
 

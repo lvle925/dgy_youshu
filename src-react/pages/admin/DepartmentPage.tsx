@@ -2,7 +2,8 @@ import { ActionButton } from "@/app/AccessContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useBusinessCollection } from "@/lib/useBusinessCollection";
-import { FormDialog, FormField, PageHeading, PageSection, SearchField, StatusValue } from "@/pages/PagePrimitives";
+import { FormDialog, FormField, NativeSelect, PageHeading, PageSection, SearchField, StatusValue } from "@/pages/PagePrimitives";
+import { ConfirmDialog } from "@/../src/components/shared/ConfirmDialog";
 import { DataTable, type DataColumn } from "@/../src/components/shared/DataTable";
 import { MetricCard } from "@/../src/components/shared/MetricCard";
 import { Building2, ChevronDown, ChevronRight, Pencil, Plus, Trash2 } from "lucide-react";
@@ -17,6 +18,8 @@ export function DepartmentPage() {
   const data = useBusinessCollection<Department>({ key: "youshu-departments", seed: emptyDepartments, apiCollection: "departments" });
   const [keyword, setKeyword] = useState("");
   const [editing, setEditing] = useState<Department | null>(null);
+  const [removing, setRemoving] = useState<Department | null>(null);
+  const [selectedId, setSelectedId] = useState("");
   const [formOpen, setFormOpen] = useState(false);
   const [form, setForm] = useState({ name: "", parentId: "", type: "业务处室", leader: "", status: "启用" });
   const query = keyword.trim();
@@ -42,7 +45,7 @@ export function DepartmentPage() {
     { key: "leader", header: "负责人" },
     { key: "members", header: "绑定人员", cell: (row) => data.rows.reduce((count, item) => count + (String(item.departmentId ?? "") === String(row.id) ? 1 : 0), 0) },
     { key: "status", header: "状态", cell: (row) => <StatusValue value={row.status} /> },
-    { key: "action", header: "操作", cell: (row) => <div className="table-action-buttons"><ActionButton action="编辑" size="sm" variant="ghost" onClick={() => openEditor(row)}><Pencil data-icon="inline-start" />编辑</ActionButton><ActionButton action="删除" size="sm" variant="ghost" onClick={() => void remove(row)}><Trash2 data-icon="inline-start" />删除</ActionButton></div> },
+    { key: "action", header: "操作", cell: (row) => <div className="table-action-buttons"><ActionButton action="编辑" size="sm" variant="ghost" onClick={() => openEditor(row)}><Pencil data-icon="inline-start" />编辑</ActionButton><ActionButton action="删除" size="sm" variant="ghost" onClick={() => setRemoving(row)}><Trash2 data-icon="inline-start" />删除</ActionButton></div> },
   ];
 
   const tree = data.rows.filter((row) => !row.parentId || !data.rows.some((parent) => String(parent.id) === String(row.parentId)))
@@ -93,17 +96,35 @@ export function DepartmentPage() {
     if (data.rows.some((item) => String(item.parentId ?? "") === String(row.id))) return toast.warning("请先调整下级部门的隶属关系");
     try {
       await data.removeRecord(row.id);
+      setRemoving(null);
       toast.success("组织节点已删除");
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "删除失败");
     }
   }
 
+  const scopedIds = useMemo(() => {
+    if (!selectedId) return null;
+    const ids = new Set<string>([selectedId]);
+    let changed = true;
+    while (changed) {
+      changed = false;
+      data.rows.forEach((row) => {
+        const parentId = String(row.parentId ?? "");
+        if (parentId && ids.has(parentId) && !ids.has(String(row.id))) {
+          ids.add(String(row.id));
+          changed = true;
+        }
+      });
+    }
+    return ids;
+  }, [data.rows, selectedId]);
+
   function renderTree(rows: Department[], parentId = "", depth = 0): ReactNode {
     return rows.filter((row) => String(row.parentId ?? "") === parentId && visibleIds.has(String(row.id)))
       .map((row) => {
         const children = data.rows.filter((child) => String(child.parentId ?? "") === String(row.id));
-        return <DepartmentTreeNode key={row.id} row={row} depth={depth} hasChildren={children.length > 0} onEdit={() => openEditor(row)}>
+        return <DepartmentTreeNode key={row.id} row={row} depth={depth} hasChildren={children.length > 0} onEdit={() => openEditor(row)} active={selectedId === String(row.id)} onSelect={() => setSelectedId(String(row.id))}>
           {renderTree(data.rows, String(row.id), depth + 1)}
         </DepartmentTreeNode>;
       });
@@ -113,30 +134,32 @@ export function DepartmentPage() {
     <PageHeading title="部门与组织架构" description="维护委办局、招商处室、园区工作组和人员归属关系" source={data.source} actions={<ActionButton action="新增" onClick={() => openEditor()}><Plus data-icon="inline-start" />新增组织</ActionButton>} />
     <div className="business-metric-grid"><MetricCard title="组织节点" value={data.rows.length} description="委办局与园区工作组" icon={<Building2 />} /><MetricCard title="启用部门" value={data.rows.filter((row) => row.status === "启用").length} description="可绑定工作台成员" /><MetricCard title="组织层级" value={treeDepth(data.rows)} description="从上级单位到工作组" /></div>
     <div className="department-layout">
-      <PageSection title="组织树" description="选择组织节点后可维护负责人和上级隶属关系">
+      <PageSection title="组织树" description="点击组织节点可筛选右侧清单并联动查看下级组织">
         <SearchField value={keyword} onChange={setKeyword} placeholder="搜索组织、类型或负责人" />
+        {selectedId && <div className="department-tree-filter"><span>已选：{data.rows.find((row) => String(row.id) === selectedId)?.name ?? "当前节点"}</span><Button size="sm" variant="ghost" onClick={() => setSelectedId("")}>查看全部</Button></div>}
         <div className="department-tree">{tree.length ? renderTree(tree) : <p className="text-muted-foreground">暂无组织节点</p>}</div>
       </PageSection>
-      <PageSection title="组织清单" description={`共 ${data.rows.length} 个组织节点`}>
-        <DataTable columns={columns} data={data.rows.filter((row) => visibleIds.has(String(row.id)))} openRowDetails={false} />
+      <PageSection title="组织清单" description={`共 ${scopedIds ? data.rows.filter((row) => scopedIds.has(String(row.id))).length : data.rows.length} 个组织节点`}>
+        <DataTable columns={columns} data={data.rows.filter((row) => visibleIds.has(String(row.id)) && (!scopedIds || scopedIds.has(String(row.id))))} openRowDetails={false} />
       </PageSection>
     </div>
     <FormDialog open={formOpen} onOpenChange={setFormOpen} title={editing ? "编辑组织节点" : "新增组织节点"} description="成员的部门归属与数据范围授权由安全保密员维护" onSubmit={saveDepartment}>
       <FormField label="组织名称" required><Input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} required /></FormField>
-      <FormField label="上级组织"><select className="business-input" value={form.parentId} onChange={(event) => setForm({ ...form, parentId: event.target.value })}><option value="">作为根组织</option>{data.rows.filter((row) => String(row.id) !== String(editing?.id ?? "") && !descendants(String(editing?.id ?? "")).has(String(row.id))).map((row) => <option key={row.id} value={row.id}>{row.name}</option>)}</select></FormField>
-      <FormField label="组织类型"><select className="business-input" value={form.type} onChange={(event) => setForm({ ...form, type: event.target.value })}>{["委办局", "业务处室", "园区管委会", "园区工作组", "招商小组"].map((type) => <option key={type}>{type}</option>)}</select></FormField>
+      <FormField label="上级组织"><NativeSelect bare label="上级组织" value={form.parentId} onChange={(value) => setForm({ ...form, parentId: value })} options={[{ value: "", label: "作为根组织" }, ...data.rows.filter((row) => String(row.id) !== String(editing?.id ?? "") && !descendants(String(editing?.id ?? "")).has(String(row.id))).map((row) => ({ value: String(row.id), label: row.name }))]} /></FormField>
+      <FormField label="组织类型"><NativeSelect bare label="组织类型" allowEmpty={false} value={form.type} onChange={(value) => setForm({ ...form, type: value })} options={["委办局", "业务处室", "园区管委会", "园区工作组", "招商小组"]} /></FormField>
       <FormField label="负责人"><Input value={form.leader} onChange={(event) => setForm({ ...form, leader: event.target.value })} /></FormField>
-      <FormField label="状态"><select className="business-input" value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value })}><option>启用</option><option>停用</option></select></FormField>
+      <FormField label="状态"><NativeSelect bare label="状态" allowEmpty={false} value={form.status} onChange={(value) => setForm({ ...form, status: value })} options={["启用", "停用"]} /></FormField>
     </FormDialog>
+    <ConfirmDialog open={Boolean(removing)} onOpenChange={(open) => !open && setRemoving(null)} title="删除组织节点" description={`确定删除「${removing?.name ?? ""}」？该操作会写入审计记录，且不可撤销。`} confirmText="确认删除" destructive onConfirm={() => { if (removing) void remove(removing); }} />
   </div>;
 }
 
-function DepartmentTreeNode({ row, depth, hasChildren, onEdit, children }: { row: Department; depth: number; hasChildren: boolean; onEdit: () => void; children: ReactNode }) {
+function DepartmentTreeNode({ row, depth, hasChildren, onEdit, active, onSelect, children }: { row: Department; depth: number; hasChildren: boolean; onEdit: () => void; active: boolean; onSelect: () => void; children: ReactNode }) {
   const [expanded, setExpanded] = useState(true);
   return <div className="department-tree-node">
-    <div className="department-tree-row" style={{ paddingLeft: `${depth * 18}px` }}>
+    <div className="department-tree-row" data-active={active || undefined} style={{ paddingLeft: `${depth * 18}px` }}>
       <button type="button" aria-label={`${expanded ? "收起" : "展开"}${row.name}`} disabled={!hasChildren} onClick={() => setExpanded(!expanded)}>{hasChildren ? expanded ? <ChevronDown /> : <ChevronRight /> : <Building2 />}</button>
-      <div><strong>{row.name}</strong><small>{row.type} · {row.leader || "未指定负责人"}</small></div>
+      <button type="button" className="department-tree-label" onClick={onSelect}><strong>{row.name}</strong><small>{row.type} · {row.leader || "未指定负责人"}</small></button>
       <Button variant="ghost" size="icon" aria-label={`编辑${row.name}`} onClick={onEdit}><Pencil /></Button>
     </div>
     {expanded && children}

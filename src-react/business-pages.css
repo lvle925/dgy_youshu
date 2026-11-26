@@ -210,6 +210,7 @@
 .business-data-source svg { width: 13px; height: 13px; }
 .business-metric-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 13px; }
 .business-metric-grid.six { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.business-metric-grid.five { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 .business-metric-grid.compact { grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 16px 0; }
 .business-metric-grid .shared-metric-card { min-width: 0; }
 .business-loading { display: grid; gap: 16px; padding: 8px; }
@@ -247,6 +248,9 @@
 .business-form-actions { display: flex; align-items: flex-end; gap: 8px; }
 .business-range-hint { grid-column: 1 / -1; margin: 0; color: #b8542f; font-size: 11px; }
 .risk-reference-tag { padding: 1px 6px; border: 1px dashed #cfd8e3; border-radius: 999px; color: #8d99a8; font-size: 10px; font-style: normal; }
+.park-checkbox-group { display: flex; flex-wrap: wrap; gap: 8px 14px; padding: 10px 12px; border: 1px solid #e1e7ee; border-radius: 8px; background: #fff; }
+.park-checkbox-group label { display: inline-flex; align-items: center; gap: 6px; color: #46576d; font-size: 12px; cursor: pointer; }
+.park-checkbox-group input { width: 15px; height: 15px; accent-color: #1652b8; }
 .outbound-view-switch { display: flex; gap: 8px; margin: 13px 0 15px; padding: 5px; }
 .outbound-steps li button { border: 0; background: transparent; color: inherit; font: inherit; cursor: pointer; }
 .outbound-preview { display: grid; gap: 8px; padding: 13px 15px; border: 1px solid rgba(15,39,68,.07); border-radius: 10px; background: #fbfcfe; }
@@ -258,6 +262,7 @@
 .business-inline-error { display: flex; align-items: center; gap: 9px; margin-bottom: 12px; padding: 9px 12px; border: 1px solid rgba(184, 50, 46, .22); border-radius: 9px; background: #fdf6f5; color: #a63c3c; font-size: 12px; }
 .business-inline-error > svg { width: 15px; height: 15px; flex: none; }
 .business-inline-error > span { flex: 1; min-width: 0; line-height: 1.6; }
+.business-inline-error[data-tone="info"] { border-color: rgba(22,82,184,.18); background: #f5f8ff; color: #1652b8; }
 
 .business-chart-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 15px; min-width: 0; }
 .business-chart { width: 100%; height: 270px; min-height: 220px; color: #6c7a8c; font-size: 11px; }
@@ -496,6 +501,8 @@ button.business-company-item:hover strong { color: #1652b8; }
 .tenant-preview p,.tenant-preview small { margin: 0; color: #778699; font-size: 12px; line-height: 1.7; }
 .tenant-preview--banner { justify-items: center; background: radial-gradient(circle at 90% 10%,rgba(22,82,184,.08),transparent 40%),#f8fafc; text-align: center; }
 .tenant-preview--banner > strong { font-size: 23px; }
+.tenant-preview-logo { width: 56px; height: 56px; object-fit: contain; border-radius: 10px; background: #fff; }
+.tenant-preview-mark { width: 34px; height: 34px; color: #9fb0c4; }
 .tenant-preview--banner > span:last-child { padding: 9px 15px; border-radius: 7px; color: white; font-size: 11px; }
 .theme-color-input { display: grid; grid-template-columns: 55px 1fr; gap: 8px; }
 .theme-color-input input[type="color"] { width: 55px; height: 36px; padding: 3px; }
@@ -536,6 +543,7 @@ button.business-company-item:hover strong { color: #1652b8; }
 @media (max-width: 1100px) {
   .business-metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .business-metric-grid.six { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .business-metric-grid.five { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .industry-node-grid,.match-card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .park-card-grid,.campus-card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .business-map-layout { grid-template-columns: minmax(260px,.8fr) minmax(0,1.4fr); }

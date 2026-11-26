@@ -341,6 +341,9 @@ body { background: var(--os-ambient-bg); color: var(--foreground); }
 .department-tree-row { display: flex; align-items: center; gap: 8px; min-height: 46px; padding-right: 8px; border-bottom: 1px solid var(--border-subtle); }
 .department-tree-row > button:first-child { display: grid; place-items: center; width: 24px; height: 24px; color: var(--muted-foreground); }
 .department-tree-row > div { display: grid; flex: 1; gap: 2px; }
+.department-tree-label { display: grid; flex: 1; gap: 2px; border: 0; background: transparent; text-align: left; cursor: pointer; }
+.department-tree-row[data-active] { border-radius: 8px; background: #eef3fc; box-shadow: inset 3px 0 #1652b8; }
+.department-tree-filter { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 10px; padding: 6px 8px 6px 12px; border: 1px solid rgba(22,82,184,.14); border-radius: 8px; background: #f5f8ff; color: #1652b8; font-size: 12px; }
 .department-tree-row strong { font-size: 13px; font-weight: 600; }
 .department-tree-row small { color: var(--muted-foreground); font-size: 11px; }
 .department-tree-row svg { width: 15px; height: 15px; }
@@ -630,8 +633,11 @@ body { background: var(--os-ambient-bg); color: var(--foreground); }
 .permission-tree-search { display:flex; align-items:center; gap:8px; padding:0 9px; border:1px solid var(--surface-border); border-radius:6px; }
 .permission-tree-search>svg { width:14px; height:14px; color:#8492a6; }
 .permission-tree-search [data-slot="input"] { height:34px; padding:0; border:0; box-shadow:none; font-size:12px; }
-.permission-tree-summary { display:flex; justify-content:space-between; padding:8px 4px; color:#536277; font-size:11px; }
+.permission-tree-summary { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px 4px; color:#536277; font-size:11px; }
 .permission-tree-summary span { color:#8c99a9; }
+.permission-tree-actions { display:flex; gap:6px; }
+.permission-tree-actions button { padding:2px 8px; border:1px solid var(--surface-border); border-radius:5px; background:#fff; color:#1652b8; font:inherit; font-size:11px; cursor:pointer; }
+.permission-tree-actions button:hover { background:#EEF3FC; }
 .permission-tree-row { display:flex; align-items:center; gap:6px; min-height:34px; padding-right:7px; border-radius:5px; }
 .permission-tree-row:hover { background:#F7F9FC; }
 .permission-tree-expand,.permission-tree-check { display:grid; width:20px; height:20px; flex:none; place-items:center; border:0; background:transparent; color:#8896a7; cursor:pointer; }

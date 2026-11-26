@@ -97,13 +97,15 @@ export function PageSection({
 export function InlineError({
   message,
   onRetry,
+  tone = "warning",
 }: {
   message?: string;
   onRetry?: () => void;
+  tone?: "warning" | "info";
 }) {
   if (!message) return null;
   return (
-    <div className="business-inline-error" role="alert">
+    <div className="business-inline-error" data-tone={tone} role="status">
       <AlertCircle aria-hidden="true" />
       <span>{message}</span>
       {onRetry && (
