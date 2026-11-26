@@ -1,4 +1,5 @@
 import {
+  Fragment,
   useEffect,
   useMemo,
   useRef,
@@ -11,7 +12,7 @@ import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   navigationByPath,
   navigationGroups,
-  type NavigationGroup,
+  navigationTrail,
 } from "./navigation";
 import { PROVINCES, REGION_CITY_OPTIONS } from "../../src/mocks/enums";
 import { BrandMark } from "@/components/BrandMark";
@@ -134,6 +135,7 @@ function navigationPathFor(path: string) {
   if (path.startsWith("/subsidy/company/")) return "/subsidy/index";
   if (path.startsWith("/park/detail/")) return "/parksBuildings/index";
   if (path.startsWith("/clue/detail/")) return "/business/projectClues/index";
+  if (path === "/business/enterpriseExpansion/index") return "/business/projectClues/index";
   return path;
 }
 function iconForPath(path: string) {
@@ -214,11 +216,22 @@ export function AppShell({
   const activePath =
     location.pathname === "/" ? HOME_TAB.path : location.pathname;
   const activeNavigationPath = navigationPathFor(activePath);
-  const group = navigationGroups.find((entry) =>
-    entry.sections.some((section) =>
-      section.items.some((item) => item.path === activeNavigationPath),
-    ),
-  );
+  const trail = useMemo(() => {
+    const nav = navigationTrail(activeNavigationPath);
+    const nodes = [
+      { text: "工作台", level: "root" },
+      ...(nav
+        ? [{ text: nav.group, level: "group" }, { text: nav.section, level: "section" }]
+        : []),
+      { text: titleFor(activePath), level: "page" },
+    ];
+    const unique = nodes.filter(
+      (node, index) => nodes.findIndex((item) => item.text === node.text) === index,
+    );
+    return unique.map((node, index) =>
+      index === unique.length - 1 ? { ...node, level: "page" } : node,
+    );
+  }, [activePath, activeNavigationPath]);
 
   useEffect(() => {
     if (!allowsRoute(principal, activePath)) return;
@@ -278,6 +291,11 @@ export function AppShell({
     persistTabs([HOME_TAB]);
     navigate(permittedTabs[0]?.path ?? "/");
   }
+  function closeRightTabs() {
+    const index = permittedTabs.findIndex((tab) => tab.path === activePath);
+    if (index < 0) return;
+    persistTabs(permittedTabs.slice(0, index + 1));
+  }
 
   return (
     <CityContext.Provider value={{ city, setCity }}>
@@ -290,7 +308,7 @@ export function AppShell({
             setCity(nextCity);
             localStorage.setItem("workspace_city", nextCity);
           }}
-          group={group}
+          trail={trail}
           activePath={activePath}
           activeNavigationPath={activeNavigationPath}
           expanded={expanded}
@@ -307,6 +325,7 @@ export function AppShell({
             navigate={navigate}
             closeTab={closeTab}
             closeOtherTabs={closeOtherTabs}
+            closeRightTabs={closeRightTabs}
             closeAllTabs={closeAllTabs}
           />
           <main className="workspace-content">{children}</main>
@@ -328,7 +347,7 @@ function WorkspaceFrame({
   onLogout,
   city,
   setCity,
-  group,
+  trail,
   activePath,
   activeNavigationPath,
   expanded,
@@ -344,7 +363,7 @@ function WorkspaceFrame({
   onLogout: () => void;
   city: string;
   setCity: (city: string) => void;
-  group?: NavigationGroup;
+  trail: Array<{ text: string; level: string }>;
   activePath: string;
   activeNavigationPath: string;
   expanded: Record<string, boolean>;
@@ -492,13 +511,16 @@ function WorkspaceFrame({
               <PanelLeft />
             </Button>
             <Separator orientation="vertical" className="header-separator" />
-            <div className="workspace-breadcrumb">
-              <span>工作台</span>
-              <ChevronRight />
-              <strong>{group?.title ?? "业务模块"}</strong>
-              <ChevronRight />
-              <b>{titleFor(activePath)}</b>
-            </div>
+            <nav className="workspace-breadcrumb" aria-label="面包屑">
+              {trail.map((node, index) => (
+                <Fragment key={node.text}>
+                  {index > 0 && <ChevronRight aria-hidden="true" />}
+                  <span data-crumb={node.level} data-current={node.level === "page" || undefined}>
+                    {node.text}
+                  </span>
+                </Fragment>
+              ))}
+            </nav>
             <CityPicker city={city} onChange={setCity} />
           </div>
           <div className="workspace-header-right">
@@ -737,6 +759,7 @@ function WorkspaceTabs({
   navigate,
   closeTab,
   closeOtherTabs,
+  closeRightTabs,
   closeAllTabs,
 }: {
   tabs: WorkspaceTab[];
@@ -744,8 +767,13 @@ function WorkspaceTabs({
   navigate: (path: string) => void;
   closeTab: (path: string) => void;
   closeOtherTabs: () => void;
+  closeRightTabs: () => void;
   closeAllTabs: () => void;
 }) {
+  const activeRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    activeRef.current?.scrollIntoView({ block: "nearest", inline: "nearest" });
+  }, [activePath]);
   return (
     <div className="workspace-tabs-wrap os-tabs-strip">
       <div className="workspace-tablist" role="tablist" aria-label="已打开页面">
@@ -753,7 +781,7 @@ function WorkspaceTabs({
           const Icon = iconForPath(tab.path);
           const selected = tab.path === activePath;
           return (
-            <div className="workspace-tab-item" key={tab.path}>
+            <div className="workspace-tab-item" key={tab.path} ref={selected ? activeRef : undefined}>
               <button
                 type="button"
                 role="tab"
@@ -799,6 +827,7 @@ function WorkspaceTabs({
         />
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={closeOtherTabs}>关闭其他</DropdownMenuItem>
+          <DropdownMenuItem onClick={closeRightTabs}>关闭右侧</DropdownMenuItem>
           <DropdownMenuItem onClick={closeAllTabs}>关闭全部</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

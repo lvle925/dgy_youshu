@@ -5,9 +5,18 @@ import {
   Columns3,
   ChevronRight,
   Inbox,
+  RotateCcw,
 } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -51,6 +60,8 @@ export function DataTable<T extends { id?: string | number }>({
   emptyText = "暂无数据",
   defaultSort,
   className,
+  loading = false,
+  onResetFilters,
 }: {
   columns: DataColumn<T>[];
   data: T[];
@@ -62,6 +73,8 @@ export function DataTable<T extends { id?: string | number }>({
   emptyText?: string;
   defaultSort?: { key: string; direction: "asc" | "desc" };
   className?: string;
+  loading?: boolean;
+  onResetFilters?: () => void;
 }) {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(pageSizeOptions[0] ?? 10);
@@ -128,7 +141,7 @@ export function DataTable<T extends { id?: string | number }>({
     <div className={cn("data-table-shell os-glass-card", className)}>
       <div className="data-table-toolbar">
         <span>
-          {data.length ? `共 ${data.length.toLocaleString()} 条` : "数据列表"}
+          {loading ? "正在加载数据" : data.length ? `共 ${data.length.toLocaleString()} 条` : "数据列表"}
         </span>
         <DropdownMenu>
           <DropdownMenuTrigger
@@ -196,7 +209,18 @@ export function DataTable<T extends { id?: string | number }>({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {rows.map((row, index) => (
+          {loading
+            ? Array.from({ length: Math.min(pageSize, 8) }).map((_, index) => (
+                <TableRow key={`skeleton-${index}`}>
+                  {shown.map((column) => (
+                    <TableCell key={column.key}>
+                      <Skeleton className="h-3.5 w-full max-w-28" />
+                    </TableCell>
+                  ))}
+                  {onRowClick && <TableCell className="data-table-action-cell" />}
+                </TableRow>
+              ))
+            : rows.map((row, index) => (
             <TableRow
               key={String(row.id ?? index)}
               className={cn((onRowClick || openRowDetails) && "data-table-row-clickable")}
@@ -246,13 +270,19 @@ export function DataTable<T extends { id?: string | number }>({
               )}
             </TableRow>
           ))}
-          {rows.length === 0 && (
+          {!loading && rows.length === 0 && (
             <TableRow>
               <TableCell colSpan={gridColumnCount}>
                 <div className="data-table-empty">
                   <Inbox aria-hidden="true" />
                   <strong>{emptyText}</strong>
-                  <span>调整筛选条件后再试</span>
+                  <span>{onResetFilters ? "可重置筛选条件后重新查询" : "调整筛选条件后再试"}</span>
+                  {onResetFilters && (
+                    <Button type="button" variant="outline" size="sm" onClick={onResetFilters}>
+                      <RotateCcw data-icon="inline-start" />
+                      重置筛选
+                    </Button>
+                  )}
                 </div>
               </TableCell>
             </TableRow>
@@ -261,19 +291,24 @@ export function DataTable<T extends { id?: string | number }>({
       </Table>
       <div className="data-table-pagination">
         <span>每页</span>
-        <select
-          value={pageSize}
-          onChange={(event) => {
-            setPageSize(Number(event.target.value));
+        <Select
+          value={String(pageSize)}
+          onValueChange={(next) => {
+            setPageSize(Number(next));
             setPage(1);
           }}
         >
-          {pageSizeOptions.map((option) => (
-            <option key={option} value={option}>
-              {option} 条
-            </option>
-          ))}
-        </select>
+          <SelectTrigger size="sm" aria-label="每页条数" className="data-table-page-size">
+            <SelectValue>{(selected) => `${selected} 条`}</SelectValue>
+          </SelectTrigger>
+          <SelectContent alignItemWithTrigger={false}>
+            {pageSizeOptions.map((option) => (
+              <SelectItem key={option} value={String(option)}>
+                {option} 条
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <span className="data-table-page-label">
           第 {page} / {pageCount} 页
         </span>

@@ -1,7 +1,14 @@
 import type { FormEvent, ReactNode } from "react";
-import { Database, Search } from "lucide-react";
+import { AlertCircle, Database, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -57,12 +64,16 @@ export function PageSection({
   actions,
   children,
   className = "",
+  error,
+  onRetry,
 }: {
   title?: string;
   description?: string;
   actions?: ReactNode;
   children?: ReactNode;
   className?: string;
+  error?: string;
+  onRetry?: () => void;
 }) {
   return (
     <Card className={`business-section os-glass-card ${className}`}>
@@ -75,8 +86,32 @@ export function PageSection({
           {actions && <div className="business-section-actions">{actions}</div>}
         </CardHeader>
       )}
-      <CardContent>{children}</CardContent>
+      <CardContent>
+        <InlineError message={error} onRetry={onRetry} />
+        {children}
+      </CardContent>
     </Card>
+  );
+}
+
+export function InlineError({
+  message,
+  onRetry,
+}: {
+  message?: string;
+  onRetry?: () => void;
+}) {
+  if (!message) return null;
+  return (
+    <div className="business-inline-error" role="alert">
+      <AlertCircle aria-hidden="true" />
+      <span>{message}</span>
+      {onRetry && (
+        <Button type="button" size="sm" variant="outline" onClick={onRetry}>
+          重试
+        </Button>
+      )}
+    </div>
   );
 }
 
@@ -97,6 +132,8 @@ export function SearchField({
   );
 }
 
+const ALL_OPTION = "__all__";
+
 export function NativeSelect({
   value,
   onChange,
@@ -111,10 +148,24 @@ export function NativeSelect({
   return (
     <label className="business-native-select">
       <span>{label}</span>
-      <select value={value} onChange={(event) => onChange(event.target.value)}>
-        <option value="">全部</option>
-        {options.map((option) => <option value={option} key={option}>{option}</option>)}
-      </select>
+      <Select
+        value={value || ALL_OPTION}
+        onValueChange={(next) => onChange(next === ALL_OPTION ? "" : String(next ?? ""))}
+      >
+        <SelectTrigger size="sm" aria-label={label}>
+          <SelectValue>
+            {(selected) => (selected && selected !== ALL_OPTION ? String(selected) : "全部")}
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent alignItemWithTrigger={false}>
+          <SelectItem value={ALL_OPTION}>全部</SelectItem>
+          {options.map((option) => (
+            <SelectItem key={option} value={option}>
+              {option}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </label>
   );
 }

@@ -1,5 +1,5 @@
-import { useEffect, useState, type PointerEvent } from "react";
-import { Hand, MapPin, Pentagon, RotateCcw, Square, ZoomIn, ZoomOut } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, type PointerEvent } from "react";
+import { Hand, MapPin, Pentagon, RotateCcw, Square, Trash2, Undo2, ZoomIn, ZoomOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export type ScreenPoint = { x: number; y: number };
@@ -122,6 +122,38 @@ export function SpatialMap({ parks, selected, onSelect, boundary = null, onBound
   const [drawing, setDrawing] = useState(false);
   const [preview, setPreview] = useState<ScreenPoint | null>(null);
   const [zoom, setZoom] = useState(1);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
+  const [frame, setFrame] = useState({ width: 0, height: 0 });
+
+  useEffect(() => {
+    const element = containerRef.current;
+    if (!element) return;
+    const observer = new ResizeObserver((entries) => {
+      const rect = entries[0].contentRect;
+      setFrame({ width: rect.width, height: rect.height });
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+
+  // 完整地图等比呈现避免拉伸，缩略图保持原有铺满效果。
+  const layout = useMemo(() => {
+    const width = frame.width || 1;
+    const height = frame.height || 1;
+    if (compact) {
+      return { width, height, scaleX: width / 100, scaleY: height / 100, left: 0, top: 0 };
+    }
+    const scale = Math.min(width, height) / 100;
+    return {
+      width,
+      height,
+      scaleX: scale,
+      scaleY: scale,
+      left: (width - 100 * scale) / 2,
+      top: (height - 100 * scale) / 2,
+    };
+  }, [frame, compact]);
 
   useEffect(() => {
     if (!focusPosition || compact) return;
@@ -130,11 +162,41 @@ export function SpatialMap({ parks, selected, onSelect, boundary = null, onBound
     setOffset({ x: (50 - point.x) * 1.55, y: (50 - point.y) * 1.55 });
   }, [focusKey, compact]);
 
-  function screenCoordinates(event: PointerEvent<SVGSVGElement>, translate = offset) {
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (!svg || compact) return;
+    const onWheel = (event: WheelEvent) => {
+      if (anchor) return;
+      event.preventDefault();
+      setZoom((current) => Math.max(0.8, Math.min(2.5, Number((current + (event.deltaY < 0 ? 0.2 : -0.2)).toFixed(1)))));
+    };
+    svg.addEventListener("wheel", onWheel, { passive: false });
+    return () => svg.removeEventListener("wheel", onWheel);
+  }, [anchor, compact]);
+
+  function viewBoxPoint(event: PointerEvent<SVGSVGElement>) {
     const box = event.currentTarget.getBoundingClientRect();
-    const raw = { x: (event.clientX - box.left) * 100 / box.width, y: (event.clientY - box.top) * 100 / box.height };
-    if (tool === "pan" && translate.x === 0 && translate.y === 0) return raw;
-    return { x: 50 + (raw.x - translate.x - 50) / zoom, y: 50 + (raw.y - translate.y - 50) / zoom };
+    return {
+      x: (event.clientX - box.left - layout.left) / layout.scaleX,
+      y: (event.clientY - box.top - layout.top) / layout.scaleY,
+    };
+  }
+
+  function screenCoordinates(event: PointerEvent<SVGSVGElement>) {
+    const point = viewBoxPoint(event);
+    return {
+      x: 50 + (point.x - offset.x - 50) / zoom,
+      y: 50 + (point.y - offset.y - 50) / zoom,
+    };
+  }
+
+  function clampOffset(next: ScreenPoint) {
+    // shortcut: 拖拽最多让底图移出可视区 25%，缩放越大允许的余量越多
+    const limit = 25 + 45 * (zoom - 1);
+    return {
+      x: Math.max(-limit, Math.min(limit, next.x)),
+      y: Math.max(-limit, Math.min(limit, next.y)),
+    };
   }
 
   function start(event: PointerEvent<SVGSVGElement>) {
@@ -146,7 +208,7 @@ export function SpatialMap({ parks, selected, onSelect, boundary = null, onBound
       setDrawing(true);
     } else {
       event.currentTarget.setPointerCapture(event.pointerId);
-      setAnchor(tool === "pan" ? screenCoordinates(event, zero) : point);
+      setAnchor(tool === "pan" ? viewBoxPoint(event) : point);
       if (tool === "rectangle") onBoundary(createBoundary("rectangle", [point, point]));
     }
   }
@@ -159,8 +221,8 @@ export function SpatialMap({ parks, selected, onSelect, boundary = null, onBound
     }
     if (tool === "rectangle") onBoundary?.(createBoundary("rectangle", [anchor, screenCoordinates(event)]));
     if (tool === "pan") {
-      const point = screenCoordinates(event, zero);
-      setOffset(current => ({ x: current.x + point.x - anchor.x, y: current.y + point.y - anchor.y }));
+      const point = viewBoxPoint(event);
+      setOffset((current) => clampOffset({ x: current.x + point.x - anchor.x, y: current.y + point.y - anchor.y }));
       setAnchor(point);
     }
   }
@@ -171,6 +233,25 @@ export function SpatialMap({ parks, selected, onSelect, boundary = null, onBound
     setDrawing(false);
     setPreview(null);
     if (next !== "pan") onBoundary?.(null);
+  }
+
+  function undoPoint() {
+    const points = toScreenBoundary(boundary);
+    if (points.length === 0) return;
+    const rest = points.slice(0, -1);
+    if (rest.length < 3) {
+      onBoundary?.(null);
+      setDrawing(false);
+      return;
+    }
+    onBoundary?.(createBoundary("polygon", rest));
+  }
+
+  function clearSelection() {
+    onBoundary?.(null);
+    setDrawing(false);
+    setPreview(null);
+    setAnchor(null);
   }
 
   function finish() {
@@ -206,8 +287,14 @@ export function SpatialMap({ parks, selected, onSelect, boundary = null, onBound
         : "按住并拖出选区"
       : "拖动地图或选择园区浏览";
 
-  return <div className={compact ? "spatial-map spatial-map--compact" : "spatial-map os-glass-card"} data-tool={tool}>
-    <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="spatial-map-canvas" aria-label="园区路网与电子围栏示意"
+  function markerStyle(point: ScreenPoint) {
+    const x = layout.left + (50 + (point.x - 50) * zoom + offset.x) * layout.scaleX;
+    const y = layout.top + (50 + (point.y - 50) * zoom + offset.y) * layout.scaleY;
+    return { left: `${(x / layout.width) * 100}%`, top: `${(y / layout.height) * 100}%` };
+  }
+
+  return <div ref={containerRef} className={compact ? "spatial-map spatial-map--compact" : "spatial-map os-glass-card"} data-tool={tool}>
+    <svg ref={svgRef} viewBox="0 0 100 100" preserveAspectRatio={compact ? "none" : "xMidYMid meet"} className="spatial-map-canvas" aria-label="园区路网与电子围栏示意"
       onPointerDown={start} onPointerMove={move} onPointerUp={endSelection}
       onPointerCancel={() => setAnchor(null)} onDoubleClick={tool === "polygon" ? finish : undefined}>
       <g transform={"translate(" + offset.x + " " + offset.y + ") translate(50 50) scale(" + zoom + ") translate(-50 -50)"}>
@@ -226,7 +313,7 @@ export function SpatialMap({ parks, selected, onSelect, boundary = null, onBound
       const point = project(park.position);
       return <button type="button" className="spatial-point" data-active={selected === park.id} data-in-range={containsPoint(boundary, park.position)}
       aria-label={park.name + " · 在驻企业 " + park.enterprises + " 家"} key={park.id}
-      style={{ left: (50 + (point.x - 50) * zoom + offset.x) + "%", top: (50 + (point.y - 50) * zoom + offset.y) + "%" }} onClick={() => onSelect(park)}>
+      style={markerStyle(point)} onClick={() => onSelect(park)}>
       <MapPin /><span role="tooltip">{park.name}<small>在驻企业 {park.enterprises} 家</small></span>
     </button>;
     })}
@@ -243,6 +330,8 @@ export function SpatialMap({ parks, selected, onSelect, boundary = null, onBound
       <div className="spatial-hint os-glass-card">
         <span>{hint}</span>
         {tool === "polygon" && drawing && <Button size="sm" disabled={polygon.length < 3} onClick={finish}>完成圈选</Button>}
+        {tool === "polygon" && drawing && <Button size="sm" variant="ghost" aria-label="撤销上一个顶点" onClick={undoPoint}><Undo2 /></Button>}
+        {boundary && <Button size="sm" variant="ghost" aria-label="清除选区" onClick={clearSelection}><Trash2 /></Button>}
       </div>
     </>}
   </div>;

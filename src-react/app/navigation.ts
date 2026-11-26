@@ -231,6 +231,17 @@ export const navigationGroups: NavigationGroup[] = [
   },
 ];
 
+export function navigationTrail(path: string): { group: string; section: string } | null {
+  for (const group of navigationGroups) {
+    for (const section of group.sections) {
+      if (section.items.some((item) => item.path === path)) {
+        return { group: group.title, section: section.title };
+      }
+    }
+  }
+  return null;
+}
+
 export const navigationItems = navigationGroups.flatMap((group) =>
   group.sections.flatMap((section) => section.items),
 );
