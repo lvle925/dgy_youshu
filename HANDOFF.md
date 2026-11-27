@@ -53,9 +53,9 @@ npm run dev                                    # Vite 127.0.0.1:5199，代理到
 
 ## 6. 接下来做什么（按优先级）
 
-1. ~~**重建交付包**（阻塞交付）~~ —— **已完成**：`site-final/` 与 ZIP 已同步到最新 `dist`，ZIP 115 文件、正斜杠路径、根级平铺、不含 `.env`；并在**解压目录** compose 起来验证通过。**每次改前端或后端后都必须重做这一步**（后端需先 `mvn package` 再更新 `deploy/docker-package/backend/app.jar`）。
-2. ~~**重拍地图截图**~~ —— **已完成**：全部 50 张截图按 1440×900 重拍（46 张页面图 + 6 张 1440×598 总览图），取自当前交付包实例；旧的 `1904×922` 口径已消除。
-3. **同事代码比对合并**：`dgy_youshu/` 与 `dgy_youshu-develop_glf.zip` 尚未做逐文件 diff，合并结论待定。**注意：`git add -A` 会把它们误纳入版本控制，暂存时务必排除。**
+1. ~~**重建交付包**（阻塞交付）~~ —— **已完成**：`site-final/` 与 ZIP 已同步到最新 `dist`（UI 收口后的新 hash），ZIP 115 文件、正斜杠路径、根级平铺、不含 `.env`；并在**解压目录** compose 起来验证通过。**每次改前端或后端后都必须重做这一步**（后端需先 `mvn package` 再更新 `deploy/docker-package/backend/app.jar`）。
+2. ~~**重拍地图截图**~~ —— **已完成**：全部 51 张截图按 1440×900 重拍（47 张页面图 + 6 张 1440×598 总览图），取自当前交付包实例；旧的 `1904×922` 口径已消除。UI 收口后重拍了 `business-map.png`（初始态）、`map.png`（多边形绘制中，提示条在顶部工具栏下方、左下角版权露出）、新增 `features/map-results-drawer.png`（结果抽屉轻遮罩），并重新生成引用该图的 `investment-overview.png` / `workflow-overview.png`。
+3. ~~**同事代码比对合并**~~ —— **已按用户要求取消**：`dgy_youshu/` 与 `dgy_youshu-develop_glf.zip` 已于 2026-11-27 移入回收站（非永久删除），不再跟踪、不再合并。
 4. **功能缺口**（详见 `PROJECT_SESSION_SUMMARY.md` 第 10 节共 13 条）：地图结果「纳入招商台账」仍创建一条通用线索而非逐条入库；`clues` 抽屉「纳入招商台账」筛选口径待与左侧筛选统一。
    - ~~地图地址定位仍是本地字符串检索~~ → **已接入腾讯位置服务**（服务端签名，见 `docs/tendcent-map-integration.md`）。**当前阻塞：该 Key 的 WebService 每日配额已耗尽（status 121），次日重置后需实测一次完整解析**。底图（JS API）不受该配额限制，已验证可用。
    - ~~地图数据仍以 8 个上海园区示例为主~~ → **底图已换真实腾讯地图瓦片**；园区**真实边界多边形**的查询链路已就绪（`/api/geo/park-boundary`），但同样受配额限制，尚未取到真实 polygon，目前回退到示意围栏。
@@ -71,6 +71,7 @@ npm run dev                                    # Vite 127.0.0.1:5199，代理到
 - 地图结果抽屉补 `10/20/50` 分页。
 - **接入腾讯位置服务并做可替换抽象**：底图换真实腾讯地图 JS API GL 瓦片；地址定位与关键词联想改走后端签名接口；`SpatialMap` 的坐标换算抽象为适配器（离线线性投影 / 真实底图投影共用一套几何逻辑）；`containsPoint` 改为纯经纬度空间运算，与投影解耦。**腾讯只是临时演示 provider**：服务端 `MapProvider` + 前端 `MapBaseRenderer` 两层契约隔离具体实现，换服务商只需新增实现并切换 `MAP_PROVIDER` / `VITE_MAP_PROVIDER`，业务页面无需改动。
 - 修掉真实底图下的三个交互缺陷：地图移动后覆盖层不同步（补 `onMove` 订阅）、定位后自动弹详情抽屉遮挡工具栏、定位后放大量过大导致点位飞出视野。
+- **2026-11-27 轻量 UI 收口（未动业务接口/逻辑）**：① 绘制提示条 `.spatial-hint` 从左下角移到顶部工具栏正下方居中（`top:58px`，窄屏 `96px`，加 `z-index:3`），彻底让开腾讯比例尺/版权；② 圈选文案改为「已圈选 X 家企业，可查看名单并与地图围栏对照」，`PageSection.actions` 加轻量「查看企业名单」按钮直接开抽屉；③ `body:has(.business-map-page) [data-slot="sheet-overlay"]` 用 `rgba(15,39,68,.06)` + `backdrop-filter:none` 做极轻遮罩，右侧名单与左侧围栏可对照；④ `.business-rule-chips` / `.business-rule-chip` 去掉 `!important`，改用高特异性父级选择器。改完已 `npx vite build --emptyOutDir false` 零报错，并重拍地图截图、重建交付包。
 
 ## 7. 已知坑（别踩）
 

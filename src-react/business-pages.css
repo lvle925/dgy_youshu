@@ -243,8 +243,9 @@
 .business-rule-cards > div { display: flex; align-items: baseline; gap: 12px; }
 .business-rule-cards strong { color: #5d6c80; font-size: 12px; font-weight: 500; }
 .business-rule-cards span { color: #26384e; font-size: 13px; }
-.business-rule-chips { flex-wrap: wrap; gap: 8px !important; }
-.business-rule-chip { padding: 4px 10px; border: 1px solid rgba(22,82,184,.18); border-radius: 999px; background: #eef3fc; color: #1652b8 !important; font-size: 12px !important; }
+/* 用更高特异性的父级选择器压过 .business-rule-cards > div / span 的通用规则，避免 !important */
+.business-rule-cards > .business-rule-chips { flex-wrap: wrap; gap: 8px; }
+.business-rule-cards > .business-rule-chips .business-rule-chip { padding: 4px 10px; border: 1px solid rgba(22,82,184,.18); border-radius: 999px; background: #eef3fc; color: #1652b8; font-size: 12px; }
 .business-form-actions { display: flex; align-items: flex-end; gap: 8px; }
 .business-range-hint { grid-column: 1 / -1; margin: 0; color: #b8542f; font-size: 11px; }
 .risk-reference-tag { padding: 1px 6px; border: 1px dashed #cfd8e3; border-radius: 999px; color: #8d99a8; font-size: 10px; font-style: normal; }
@@ -396,6 +397,8 @@ button.business-company-item:hover strong { color: #1652b8; }
 .map-result-list > button > svg { width: 14px; color: #9aa6b5; }
 .spatial-zoom-controls { display: inline-flex; align-items: center; gap: 2px; border-left: 1px solid rgba(15,39,68,.08); padding-left: 4px; }
 .spatial-zoom-controls button { min-width: 28px; }
+/* 地图页右侧抽屉：使用极轻遮罩且不模糊，便于对照左侧地图围栏与点位 */
+body:has(.business-map-page) [data-slot="sheet-overlay"] { background: rgba(15, 39, 68, .06); backdrop-filter: none; }
 .map-company-sheet { width: min(700px, 95vw); max-width: 700px; }
 .map-company-panel-body { display: flex; flex-direction: column; gap: 16px; padding: 0 24px 24px; min-width: 0; }
 .map-company-kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }

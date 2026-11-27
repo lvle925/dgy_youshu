@@ -794,14 +794,16 @@ body { background: var(--os-ambient-bg); color: var(--foreground); }
 .spatial-map:not([data-tool="pan"]) .spatial-point { pointer-events: none; }
 .spatial-map--compact .spatial-point { width: 24px; height: 24px; }
 .spatial-map--compact .spatial-point > svg { width: 13px; height: 13px; }
-.spatial-tools, .spatial-hint { position: absolute; display: flex; align-items: center; flex-wrap: wrap; gap: 4px; padding: 5px; }
+.spatial-tools, .spatial-hint { position: absolute; display: flex; align-items: center; flex-wrap: wrap; gap: 4px; padding: 5px; z-index: 3; }
 .spatial-tools { top: 14px; left: 14px; right: auto; }
-.spatial-hint { bottom: 14px; left: 14px; padding-inline: 10px; color: var(--muted-foreground); font-size: 12px; min-height: 34px; }
+/* 绘制提示条置于顶部工具栏正下方居中，避开地图左下角的比例尺与版权标识 */
+.spatial-hint { top: 58px; bottom: auto; left: 50%; right: auto; transform: translateX(-50%); max-width: calc(100% - 28px); padding-inline: 10px; color: var(--muted-foreground); font-size: 12px; min-height: 34px; }
 .business-map-layout .map-result-list { max-height: 365px; overflow: auto; }
 @media (max-width: 650px) {
   .spatial-map { min-height: 380px; }
   .spatial-map--compact { min-height: 0; }
   .spatial-tools { right: 10px; top: 10px; left: 10px; }
+  .spatial-hint { top: 96px; }
 }
 
 body:has(.notification-drawer) [data-slot="sheet-overlay"] { backdrop-filter: none; background: rgba(15, 39, 68, .16); }

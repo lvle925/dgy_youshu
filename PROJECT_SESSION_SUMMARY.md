@@ -13,11 +13,11 @@
 | 本轮提交序列 | `7716542` 底座与地图 → `6b2de71` 登录/首页/404 → `cfedae0` 智慧招商 → `57a8737` 商机洞察 → `0f48585` 安商稳商 → `a89b6a8` 平台治理 → `e130efe`+`2f513c5` 文档 → `ae403ad` 交付包重建 → `3692e0c` 功能缺口修复 → `a3482f2`/`a5558ce` 腾讯地图接入 → `c9dd83d` provider 化收尾 |
 | 推送状态 | 全部已推送，`main` 与 `origin/main` 同步于最新提交 |
 | 本轮交接文档 | 已同步本轮改动、可替换地图架构与剩余缺口，见第 9、10 节 |
-| 当前待接手重点 | 同事代码比较合并（用户明确暂不合并）；地图 WebService 配额次日重置后实测完整解析/联想链路；第 10 节功能缺口 |
+| 当前待接手重点 | 地图 WebService 配额重置后实测完整解析/联想链路；园区真实 polygon 抓取；第 10 节功能缺口 |
 
 本轮用户要求按《`dgy_youshu` 全量逐页前端 UI / 交互审查》文档执行 Batch 0~5 共 39 个页面/组件的前端精修，并明确交付边界为「源码 + 每批 build 验收」：不重建 Docker 交付包与 ZIP、不重拍截图、不改 README。每个批次单独提交，提交信息以 `Batch N:` 开头便于回溯。
 
-根目录下还有用户提供的 `dgy_youshu/` 和 `dgy_youshu-develop_glf.zip`。这两个项目均为主仓库的未跟踪内容。嵌套目录中没有独立 `.git`，在其中运行 Git 会向上找到主仓库，因此其中显示的 `main` 和提交历史属于外层仓库。同事代码与主线的逐文件差异和合并结论仍需核查。
+根目录下曾有用户提供的 `dgy_youshu/` 和 `dgy_youshu-develop_glf.zip`（均未跟踪）。2026-11-27 用户明确「同事的不管删除即可」，两者已移入回收站（非永久删除），不再保留、不再合并。
 
 ## 2. 用户确定的产品定位与交付习惯
 
@@ -228,8 +228,8 @@ GeoJSON 选区采用闭合 Polygon 环，坐标使用 `[lng, lat]`。园区点�
 本节记录本轮源码和文件核查结果，具体修复工作留待下一轮业务任务。
 
 1. ~~**本轮 6 个提交尚未推送。**~~ **已解决**：`7716542`、`6b2de71`、`cfedae0`、`57a8737`、`0f48585`、`a89b6a8` 及后续文档提交均已推送，`main` 与 `origin/main` 同步于 `ae403ad`。
-2. ~~**完整 Docker ZIP 与交付目录版本有差异。**~~ **已解决（provider 化后再次重建）**：[deploy/youshu-docker-package.zip](C:/Users/Administrator/Desktop/网站逆向/deploy/youshu-docker-package.zip) 现为 31,293,009 字节、115 个文件，首页引用 `main-B-ICvMxx.js` / `main-BjarhANU.css`，与 `deploy/docker-package/frontend/site-final/` 及最新 `dist` 三方一致；ZIP 采用正斜杠路径、根级平铺、不含 `.env`。后端 `app.jar` 已用 `mvn package` 重新构建（MD5 `01bd7825f4b544e5492f7ebab2ad0bfc`）并同步到交付包。已在**解压目录**用独立 Compose 项目 `youshu-verify-provider`、端口 5299/3399 验证通过：MySQL healthy、演示登录成功、`/api/geo/status` 返回 `{"configured":true,"provider":"tencent","providerName":"腾讯位置服务"}`、真实底图与 8 个点位正常、矩形框选得到 30 家企业且抽屉分页正常、本地定位提示正常且不弹详情抽屉、屏蔽腾讯底图域名后自动回退到离线 SVG 示意底图（8 个点位仍在）。**后续每次改前端或后端都需重做这一步。**
-3. ~~**地图截图尺寸有偏差。**~~ **已解决**：全部 50 张截图已按统一口径重拍 —— 46 张页面图为 `1440×900`，6 张模块总览为 `1440×598`，取自当前交付包实例（CDP `Emulation.setDeviceMetricsOverride` 设 `deviceScaleFactor=1`），旧的 `1904×922` 口径已消除。
+2. ~~**完整 Docker ZIP 与交付目录版本有差异。**~~ **已解决（2026-11-27 UI 收口后再次重建）**：[deploy/youshu-docker-package.zip](C:/Users/Administrator/Desktop/网站逆向/deploy/youshu-docker-package.zip) 现为 31,293,268 字节、115 个文件，首页引用 `main-DJ3kg-Sy.js` / `main-DzO5w9sv.css`，与 `deploy/docker-package/frontend/site-final/` 及最新 `dist` 三方一致；ZIP 采用正斜杠路径、根级平铺、不含 `.env`。后端 `app.jar` 已用 `mvn package` 重新构建（MD5 `01bd7825f4b544e5492f7ebab2ad0bfc`）并同步到交付包。已在**解压目录**用独立 Compose 项目 `youshu-verify-provider`、端口 5299/3399 验证通过：MySQL healthy、演示登录成功、`/api/geo/status` 返回 `{"configured":true,"provider":"tencent","providerName":"腾讯位置服务"}`、真实底图与 8 个点位正常、矩形框选得到 30 家企业且抽屉分页正常、本地定位提示正常且不弹详情抽屉、屏蔽腾讯底图域名后自动回退到离线 SVG 示意底图（8 个点位仍在）。**后续每次改前端或后端都需重做这一步。**
+3. ~~**地图截图尺寸有偏差。**~~ **已解决**：全部 51 张截图已按统一口径重拍 —— 47 张页面图为 `1440×900`，6 张模块总览为 `1440×598`，取自当前交付包实例（CDP `Emulation.setDeviceMetricsOverride` 设 `deviceScaleFactor=1`），旧的 `1904×922` 口径已消除。2026-11-27 UI 收口后重拍 `features/business-map.png`（初始态）、`map.png`（多边形绘制中，提示条在顶部工具栏下方、左下角版权露出），新增 `features/map-results-drawer.png`（结果抽屉轻遮罩），并重新生成引用 business-map 的 `investment-overview.png` / `workflow-overview.png`。
 4. ~~**地址定位采用本地字符串检索。**~~ **已接入地图服务并 provider 化**：服务端按官方算法签名后调用 `/ws/geocoder/v1`（地址解析）与 `/ws/place/v1/suggestion`（关键词联想），前端 `/api/geo/*` 转发，SecretKey 仅存后端。查询结果做 6 小时缓存并设每日 200 次预算上限，配额耗尽由 `MapQuotaExceededException` 统一熔断。命中无坐标企业时仍按园区、区域或首个园区回落。**腾讯只是临时演示 provider**：业务层只依赖 `MapProvider` 契约，新增服务商实现后加 `@Component` 自动注册，通过 `MAP_PROVIDER` 切换；前端对应 `MapBaseRenderer` 契约与 `VITE_MAP_PROVIDER`。详见 `docs/tendcent-map-integration.md`。**待办：该 Key 的 WebService 每日配额已耗尽（status 121），次日重置后需实测一次完整解析链路。**
 5. **地图数据以 8 个上海园区示例为主。** **底图已接入腾讯地图 JS API GL 真实瓦片**（路网、水系、POI 与版权标识均真实），未配置凭据时自动回退到原 SVG 示意底图。其他城市仍返回空园区集，非上海城市提示浮层与「切回上海市」按钮保留。**园区真实边界多边形**：后端 `/api/geo/park-boundary` 已实现（腾讯地点检索返回 polygon 时直接采用），前端按选中园区按需查询并缓存，同样受 WebService 配额限制；配额恢复前实际使用示意围栏。
 6. **部分企业坐标是演示推算。** 缺失办公坐标时使用所属园区点，无法匹配园区时按数组顺序分配园区。缺失注册坐标时从企业区县匹配园区并加微小偏移。由此生成的潜在招引/流失记录只能代表演示计算结果，旧记录真实位置仍需补齐。**接入真实底图后，这一问题更明显**：企业点位仍为推算坐标，与真实地图上的实际位置可能有偏差，后续应从工商/园区数据源补齐真实办公与注册坐标。
@@ -239,7 +239,7 @@ GeoJSON 选区采用闭合 Polygon 环，坐标使用 `[lng, lat]`。园区点�
 10. **地图结果区改为无横向滚动的企业列表。** 原 `min-width: 610px` 四列表格已替换为三列列表（企业名+地址、行业、区域），底部「纳入招商台账」改为 sticky footer。**分页已补齐**：抽屉内提供 `10 / 20 / 50` 每页条数与上一页/下一页，切换注册/办公视图或潜在筛选时自动回到第一页。
 11. **地图验收本轮已补测缩放与坐标一致性。** 矩形框选的绘制矩形与鼠标拖拽路径逐像素吻合，缩放后 HTML 园区点位仍与 SVG 电子围栏居中对齐；拖动平移、多点多边形完成、重置与边界点仍值得复验。provider 化后在交付包解压实例上补测：真实底图、矩形框选（30 家企业）、结果抽屉分页、地图定位（不弹抽屉）、底图不可用时离线降级，均通过。地图专项自动化回归测试仍未补。
 12. ~~**后端数据范围需覆盖无园区归属记录。**~~ **已解决**：`RecordsController.inScope()` 现按集合区分语义 —— 公共集合（policies / industryNodes / supplyRelations / biddingRecords / members / roles / departments / tenantSettings / aiScripts）保持全园区可见；公海集合（clues）无园区归属时仍可见但已归属线索按园区隔离；其余私有业务数据无园区归属时**不再一律放行**，改为按关联企业反查园区归属，查不到则拒绝。走访工单与走访记录在创建时按企业名自动补齐 `park` / `parkId`。新增 2 个测试覆盖该行为，并用旧逻辑验证过测试确实会失败。
-13. **同事代码合并仍待确认。** 用户曾明确希望比较 `dgy_youshu/` 并合并兼容改动。当前会话记录没有完成逐文件评审及合并的证据，两个未跟踪输入需保留供后续检查。
+13. ~~**同事代码合并仍待确认。**~~ **已关闭**：2026-11-27 用户明确「同事的不管删除即可」，`dgy_youshu/` 与 `dgy_youshu-develop_glf.zip` 已移入回收站（非永久删除），不再跟踪、不再合并。
 
 ## 10. Git 历史与验证证据
 
@@ -271,7 +271,7 @@ GeoJSON 选区采用闭合 Polygon 环，坐标使用 `[lng, lat]`。园区点�
 
 本轮新增的 2 个测试分别覆盖：指定园区账号不得看到无园区归属的走访工单；指定园区账号仍可全量读取公共政策集合。已用改动前的代码验证过这两个测试确实会失败，确认断言有效。
 
-README 当前共检查到 56 个本地图片/文件链接，目标全部存在。`docs/screenshots/` 下有 50 张 PNG。文件存在性、图像尺寸和业务状态展示需要分别核对。
+README 当前共检查到 54 个本地图片/文件链接，目标全部存在。`docs/screenshots/` 下有 51 张 PNG。文件存在性、图像尺寸和业务状态展示需要分别核对。
 
 ## 11. 本机运行与 Docker 交付
 

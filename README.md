@@ -68,6 +68,7 @@
 | 供应链 | [查看截图](docs/screenshots/features/supply-chain.png) |
 | 园区楼宇 | [查看截图](docs/screenshots/features/parks-buildings.png) |
 | 商机地图与 GeoJSON 围栏圈选 | [查看截图](docs/screenshots/features/business-map.png) |
+| 商机地图圈选结果名单（轻遮罩对照围栏） | [查看截图](docs/screenshots/features/map-results-drawer.png) |
 | 企业查询 | [查看截图](docs/screenshots/features/company-search.png) |
 | 招投标查询 | [查看截图](docs/screenshots/features/bidding.png) |
 | 商机大厅 | [查看截图](docs/screenshots/features/business-hall.png) |

@@ -235,7 +235,7 @@ function CityMap({ city }: { city: string }) {
   return <div className="business-page business-map-page">
     <PageHeading title="商机地图" description={city + " · 产业载体、注册企业与办公企业空间分析"} />
     <div className="business-map-layout">
-      <PageSection title="地图范围" description={boundary ? `已圈选 ${companyCount} 家企业，可在右侧查看企业关系` : visibleParks.length + " 个园区 · " + visibleCompanies.length + " 家演示企业"}>
+      <PageSection title="地图范围" description={boundary ? `已圈选 ${companyCount} 家企业，可查看名单并与地图围栏对照` : visibleParks.length + " 个园区 · " + visibleCompanies.length + " 家演示企业"} actions={boundary ? <Button type="button" size="sm" variant="outline" onClick={openResults}>查看企业名单</Button> : undefined}>
         <div className="business-map-filters"><div className="business-map-search-line"><label className="business-map-field"><span>地图定位</span><div className="business-map-locate">
           <SearchField value={addressKeyword} onChange={(value) => { setAddressKeyword(value); void loadSuggestions(value); }} placeholder="搜索地址、园区或企业" onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); void locateAddress(); } if (event.key === "Escape") setSuggestions([]); }} />
           {suggestions.length > 0 && <ul className="business-map-suggest" role="listbox" aria-label="地址候选">
