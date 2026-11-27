@@ -5,7 +5,7 @@ import { useLocation } from "react-router-dom";
 import { Download, Filter, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { DataTable, type DataColumn } from "@/../src/components/shared/DataTable";
+import { DataTable, TagPills, type DataColumn } from "@/../src/components/shared/DataTable";
 import { FilterDrawer } from "@/../src/components/shared/FilterDrawer";
 import { StatBar } from "@/../src/components/shared/StatBar";
 import { StatusTag } from "@/../src/components/shared/StatusTag";
@@ -68,7 +68,14 @@ export function CorporateArchivesPage() {
     }
     return raw.includes(item);
   })));
-  const columns: DataColumn<Row>[] = [{ key: "name", header: "企业名称", sortable: true }, { key: "park", header: "所属园区" }, { key: "industry", header: "行业" }, { key: "scale", header: "规模" }, { key: "socialSecurity", header: "社保人数", sortable: true }, { key: "settleDate", header: "入驻日期", sortable: true }, { key: "tags", header: "企业标签", cell: (row) => (row.tags ?? []).join("、") }, { key: "archiveStatus", header: "经营状态", cell: (row) => <StatusValue value={row.archiveStatus} /> }];
+  const columns: DataColumn<Row>[] = [
+    { key: "name", header: "企业名称", sortable: true, primary: true, subtext: (row) => `${row.industry || "行业待补充"} · ${row.park || "园区待分配"}` },
+    { key: "scale", header: "规模" },
+    { key: "socialSecurity", header: "社保人数", sortable: true },
+    { key: "settleDate", header: "入驻日期", sortable: true },
+    { key: "tags", header: "企业标签", cell: (row) => <TagPills tags={Array.isArray(row.tags) ? row.tags : String(row.tags ?? "").split("|").filter(Boolean)} max={2} /> },
+    { key: "archiveStatus", header: "经营状态", cell: (row) => <StatusValue value={row.archiveStatus} /> },
+  ];
   async function importCsv(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const file = csvInputRef.current?.files?.[0];
@@ -121,7 +128,7 @@ export function CorporateArchivesPage() {
   return <div className="business-page"><PageHeading title="企业档案" description="从工商、招聘、经营和知识产权等维度查看园区企业画像" source={data.source} actions={<><ActionButton action="新增" variant="outline" onClick={() => setImportOpen(true)}><Upload data-icon="inline-start" />批量导入</ActionButton><ActionButton action="导出" variant="outline" onClick={() => enqueue("企业档案.csv", [{ header: "企业名称", value: row => row.name }, { header: "行业", value: row => row.industry }, { header: "区域", value: row => row.district }, { header: "园区", value: row => row.park }], filtered)}><Download data-icon="inline-start" />导出</ActionButton></>} /><StatBar scope="全库口径" items={[{ label: "入驻企业总数", value: archiveStats.settled.toLocaleString(), suffix: "家" }, { label: "累计迁出", value: archiveStats.migrated, suffix: "家", tone: "gold" }, { label: "企业消失", value: archiveStats.vanished, suffix: "家" }, { label: "平均入驻年限", value: archiveStats.avgYears, suffix: "年" }, { label: "企业留存率", value: archiveStats.retention, tone: "success" }]} /><PageSection title="企业档案" description={`当前筛选 ${filtered.length} 家企业`}><div className="business-toolbar"><SearchField value={keyword} onChange={setKeyword} placeholder="企业名称或统一社会信用代码" /><Button variant="outline" onClick={() => setDrawerOpen(true)}><Filter data-icon="inline-start" />更多筛选（30+ 维度）</Button></div><DataTable columns={columns} data={filtered} openRowDetails={false} onRowClick={setSelected} detailTitle="企业档案" renderDetails={(row) => <ArchiveDetail row={row} onFollowUp={() => void requestServiceFollowUp(row)} />} /></PageSection>
     <FilterDrawer open={drawerOpen} onOpenChange={setDrawerOpen} title="企业高级筛选" groups={groups} value={drawerValue} onChange={setDrawerValue} onQuery={() => setDrawerOpen(false)} onReset={() => setDrawerValue({})} />
     <Sheet open={Boolean(selected)} onOpenChange={(open) => !open && setSelected(null)}><SheetContent side="right" className="business-detail-sheet"><SheetHeader><SheetTitle>{selected?.name}</SheetTitle><SheetDescription>企业全景档案 · {selected?.industry}</SheetDescription></SheetHeader>{selected && <ArchiveDetail row={selected} onFollowUp={() => void requestServiceFollowUp(selected)} />}</SheetContent></Sheet>
-    <Dialog open={importOpen} onOpenChange={setImportOpen}><DialogContent className="max-w-lg"><DialogHeader><DialogTitle>批量导入企业档案</DialogTitle><DialogDescription>CSV 首行使用字段名。支持 name、district、industry、scale、socialSecurity、park、tags 等字段。</DialogDescription></DialogHeader><form onSubmit={importCsv} className="archive-import-form"><input ref={csvInputRef} id="archive-csv" type="file" accept=".csv,text/csv" required /><p>标签字段可用竖线分隔，例如 高新技术企业|专精特新。</p>{importing && <div className="archive-import-progress"><div className="archive-import-bar"><i style={{ width: `${importProgress.total ? (importProgress.done / importProgress.total) * 100 : 0}%` }} /></div><span>正在导入 {importProgress.done} / {importProgress.total}{importProgress.failed ? ` · ${importProgress.failed} 条失败` : ""}</span></div>}<div><Button type="button" variant="outline" onClick={() => setImportOpen(false)}>取消</Button><Button type="submit" disabled={importing}>{importing ? "导入中…" : "导入 CSV"}</Button></div></form></DialogContent></Dialog></div>;
+    <Dialog open={importOpen} onOpenChange={setImportOpen}><DialogContent className="max-w-lg"><DialogHeader><DialogTitle>批量导入企业档案</DialogTitle><DialogDescription>CSV 首行请按列填写企业名称、所在区域、所属行业、企业规模、社保人数、所属园区与企业标签。</DialogDescription></DialogHeader><form onSubmit={importCsv} className="archive-import-form"><input ref={csvInputRef} id="archive-csv" type="file" accept=".csv,text/csv" required /><p>标签字段可用竖线分隔，例如 高新技术企业|专精特新。</p>{importing && <div className="archive-import-progress"><div className="archive-import-bar"><i style={{ width: `${importProgress.total ? (importProgress.done / importProgress.total) * 100 : 0}%` }} /></div><span>正在导入 {importProgress.done} / {importProgress.total}{importProgress.failed ? ` · ${importProgress.failed} 条失败` : ""}</span></div>}<div><Button type="button" variant="outline" onClick={() => setImportOpen(false)}>取消</Button><Button type="submit" disabled={importing}>{importing ? "导入中…" : "导入 CSV"}</Button></div></form></DialogContent></Dialog></div>;
 }
 
 function ArchiveDetail({ row, onFollowUp }: { row: Row; onFollowUp: () => void }) {

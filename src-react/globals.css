@@ -192,6 +192,13 @@ button,input { font:inherit; }
 .dashboard-chart-grid { display:grid; grid-template-columns:minmax(0,7fr) minmax(0,5fr); gap:18px; }
 .chart-card [data-slot="card-header"] { padding:18px 20px 8px; }.chart-card [data-slot="card-title"] { display:flex; align-items:center; gap:9px; color:#141B24; font-size:14px; font-weight:600; }.chart-card [data-slot="card-description"] { color:#526071; font-size:12px; }
 .chart-content { position:relative; height:265px; padding:4px 18px 18px; }
+/* 定制悬浮卡片式 Tooltip：色点 + 单位 + 柔和投影 */
+.chart-tooltip-card { min-width:132px; padding:9px 11px; border:1px solid rgba(22,82,184,.12); border-radius:10px; background:rgba(255,255,255,.97); box-shadow:0 10px 28px -12px rgba(15,39,68,.32); backdrop-filter:blur(6px); }
+.chart-tooltip-title { margin-bottom:6px; padding-bottom:5px; border-bottom:1px solid rgba(15,39,68,.06); color:#8793a2; font-size:10px; letter-spacing:.02em; }
+.chart-tooltip-row { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:2px 0; font-size:11px; }
+.chart-tooltip-row>span { display:inline-flex; align-items:center; gap:6px; color:#64748b; }
+.chart-tooltip-row i { width:7px; height:7px; border-radius:2px; }
+.chart-tooltip-row strong { color:#1d2e44; font-size:12px; font-weight:650; font-variant-numeric:tabular-nums; }
 .chart-legend { position:absolute; top:48px; left:55%; right:20px; display:flex; flex-direction:column; gap:13px; }
 .chart-legend>div { display:grid; grid-template-columns:8px minmax(0,1fr) auto; align-items:center; gap:7px; color:#626e7c; font-size:12px; }
 .chart-legend i,.chart-legend-inline i { display:block; width:8px; height:8px; border-radius:2px; }.chart-legend strong { color:#414d5c; font-size:12px; font-weight:600; }
@@ -245,6 +252,11 @@ button,input { font:inherit; }
 @media(max-width:1250px) { .workspace-content { padding-inline:20px; }.metric-divider { margin-inline:5px; }.login-screen { padding:32px; }.login-panel { padding:40px; } }
 @media(max-width:900px) { .workspace-header { height:58px; padding-inline:16px; }.workspace-tabs-wrap { padding-inline:12px; }.workspace-content { padding:20px 16px 32px; }.metric-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }.policy-rank-content { grid-template-columns:1fr; }.policy-rank-list { padding:16px 0 0; border-top:1px solid var(--border); border-left:0; }.login-screen { padding:24px; }.login-layout { grid-template-columns:minmax(0,.8fr) minmax(360px,1fr); min-height:600px; }.login-art { min-height:600px; }.login-art-copy { margin:16px; padding:18px; }.login-art-copy h2 { font-size:23px; }.login-panel { padding:32px; } }
 @media(max-width:650px) { .workspace-header { gap:8px; padding-inline:10px; }.workspace-header-left,.workspace-header-right { gap:6px; }.workspace-header .header-separator,.user-trigger-name { display:none; }.workspace-tabs-wrap { min-height:40px; }.workspace-tabs,.workspace-tab { height:39px; }.workspace-tab { min-width:74px; padding-inline:8px; font-size:12px; }.workspace-content { padding:18px 12px 28px; }.dashboard-page { gap:14px; }.dashboard-title-row { align-items:flex-start; flex-direction:column; gap:14px; }.dashboard-title-row h1 { font-size:24px; }.city-switcher { width:100%; }.city-switcher [data-slot="select-trigger"] { flex:1; }.metric-grid,.dashboard-chart-grid { grid-template-columns:1fr; }.metric-card { min-height:132px; }.metric-detail { font-size:12px; }.policy-rank-content { padding-inline:14px; }.policy-bar-chart { min-height:220px; }.favorite-picker { grid-template-columns:1fr; }.chart-content { height:240px; }.login-screen { padding:20px; }.login-layout { display:block; min-height:0; max-width:440px; }.login-art { display:none; }.login-panel { padding:32px 26px; }.login-copy { margin-top:32px; } }
+/* 高定微交互：统一 150–200ms 缓动，prefers-reduced-motion 下由下方规则归零 */
+.business-section,.os-glass-card,.metric-card { transition:box-shadow .18s cubic-bezier(.2,0,0,1), border-color .18s cubic-bezier(.2,0,0,1), transform .18s cubic-bezier(.2,0,0,1); }
+.chip-filter-chip,.chip-filter-selected-chip,.clue-score-segments [data-slot="button"],.business-view-switch [data-slot="button"],.risk-segments button { transition:background .16s cubic-bezier(.2,0,0,1), color .16s cubic-bezier(.2,0,0,1), border-color .16s cubic-bezier(.2,0,0,1), box-shadow .16s cubic-bezier(.2,0,0,1); }
+[data-slot="tabs-list"] [data-slot="tab"],[role="tablist"] button { transition:color .16s cubic-bezier(.2,0,0,1), background .16s cubic-bezier(.2,0,0,1), box-shadow .16s cubic-bezier(.2,0,0,1); }
+[data-slot="sheet-content"] { transition:transform .2s cubic-bezier(.2,0,0,1), opacity .2s cubic-bezier(.2,0,0,1); }
 @media(prefers-reduced-motion:reduce) { *,*::before,*::after { animation-duration:.01ms!important; animation-iteration-count:1!important; scroll-behavior:auto!important; transition-duration:.01ms!important; } }
 
 /* Shared primary action and 1+2 KPI hierarchy. */
@@ -321,7 +333,7 @@ body { background: var(--os-ambient-bg); color: var(--foreground); }
 .workspace-status-card small { padding-left: 16px; color: #fff; font-size: 11px; }
 [data-slot="sidebar"][data-state="collapsed"] .workspace-status-card { padding: 8px 0; border-color: transparent; background: transparent; }
 [data-slot="sidebar"][data-state="collapsed"] .workspace-status, [data-slot="sidebar"][data-state="collapsed"] .workspace-status-card small { display: none; }
-.workspace-watermark { position: fixed; inset: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(5, minmax(0, 1fr)); overflow: hidden; pointer-events: none; opacity: .065; }
+.workspace-watermark { position: fixed; inset: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(5, minmax(0, 1fr)); overflow: hidden; pointer-events: none; opacity: .042; }
 .workspace-watermark span { display: flex; align-items: center; justify-content: center; color: #334155; font-size: 12px; white-space: nowrap; transform: rotate(-24deg); }
 .force-password-page { display: grid; min-height: 100vh; place-items: center; padding: 24px; background: var(--os-ambient-bg); }
 .force-password-card { display: grid; width: min(460px, 100%); gap: 14px; padding: 32px; border-radius: 16px; }
@@ -576,7 +588,35 @@ body { background: var(--os-ambient-bg); color: var(--foreground); }
 .data-table-shell [data-slot="table-row"]:hover { background:#f7f9fc; }
 [data-slot="table-cell"],[data-slot="table-head"] { font-variant-numeric: tabular-nums; }
 .data-table-row-clickable { cursor:pointer; }
-.data-table-row-clickable:hover { background:#F8FAFD; }
+.data-table-body-row { position:relative; transition:background .18s cubic-bezier(.2,0,0,1); }
+.data-table-body-row:hover { background:#f4f8ff; }
+/* 行 hover 时左侧柔和指示条 */
+.data-table-body-row:hover [data-slot="table-cell"]:first-child { box-shadow:inset 2px 0 0 #2F6FC8; }
+.data-table-row-clickable:hover { background:#eef4ff; }
+/* 双行富信息单元格 */
+.data-cell-rich { display:inline-flex; min-width:0; flex-direction:column; gap:3px; line-height:1.35; }
+.data-cell-rich-main { overflow:hidden; color:#1d2e44; font-size:13px; font-weight:600; text-overflow:ellipsis; white-space:nowrap; }
+.data-cell-rich-sub { overflow:hidden; color:#8793a2; font-size:11px; font-weight:400; text-overflow:ellipsis; white-space:nowrap; }
+/* 内联微型进度条：语义色阶 */
+.inline-progress { display:inline-flex; align-items:center; gap:8px; min-width:96px; }
+.inline-progress-track { position:relative; flex:1 1 auto; height:5px; overflow:hidden; border-radius:999px; background:#e8edf4; }
+.inline-progress-fill { display:block; height:100%; border-radius:999px; transition:width .2s cubic-bezier(.2,0,0,1); }
+.inline-progress-fill--info { background:linear-gradient(90deg,#5C8ED5,#1652B8); }
+.inline-progress-fill--success { background:linear-gradient(90deg,#3FB98B,#147A4C); }
+.inline-progress-fill--warning { background:linear-gradient(90deg,#E5B45C,#C8922E); }
+.inline-progress-fill--danger { background:linear-gradient(90deg,#E2776F,#B8322E); }
+.inline-progress-value { min-width:38px; color:#46576d; font-size:11px; font-weight:600; font-variant-numeric:tabular-nums; text-align:right; }
+.inline-progress-value--info { color:#1652B8; }
+.inline-progress-value--success { color:#147A4C; }
+.inline-progress-value--warning { color:#A66E14; }
+.inline-progress-value--danger { color:#B8322E; }
+/* 标签胶囊组 */
+.tag-pills { display:inline-flex; align-items:center; gap:4px; flex-wrap:wrap; }
+.tag-pill { display:inline-flex; padding:1px 7px; border:1px solid rgba(22,82,184,.14); border-radius:999px; background:#f0f5ff; color:#3f6bab; font-size:10px; line-height:1.6; white-space:nowrap; }
+.tag-pill--more { border-color:rgba(100,116,139,.16); background:#f4f6f9; color:#7b8798; }
+.tag-pills-empty { color:#a1acb9; }
+/* 操作列主次层级 */
+.table-action-buttons [data-slot="button"]:not([variant="outline"]):not([variant="ghost"]) { box-shadow:0 3px 8px -4px rgba(22,82,184,.45); }
 .data-table-sort { display:inline-flex; align-items:center; gap:6px; border:0; background:transparent; color:inherit; font:inherit; cursor:default; }
 .data-table-sort.is-sortable { cursor:pointer; }
 .data-table-sort svg { width:12px; height:12px; color:#a1acb9; }
@@ -613,15 +653,23 @@ body { background: var(--os-ambient-bg); color: var(--foreground); }
 .shared-metric-card.is-clickable:hover { transform:translateY(-2px); box-shadow:0 12px 26px -16px rgba(15,39,68,.3); }
 .shared-metric-card.is-clickable:focus-visible { outline:2px solid var(--primary); outline-offset:2px; }
 .shared-metric-card--surface::before { position:absolute; top:0; right:0; left:0; height:3px; background:#1652B8; content:""; }
+/* 主锚点卡：顶部霁蓝→鎏金强调条 + 轻度霁蓝微渐变底，与次卡形成 1+N 视觉节奏 */
+.shared-metric-card--primary { border-color:rgba(22,82,184,.22); background:linear-gradient(158deg,#f4f8ff 0%,#ffffff 62%); box-shadow:0 10px 26px -18px rgba(22,82,184,.4); }
+.shared-metric-card--primary::before { background:linear-gradient(90deg,#1652B8 0%,#2F6FC8 62%,#C8922E 100%); }
 .shared-metric-card [data-slot="card-header"] { gap:8px; padding:18px 19px 5px; }
 .shared-metric-card [data-slot="card-description"] { display:flex; align-items:center; gap:8px; color:#6f7e92; font-size:12px; }
+.shared-metric-card--primary [data-slot="card-description"] { color:#415a79; font-weight:600; }
 .shared-metric-card [data-slot="card-title"] { color:#1d2e44; font-size:26px; font-weight:620; letter-spacing:-.03em; font-variant-numeric:tabular-nums; }
+.shared-metric-card--primary [data-slot="card-title"] { color:#123C86; font-size:30px; font-weight:700; letter-spacing:-.035em; }
 .shared-metric-card [data-slot="card-content"] { display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:4px 19px 17px; }
 .shared-metric-card [data-slot="card-content"]>p { width:100%; margin:0; color:#7d8999; font-size:11px; }
+.shared-metric-hint { margin-left:auto; padding:2px 7px; border:1px solid rgba(22,82,184,.16); border-radius:999px; background:rgba(22,82,184,.05); color:#3f6bab; font-size:10px; font-weight:500; white-space:nowrap; }
 .shared-metric-card--gradient { border-color:transparent; background:linear-gradient(135deg,#1652B8 0%,#123F8B 100%); box-shadow:0 9px 24px -16px rgba(22,82,184,.45); }
 .shared-metric-card--gradient [data-slot="card-description"],.shared-metric-card--gradient [data-slot="card-title"],.shared-metric-card--gradient [data-slot="card-content"]>p { color:#fff; }
 .shared-metric-card--gradient [data-slot="card-title"] { font-size:28px; }
 .shared-metric-icon { display:grid; width:25px; height:25px; place-items:center; border-radius:6px; background:#EEF3FC; color:#1652B8; }
+.shared-metric-card--primary .shared-metric-icon { width:29px; height:29px; border-radius:8px; background:linear-gradient(145deg,#e8f0ff,#dce8fb); color:#1652B8; box-shadow:0 4px 12px -5px rgba(22,82,184,.4), inset 0 1px 0 rgba(255,255,255,.8); }
+.shared-metric-card--primary .shared-metric-icon svg { width:16px; height:16px; }
 .shared-metric-icon svg { width:14px; height:14px; }
 .shared-metric-card--gradient .shared-metric-icon { background:rgba(255,255,255,.15); color:#fff; }
 .shared-metric-delta { display:inline-flex; align-items:center; gap:3px; padding:3px 6px; border-radius:4px; font-size:10px; }

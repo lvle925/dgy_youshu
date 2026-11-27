@@ -51,8 +51,8 @@ export function MemberLogPage() {
   const operators = useMemo(() => [...new Set(rows.map((row) => String(row.operator ?? "")).filter(Boolean))], [rows]);
   const hasFilter = Boolean(keyword || operator || module || from || to);
   const modules = useMemo(() => [...new Set(rows.map((row) => String(row.type ?? "")).filter(Boolean))], [rows]);
-  const departmentLabel = (row: Row) => departmentNames.get(String(row.departmentId ?? "")) || row.departmentId || "未登记";
-  const moduleLabel = (row: Row) => moduleLabels[String(row.type ?? "")] ?? row.type ?? "—";
+  const departmentLabel = (row: Row) => departmentNames.get(String(row.departmentId ?? "")) || "未登记";
+  const moduleLabel = (row: Row) => moduleLabels[String(row.type ?? "")] ?? "其他业务";
   const columns: DataColumn<Row>[] = [
     { key: "title", header: "操作事项", sortable: true },
     { key: "operator", header: "操作人" },

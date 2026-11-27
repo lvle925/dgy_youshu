@@ -38,7 +38,7 @@ export function BiddingPage() {
   return <div className="business-page">
     <PageHeading title="招投标查询" description="查询园区建设、产业服务和重点企业采购公告" source={data.source} />
     <div className="business-metric-grid">
-      <MetricCard title="公告记录" value={data.rows.length} description="当前持久化台账" icon={<Layers3 />} />
+      <MetricCard title="公告记录" value={data.rows.length} description="当前经办范围内的招投标台账" icon={<Layers3 />} />
       <MetricCard title="报名中" value={data.rows.filter((row) => row.status === "报名中").length} description="仍处于报名期" />
       <MetricCard title="即将截止" value={data.rows.filter((row) => row.status === "即将截止").length} description="需关注投标节点" />
       <MetricCard title="采购单位" value={buyerRows.length} description="按公告数据去重" />

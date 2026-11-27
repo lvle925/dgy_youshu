@@ -33,7 +33,7 @@ function useAuthStatus() {
   const [status, setStatus] = useState<AuthStatus | null>(null);
   const refresh = useCallback(async () => {
     const response = await fetch('/api/auth/status', { credentials: 'same-origin' });
-    if (!response.ok) throw new Error('无法连接后端服务');
+    if (!response.ok) throw new Error('服务暂不可用，请稍后重试');
     const result = await response.json();
     setStatus(result);
     return result as AuthStatus;
@@ -206,7 +206,7 @@ function LoginPage() {
         });
         const result = await response.json().catch(() => ({}));
         if (!response.ok) {
-          throw new Error(result.message || '短信登录服务尚未接入当前本地后端。');
+          throw new Error(result.message || '短信服务暂不可用，请稍后重试。');
         }
         await completeLogin({ ...result, user: result.user || phone }, '已安全登录');
       } catch (cause) {
@@ -236,13 +236,13 @@ function LoginPage() {
         body: JSON.stringify({ username: username.trim(), password, captchaId: challenge.id, captcha: captcha.trim(), captchaToken }),
       });
       const result = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(result.message || (status?.initialized ? '账号或密码不正确。' : '创建失败，请检查后端服务。'));
+      if (!response.ok) throw new Error(result.message || (status?.initialized ? '账号或密码不正确。' : '创建失败，请稍后重试。'));
       await completeLogin(
         result,
         status?.initialized ? '已安全登录' : '本地管理员已创建',
       );
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : '无法连接后端服务。');
+      setError(cause instanceof Error ? cause.message : '服务暂不可用，请稍后重试。');
       void refreshCaptcha();
       window.requestAnimationFrame(() => document.getElementById('captcha')?.focus());
     } finally {
@@ -354,7 +354,7 @@ function LoginPage() {
         <div className="login-side-note"><span>产业招商</span><span>·</span><span>企业服务</span><span>·</span><span>园区运营</span></div>
       </section>
       </div>
-      <NewDeviceVerificationDialog open={Boolean(deviceChallenge)} onOpenChange={(open) => { if (!open) setDeviceChallenge(null); }} phone={deviceChallenge?.phone ?? ''} demoCode={deviceChallenge?.demoCode} onVerify={verifyNewDevice} onResend={async () => { const response = await fetch('/api/auth/device/send', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ challengeId: deviceChallenge?.id }) }); const result = await response.json().catch(() => ({})); if (!response.ok) throw new Error(result.message || '设备验证码发送失败'); return result.demoCode as string | undefined; }} onChangePassword={() => { setDeviceChallenge(null); setLoginMode('password'); setError('当前本地后端未提供密码修改接口，请联系管理员。'); }} />
+      <NewDeviceVerificationDialog open={Boolean(deviceChallenge)} onOpenChange={(open) => { if (!open) setDeviceChallenge(null); }} phone={deviceChallenge?.phone ?? ''} demoCode={deviceChallenge?.demoCode} onVerify={verifyNewDevice} onResend={async () => { const response = await fetch('/api/auth/device/send', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ challengeId: deviceChallenge?.id }) }); const result = await response.json().catch(() => ({})); if (!response.ok) throw new Error(result.message || '设备验证码发送失败'); return result.demoCode as string | undefined; }} onChangePassword={() => { setDeviceChallenge(null); setLoginMode('password'); setError('当前账号暂不支持在线修改密码，请联系管理员。'); }} />
     </main>
   );
 }
@@ -425,7 +425,7 @@ function Workspace({ userName, children }: { userName: string; children: ReactNo
       localStorage.removeItem(TABS_KEY);
       navigate('/login', { replace: true });
       toast.success('已退出登录');
-    } catch { toast.error('退出失败，请检查后端服务'); }
+    } catch { toast.error('退出失败，请稍后重试'); }
   }
   return <AppShell userName={userName} onLogout={() => void logout()}>{children}</AppShell>;
 }

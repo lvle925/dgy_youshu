@@ -37,7 +37,7 @@ export function IndustryChartPage() {
       <ActionButton action="导出" variant="outline" onClick={() => enqueue("产业图谱.csv", [{ header: "产业", value: (row) => row.industry }, { header: "产业层级", value: (row) => row.layer }, { header: "产业环节", value: (row) => row.name }, { header: "企业数量", value: (row) => row.count }, { header: "代表企业", value: (row) => row.companies }], exportRows)}><Download data-icon="inline-start" />导出台账</ActionButton>
     </>} />
     <div className="business-metric-grid"><MetricCard title="全产业企业节点" value={enterpriseCount.toLocaleString()} description={`${roots.length} 条产业链 · 全量汇总口径`} icon={<Building2 />} /><MetricCard title="当前产业一级环节" value={layers.length} description={`${activeRoot?.name || "当前产业"} · 下方图谱与台账口径`} /><MetricCard title="代表企业" value={companyNames.length} description="全产业节点登记企业" /></div>
-    <PageSection title="产业链结构" description="产业层级与代表企业来自 MySQL 产业节点台账">
+    <PageSection title="产业链结构" description="产业层级与代表企业依据产业图谱登记信息整理">
       {roots.length > 0 && <SectionTabs items={roots.map((root) => ({ key: String(root.name), label: String(root.name) }))} value={activeRoot?.name ?? ""} onChange={setIndustry} />}
       <div className="industry-layers">{layers.map((layer, index) => {
         const nodes = data.rows.filter((node) => String(node.parentId ?? "") === String(layer.id));

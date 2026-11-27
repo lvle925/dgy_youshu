@@ -5,7 +5,7 @@ import { Building2, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { DataTable, type DataColumn } from "@/../src/components/shared/DataTable";
+import { DataTable, InlineProgress, type DataColumn } from "@/../src/components/shared/DataTable";
 import { MetricCard } from "@/../src/components/shared/MetricCard";
 import { StatBar } from "@/../src/components/shared/StatBar";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -30,9 +30,9 @@ export function CampusAdminPage() {
   const [form, setForm] = useState({ name: "", district: "", buildings: "", enterprises: "", area: "", occupancy: "", manager: "", status: "运营中" });
   const filtered = data.rows.filter((row) => (!keyword || String(row.name).includes(keyword)) && (!district || row.district === district) && (!status || row.status === status));
   const columns: DataColumn<Row>[] = [
-    { key: "name", header: "载体名称", sortable: true, cell: row => <div><strong>{row.name}</strong><div className="text-muted-foreground">{row.district}</div></div> },
+    { key: "name", header: "载体名称", sortable: true, primary: true, subtext: row => `${row.district || "区域待补充"} · 运营负责人 ${row.manager || "待分配"}` },
     { key: "fence", header: "电子围栏", cell: row => row.fence || "未配置" },
-    { key: "enterprises", header: "入驻企业 / 入驻率", sortable: true, cell: row => row.enterprises + " 家 / " + row.occupancy + "%" },
+    { key: "enterprises", header: "入驻企业 / 入驻率", sortable: true, cell: row => <span className="campus-occupancy-cell"><b>{row.enterprises ?? 0} 家</b><InlineProgress value={Number(row.occupancy ?? 0)} label={`${row.occupancy ?? 0}%`} /></span> },
     { key: "buildings", header: "楼宇 / 房间", sortable: true, cell: row => row.buildings + " 栋 / " + (row.rooms ?? "—") },
     { key: "status", header: "状态", cell: row => <StatusValue value={row.status} /> },
     { key: "action", header: "操作", cell: row => <ActionButton action="编辑" size="sm" variant="outline" onClick={() => openEdit(row)}>编辑</ActionButton> },

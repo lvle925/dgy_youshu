@@ -17,6 +17,8 @@ export function MetricCard({
   deltaLabel = "环比",
   icon,
   variant = "surface",
+  emphasis = "default",
+  hint,
   footer,
   onClick,
 }: {
@@ -27,12 +29,21 @@ export function MetricCard({
   deltaLabel?: string;
   icon?: ReactNode;
   variant?: "gradient" | "surface";
+  /** 主锚点卡：霁蓝鎏金强调条 + 微渐变底 + 柔光图标，与次卡形成 1+N 节奏 */
+  emphasis?: "primary" | "default";
+  /** 趋势/占比等辅助标签 */
+  hint?: ReactNode;
   footer?: ReactNode;
   onClick?: () => void;
 }) {
   return (
     <Card
-      className={cn("shared-metric-card", `shared-metric-card--${variant}`, onClick && "is-clickable")}
+      className={cn(
+        "shared-metric-card",
+        `shared-metric-card--${variant}`,
+        emphasis === "primary" && "shared-metric-card--primary",
+        onClick && "is-clickable",
+      )}
       role={onClick ? "button" : undefined}
       tabIndex={onClick ? 0 : undefined}
       onClick={onClick}
@@ -42,6 +53,7 @@ export function MetricCard({
         <CardDescription>
           {icon && <span className="shared-metric-icon">{icon}</span>}
           {title}
+          {hint && <span className="shared-metric-hint">{hint}</span>}
         </CardDescription>
         <CardTitle>{value}</CardTitle>
       </CardHeader>

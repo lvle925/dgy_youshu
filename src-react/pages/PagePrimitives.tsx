@@ -1,5 +1,5 @@
 import type { FormEvent, KeyboardEvent, ReactNode } from "react";
-import { AlertCircle, Database, Search } from "lucide-react";
+import { AlertCircle, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -27,26 +27,27 @@ export function PageHeading({
   description,
   actions,
   source,
+  meta,
 }: {
   title: string;
   description?: string;
   actions?: ReactNode;
   source?: CollectionSource;
+  /** 页头轻量上下文信息（统计口径、数据时间、视图切换等） */
+  meta?: ReactNode;
 }) {
   const { city } = useCurrentCity();
   const dataSource = source ?? "local";
   return (
     <header className="business-page-heading">
       <div>
-        <h1>{title}</h1>
+        <div className="business-page-title-line">
+          <h1>{title}</h1>
+          {dataSource === "unavailable" && <span className="business-data-source business-data-source--offline" role="status">数据服务暂不可用</span>}
+          {dataSource === "local" && <span className="business-data-source" role="status" title="当前展示离线演示数据，连接业务系统后自动切换">演示数据</span>}
+          {meta && <span className="business-page-meta">{meta}</span>}
+        </div>
         {description && <p>{description}</p>}
-        {dataSource === "unavailable" && <div className="business-data-source" role="status"><Database aria-hidden="true" />业务数据暂不可用</div>}
-        {dataSource === "local" && (
-          <div className="business-data-source" role="status">
-            <Database aria-hidden="true" />
-            当前使用本地演示数据
-          </div>
-        )}
         {city !== "上海市" && (
           <div className="business-city-scope" role="status">
             当前地区 {city}

@@ -151,7 +151,7 @@ export function PolicyPage() {
           <PageSection title="匹配结果" description={matchResults.length ? `找到 ${matchResults.length} 项符合条件的政策` : "填写企业信息后开始匹配"}>{matchResults.length ? <DataTable columns={[{ key: "name", header: "政策项目" }, { key: "level", header: "级别" }, { key: "type", header: "补贴类型" }, { key: "deadline", header: "截止日期" }, { key: "fit", header: "匹配度", sortable: true, cell: (row) => <StatusTag value={row.fit + " 分"} tone={row.fit >= 75 ? "success" : "warning"} /> }, { key: "basis", header: "匹配依据" }]} data={matchResults} /> : <div className="business-empty-hint"><Target /><span>{submitted ? "未找到符合条件的政策" : "匹配结果将在此显示"}</span></div>}</PageSection>
         </div>}
       </PageSection>
-      <FormDialog open={addOpen} onOpenChange={setAddOpen} title="新增政策" description="添加后写入业务数据集。后端可用时将保存到本地数据库。" onSubmit={savePolicy}>
+      <FormDialog open={addOpen} onOpenChange={setAddOpen} title="新增政策" description="添加后将纳入政策服务台账，并按授权范围同步。" onSubmit={savePolicy}>
         <FormField label="政策项目名称" required><Input value={policyForm.name} onChange={(event) => setPolicyForm({ ...policyForm, name: event.target.value })} required /></FormField>
         <FormField label="组织部门" required><Input value={policyForm.org} onChange={(event) => setPolicyForm({ ...policyForm, org: event.target.value })} required /></FormField>
         <FormField label="政策级别"><NativeSelect bare label="政策级别" allowEmpty={false} value={policyForm.level} onChange={(value) => setPolicyForm({ ...policyForm, level: value })} options={levels} /></FormField>

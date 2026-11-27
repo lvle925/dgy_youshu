@@ -57,7 +57,7 @@ export function useBusinessCollection<T extends BusinessRecord>({
       updateSource("server");
     } catch (cause) {
       setRows([]);
-      setError(cause instanceof Error ? cause.message : "数据接口暂不可用");
+      setError(cause instanceof Error ? cause.message : "数据服务暂不可用");
       updateSource("unavailable");
     }
   }, [apiCollection, key, seed, updateSource]);
@@ -81,7 +81,7 @@ export function useBusinessCollection<T extends BusinessRecord>({
       .catch((cause: unknown) => {
         if (!active) return;
         setRows([]);
-        setError(cause instanceof Error ? cause.message : "数据接口暂不可用");
+        setError(cause instanceof Error ? cause.message : "数据服务暂不可用");
         updateSource("unavailable");
       });
     return () => {

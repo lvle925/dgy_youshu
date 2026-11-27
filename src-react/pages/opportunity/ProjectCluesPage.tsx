@@ -12,7 +12,7 @@ import { MetricCard } from "@/../src/components/shared/MetricCard";
 import { StatusTag } from "@/../src/components/shared/StatusTag";
 import { clues } from "../../../src/data/mock.js";
 import { api } from "../../../src/api.js";
-import { Download, Eye, Plus, Target } from "lucide-react";
+import { ArrowRight, Download, Eye, LayoutGrid, List, Plus, Target } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -43,6 +43,7 @@ export function ProjectCluesPage() {
   const [sensitiveLoading, setSensitiveLoading] = useState(false);
   const [stageFilter, setStageFilter] = useState("");
   const [ownership, setOwnership] = useState("");
+  const [view, setView] = useState<"table" | "kanban">("table");
   const [addOpen, setAddOpen] = useState(false);
   const [progressOpen, setProgressOpen] = useState(false);
   const [form, setForm] = useState({ company: "", intent: "", region: "", industry: "", source: "商机摸排", contact: "", phone: "", park: "", desc: "" });
@@ -170,17 +171,45 @@ export function ProjectCluesPage() {
       <ActionButton action="新增" onClick={() => setAddOpen(true)}><Plus data-icon="inline-start" />新增线索</ActionButton>
     </>} />
     <div className="business-metric-grid">
-      <MetricCard title="项目总量" value={data.rows.length} description="当前授权数据范围" icon={<Target />} />
+      <MetricCard title="项目总量" value={data.rows.length} description="当前授权数据范围" icon={<Target />} emphasis="primary" hint="全量口径" />
       <MetricCard title="待研判" value={data.rows.filter((row) => (row.stage || stages[0]) === stages[0]).length} description="线索摸排阶段" />
       <MetricCard title="推进中" value={data.rows.filter((row) => stages.indexOf(row.stage) > 0 && stages.indexOf(row.stage) < 4).length} description="研判、选址与拟签约" />
       <MetricCard title="落地纳统" value={data.rows.filter((row) => row.stage === stages[4]).length} description="已形成落地成果" />
     </div>
-    <PageSection title="招商项目台账" description={`当前筛选 ${filtered.length} 条，完整企业信息按角色和园区数据范围授权`}>
+    <PageSection title="招商项目台账" description={`当前筛选 ${filtered.length} 条，完整企业信息按角色和园区数据范围授权`} actions={<div className="business-view-switch" role="group" aria-label="视图切换">
+      <Button size="sm" variant={view === "table" ? "default" : "outline"} aria-pressed={view === "table"} onClick={() => setView("table")}><List data-icon="inline-start" />表格</Button>
+      <Button size="sm" variant={view === "kanban" ? "default" : "outline"} aria-pressed={view === "kanban"} onClick={() => setView("kanban")}><LayoutGrid data-icon="inline-start" />阶段看板</Button>
+    </div>}>
       <div className="clue-score-segments" aria-label="意愿度分层">
         {scoreBands.map((item) => <Button key={item.key} variant={band === item.key ? "default" : "outline"} aria-pressed={band === item.key} onClick={() => setBand(band === item.key ? "" : item.key)}>{item.label} · {data.rows.filter((row) => item.matches(Number(row.score ?? 0))).length}</Button>)}
       </div>
       <div className="business-toolbar"><SearchField value={keyword} onChange={setKeyword} placeholder="企业名称、行业或项目线索" /><NativeSelect label="跟进状态" value={status} onChange={setStatus} options={clueStatuses} /><NativeSelect label="推进阶段" value={stageFilter} onChange={setStageFilter} options={stages} /><NativeSelect label="项目归属" value={ownership} onChange={setOwnership} options={["公海", "本人跟进"]} /></div>
-      <DataTable columns={columns} data={filtered} openRowDetails={false} onRowClick={setSelected} detailTitle="项目线索详情" />
+      {view === "table"
+        ? <DataTable columns={columns} data={filtered} openRowDetails={false} onRowClick={setSelected} detailTitle="项目线索详情" />
+        : <div className="clue-kanban" role="list" aria-label="项目推进阶段看板">
+            {stages.map((stage, stageIndex) => {
+              const stageRows = filtered.filter((row) => (row.stage || stages[0]) === stage);
+              return <section className="clue-kanban-column" key={stage} aria-label={`${stage} ${stageRows.length} 项`}>
+                <header className="clue-kanban-head"><span className="clue-kanban-dot" />{stage}<b>{stageRows.length}</b></header>
+                <div className="clue-kanban-body">
+                  {stageRows.map((row) => {
+                    const score = Number(row.score ?? 0);
+                    const bandKey = score >= 85 ? "high" : score >= 70 ? "mid" : "low";
+                    return <article className={`clue-kanban-card clue-kanban-card--${bandKey}`} key={row.id}>
+                      <div className="clue-kanban-card-top"><strong>{row.company}</strong><span className={`clue-intent-band clue-intent-band--${bandKey}`}>{score} 分</span></div>
+                      <p className="clue-kanban-intent" title={String(row.intent ?? "")}>{row.intent || "待补充项目线索"}</p>
+                      <div className="clue-kanban-meta"><span>预计投资 <b>{row.investment || "待研判"}</b></span><span>负责人 <b>{row.owner || "公海"}</b></span></div>
+                      <footer className="clue-kanban-actions">
+                        <button type="button" onClick={() => setSelected(row)}>查看详情</button>
+                        {canEdit && stageIndex < stages.length - 1 && <button type="button" className="is-primary" onClick={() => void advance(row)}>推进 <ArrowRight data-icon="inline-end" /></button>}
+                      </footer>
+                    </article>;
+                  })}
+                  {!stageRows.length && <p className="clue-kanban-empty">暂无项目</p>}
+                </div>
+              </section>;
+            })}
+          </div>}
     </PageSection>
 
     <Sheet open={Boolean(selected)} onOpenChange={(open) => { if (!open) { setSelected(null); setSensitiveContact(null); } }}>

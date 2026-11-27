@@ -555,7 +555,7 @@ function WorkspaceFrame({
 }
 
 function WatermarkLayer({ principal }: { principal: NonNullable<ReturnType<typeof usePrincipal>> }) {
-  const watermark = `${principal.displayName || principal.user} · ${principal.departmentName || principal.departmentId || "政府内部用户"} · ${new Date().toLocaleString("zh-CN", { hour12: false })}`;
+  const watermark = `${principal.displayName || principal.user} · ${principal.departmentName || "政府内部用户"} · ${new Date().toLocaleString("zh-CN", { hour12: false })}`;
   return <div className="workspace-watermark" aria-hidden="true">{Array.from({ length: 15 }, (_, index) => <span key={index}>{watermark}</span>)}</div>;
 }
 

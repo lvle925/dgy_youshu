@@ -76,7 +76,7 @@ export function SettingPage() {
         <FormField label="每日接口调用预警阈值"><Input type="number" min={1} value={saved.dailyCallWarning} onChange={(event) => update("dailyCallWarning", numberOrBlank(event))} /></FormField>
         <FormField label="每月接口调用预警阈值"><Input type="number" min={1} value={saved.monthlyCallWarning} onChange={(event) => update("monthlyCallWarning", numberOrBlank(event))} /></FormField>
         <div className="settings-notice-list">{Object.entries({ migrationAlert: "迁移风险预警", serviceOverdue: "企业诉求超期督办", visitReminder: "走访工单提醒", accountSecurity: "账号安全事件" }).map(([key, label]) => checkbox(key, label, "显示在内部通知中心"))}</div>
-      </div><div className="tenant-preview"><span><BellRing /> 运行提醒</span><strong>业务预警与接口监控阈值</strong><p>接口监控按内部请求审计记录聚合。</p></div></div>}
+      </div><div className="tenant-preview"><span><BellRing /> 运行提醒</span><strong>业务预警与服务运行阈值</strong><p>运行指标按系统访问审计记录汇总。</p></div></div>}
     </PageSection>
   </div>;
 }

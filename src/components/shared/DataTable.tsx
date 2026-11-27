@@ -45,10 +45,57 @@ export type DataColumn<T> = {
   header: string;
   accessor?: (row: T) => string | number | null | undefined;
   cell?: (row: T) => ReactNode;
+  /** 双行富信息单元格：主标题 + 副信息（地址/编码等），拉开扫描层级 */
+  primary?: boolean;
+  subtext?: (row: T) => ReactNode;
   sortable?: boolean;
   className?: string;
   defaultVisible?: boolean;
 };
+
+/** 语义色阶：正常霁蓝、优秀翡翠绿、预警琥珀、高危朱红 */
+export type ProgressTone = "info" | "success" | "warning" | "danger";
+
+/**
+ * 内联微型进度条：用于入驻率、办结率、匹配度、风险评分等百分比字段。
+ * 传 value（0-100）与可选 tone；不传 tone 时按数值自动分级。
+ */
+export function InlineProgress({
+  value,
+  tone,
+  label,
+}: {
+  value: number;
+  tone?: ProgressTone;
+  label?: ReactNode;
+}) {
+  const numeric = Number.isFinite(value) ? Math.max(0, Math.min(100, value)) : 0;
+  const resolved: ProgressTone = tone ?? (
+    numeric >= 90 ? "success" : numeric >= 70 ? "info" : numeric >= 50 ? "warning" : "danger"
+  );
+  return (
+    <span className="inline-progress" title={`${numeric}%`}>
+      <span className="inline-progress-track">
+        <span className={`inline-progress-fill inline-progress-fill--${resolved}`} style={{ width: `${numeric}%` }} />
+      </span>
+      <span className={`inline-progress-value inline-progress-value--${resolved}`}>{label ?? `${numeric}%`}</span>
+    </span>
+  );
+}
+
+/** 核心标签胶囊组：最多展示 max 个，超出折叠为 +N，鼠标悬停展示全部 */
+export function TagPills({ tags, max = 2 }: { tags: string[]; max?: number }) {
+  const valid = tags.filter(Boolean).slice(0, 12);
+  if (!valid.length) return <span className="tag-pills-empty">—</span>;
+  const shown = valid.slice(0, max);
+  const rest = valid.slice(max);
+  return (
+    <span className="tag-pills" title={valid.join(" · ")}>
+      {shown.map((tag) => <span className="tag-pill" key={tag}>{tag}</span>)}
+      {rest.length > 0 && <span className="tag-pill tag-pill--more">+{rest.length}</span>}
+    </span>
+  );
+}
 export function DataTable<T extends { id?: string | number }>({
   columns,
   data,
@@ -223,7 +270,7 @@ export function DataTable<T extends { id?: string | number }>({
             : rows.map((row, index) => (
             <TableRow
               key={String(row.id ?? index)}
-              className={cn((onRowClick || openRowDetails) && "data-table-row-clickable")}
+              className={cn("data-table-body-row", (onRowClick || openRowDetails) && "data-table-row-clickable")}
               onClick={(event) => {
                 if (
                   (event.target as HTMLElement).closest(
@@ -256,11 +303,20 @@ export function DataTable<T extends { id?: string | number }>({
                 <TableCell key={column.key} className={column.className}>
                   {column.cell
                     ? column.cell(row)
-                    : String(
-                        column.accessor?.(row) ??
-                          row[column.key as keyof T] ??
-                          "—",
-                      )}
+                    : column.primary || column.subtext
+                      ? <span className="data-cell-rich">
+                          <strong className="data-cell-rich-main">{String(
+                            column.accessor?.(row) ??
+                              row[column.key as keyof T] ??
+                              "—",
+                          )}</strong>
+                          {column.subtext && <small className="data-cell-rich-sub">{column.subtext(row)}</small>}
+                        </span>
+                      : String(
+                          column.accessor?.(row) ??
+                            row[column.key as keyof T] ??
+                            "—",
+                        )}
                 </TableCell>
               ))}
               {onRowClick && (
